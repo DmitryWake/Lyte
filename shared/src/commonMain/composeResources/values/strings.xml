@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tab_tracker">Трекер</string>
+    <string name="tab_workouts">Тренировки</string>
+    <string name="tab_history">История</string>
+</resources>

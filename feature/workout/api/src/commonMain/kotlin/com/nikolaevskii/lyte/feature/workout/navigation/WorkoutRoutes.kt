@@ -1,0 +1,9 @@
+package com.nikolaevskii.lyte.feature.workout.navigation
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+data object WorkoutListRoute
+
+@Serializable
+data class WorkoutDetailsRoute(val id: Long)

@@ -1,0 +1,60 @@
+package com.nikolaevskii.lyte.core.navigation.model
+
+import androidx.navigation.NavController
+import androidx.navigation.NavDestination
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph
+import androidx.navigation.NavGraph.Companion.findStartDestination
+
+/**
+ * Контракт верхнеуровневого раздела bottom-bar (вкладки).
+ *
+ * [graphRoute] — `@Serializable`-маршрут **вложенного графа** вкладки (а не отдельного экрана):
+ * каждая вкладка живёт в собственном `navigation<TabGraphRoute>(startDestination = …)`, чтобы у неё
+ * был свой back stack. Сам маршрут лежит в `:feature:<name>:api` (либо, для демо-обёрток, в `:shared`).
+ */
+interface TopLevelDestination {
+    val graphRoute: Any
+}
+
+/**
+ * Канонический переход на вкладку bottom-bar с сохранением/восстановлением её back stack.
+ *
+ * - `popUpTo(<старт графа-контейнера вкладок>){ saveState = true }` — сворачивает текущую вкладку,
+ *   сохраняя её стек;
+ * - `launchSingleTop` — не плодит дубликат корня вкладки при повторном тапе;
+ * - `restoreState` — восстанавливает ранее сохранённый стек целевой вкладки.
+ *
+ * Вызывать только из агрегатора (`App()` / шелл), где живёт [NavController].
+ */
+fun NavController.navigateToTopLevel(destination: TopLevelDestination) {
+    navigate(destination.graphRoute) {
+        popUpTo(tabsHostStartDestinationId()) {
+            saveState = true
+        }
+        launchSingleTop = true
+        restoreState = true
+    }
+}
+
+/**
+ * Id стартового назначения графа-контейнера вкладок — постоянной базы стека в табах. На неё
+ * сворачиваемся с `saveState`, сохраняя стек уходящей вкладки.
+ *
+ * Контейнер вкладок — родитель графа текущей вкладки (ближайшего графа-предка экрана). Если такого
+ * предка нет (сама вкладка — корень навигации), используем корневой граф как базу.
+ */
+private fun NavController.tabsHostStartDestinationId(): Int {
+    val currentTabGraph = currentBackStackEntry?.destination?.hierarchy
+        ?.firstOrNull { it is NavGraph } as? NavGraph
+    val tabsHost = currentTabGraph?.parent ?: graph
+    return tabsHost.findStartDestination().id
+}
+
+/**
+ * Выбрана ли вкладка [destination] — проверка по иерархии текущего [NavDestination]
+ * (учитывает вложенный граф вкладки, а не только конкретный экран).
+ */
+fun NavDestination?.isTopLevelSelected(destination: TopLevelDestination): Boolean =
+    this?.hierarchy?.any { it.hasRoute(destination.graphRoute::class) } == true
