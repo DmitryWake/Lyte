@@ -4,11 +4,17 @@ Room KMP: единая локальная база приложения, DAO т�
 
 ## Что внутри
 
-- `LyteDatabase` — `@Database(entities = [...], version = 1, exportSchema = true)`, `@ConstructedBy(LyteDatabaseConstructor::class)`.
+- `LyteDatabase` — `@Database(entities = [...], version = 2, exportSchema = true)`, `@ConstructedBy(LyteDatabaseConstructor::class)`.
 - `LyteDatabaseConstructor` — `expect object : RoomDatabaseConstructor<LyteDatabase>`; `actual`-реализация генерируется Room-компилятором (KSP) отдельно на каждой платформе.
-- `WorkoutEntity` / `WorkoutDao` — сущность и DAO тренировок (`observeAll`, `observeById`, `count`, `upsertAll`).
-- `applyLyteDefaults()` — расширение `RoomDatabase.Builder<T>`, настраивающее `BundledSQLiteDriver` и `setQueryCoroutineContext(Dispatchers.IO)`.
-- `coreDbModule()` — Koin-модуль: `single<LyteDatabase> { ... }` + `single<WorkoutDao> { get<LyteDatabase>().workoutDao() }`.
+- Схема тренировок (`db/workout/`, `@Entity`-классы — с суффиксом `*DatabaseEntity`):
+  - `WorkoutDatabaseEntity` (`workout`), `ExerciseDatabaseEntity` (`exercise`) — тренировка и упражнение-библиотека (`id: String`, `name`, `description?`).
+  - `WorkoutExerciseCrossRefDatabaseEntity` (`workout_exercise`) — упорядоченная связка «тренировка ↔ упражнение» (FK→`workout`/`exercise`, `ON DELETE CASCADE`, `position`).
+  - `WorkoutSetDatabaseEntity` (`workout_set`) — подход внутри связки (FK→`workout_exercise` CASCADE, `position`, `count`, `weight?`).
+  - `WorkoutWithExercises` / `WorkoutExerciseWithSets` — `@Relation`-POJO для чтения полного графа; порядок под-списков потребитель восстанавливает сортировкой по `position`.
+  - `WorkoutDao` (`abstract class`) — `getItems`, `getWithExercises` (`@Transaction`), гранулярные upsert/insert/delete и `@Transaction saveWorkoutGraph(...)` (единый путь create/edit; для `workout`/`exercise` — `@Upsert`, а не `@Insert(REPLACE)`, иначе `INSERT OR REPLACE` снёс бы детей каскадом).
+  - `ExerciseDao` — CRUD по упражнениям (`getAll`, `getById`, `@Upsert upsert`, `deleteById`).
+- `applyLyteDefaults()` — расширение `RoomDatabase.Builder<T>`: `BundledSQLiteDriver`, `setQueryCoroutineContext(Dispatchers.IO)` и `fallbackToDestructiveMigration(dropAllTables = true)` (на стадии каркаса миграций нет — при смене схемы БД пересоздаётся, данные теряются).
+- `coreDbModule()` — Koin-модуль: `single<LyteDatabase> { ... }` + `single<WorkoutDao>` + `single<ExerciseDao>`.
 - `lyteDatabaseBuilder()` (`internal`, expect/actual) — платформенный билдер: на Android контекст берётся через `Koin.GlobalContext` (`androidDatabaseContext()`), на iOS путь — `NSDocumentDirectory` (`iosDatabaseFilePath()`).
 
 ## Использование
@@ -17,7 +23,9 @@ Room KMP: единая локальная база приложения, DAO т�
 
 ```kotlin
 val featureWorkoutModule = module {
-    single<WorkoutRepository> { WorkoutRepositoryImpl(dao = get()) } // WorkoutDao приходит из coreDbModule()
+    // WorkoutDao / ExerciseDao приходят из coreDbModule()
+    single<WorkoutRepository> { WorkoutRepositoryImpl(workoutDao = get()) }
+    single<WorkoutExerciseRepository> { WorkoutExerciseRepositoryImpl(exerciseDao = get()) }
 }
 ```
 

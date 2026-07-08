@@ -4,20 +4,29 @@ import androidx.room.ConstructedBy
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
+import com.nikolaevskii.lyte.core.db.workout.ExerciseDao
+import com.nikolaevskii.lyte.core.db.workout.ExerciseDatabaseEntity
 import com.nikolaevskii.lyte.core.db.workout.WorkoutDao
-import com.nikolaevskii.lyte.core.db.workout.WorkoutEntity
+import com.nikolaevskii.lyte.core.db.workout.WorkoutDatabaseEntity
+import com.nikolaevskii.lyte.core.db.workout.WorkoutExerciseCrossRefDatabaseEntity
+import com.nikolaevskii.lyte.core.db.workout.WorkoutSetDatabaseEntity
 
 @Database(
     entities = [
-        WorkoutEntity::class,
+        WorkoutDatabaseEntity::class,
+        ExerciseDatabaseEntity::class,
+        WorkoutExerciseCrossRefDatabaseEntity::class,
+        WorkoutSetDatabaseEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 @ConstructedBy(LyteDatabaseConstructor::class)
 abstract class LyteDatabase : RoomDatabase() {
 
     abstract fun workoutDao(): WorkoutDao
+
+    abstract fun exerciseDao(): ExerciseDao
 }
 
 @Suppress("NO_ACTUAL_FOR_EXPECT")

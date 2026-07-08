@@ -4,12 +4,12 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "workout")
-data class WorkoutEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+@Entity(tableName = "exercise")
+data class ExerciseDatabaseEntity(
+    @PrimaryKey
+    val id: String,
     @ColumnInfo(name = "name")
     val name: String,
-    @ColumnInfo(name = "started_at")
-    val startedAt: Long,
+    @ColumnInfo(name = "description")
+    val description: String?,
 )

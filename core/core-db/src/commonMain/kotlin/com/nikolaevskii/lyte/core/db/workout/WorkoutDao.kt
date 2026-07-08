@@ -2,22 +2,56 @@ package com.nikolaevskii.lyte.core.db.workout
 
 import androidx.room.Dao
 import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import kotlinx.coroutines.flow.Flow
+import androidx.room.Transaction
+import androidx.room.Upsert
 
 @Dao
-interface WorkoutDao {
+abstract class WorkoutDao {
 
-    @Query("SELECT * FROM workout ORDER BY started_at DESC")
-    fun observeAll(): Flow<List<WorkoutEntity>>
+    @Query("SELECT * FROM workout")
+    abstract suspend fun getItems(): List<WorkoutDatabaseEntity>
 
+    @Transaction
     @Query("SELECT * FROM workout WHERE id = :id LIMIT 1")
-    fun observeById(id: Long): Flow<WorkoutEntity?>
+    abstract suspend fun getWithExercises(id: String): WorkoutWithExercises?
 
-    @Query("SELECT COUNT(*) FROM workout")
-    suspend fun count(): Long
+    @Upsert
+    abstract suspend fun upsertWorkout(workout: WorkoutDatabaseEntity)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsertAll(items: List<WorkoutEntity>)
+    @Upsert
+    abstract suspend fun upsertExercises(exercises: List<ExerciseDatabaseEntity>)
+
+    @Insert
+    abstract suspend fun insertCrossRefs(rows: List<WorkoutExerciseCrossRefDatabaseEntity>)
+
+    @Insert
+    abstract suspend fun insertSets(rows: List<WorkoutSetDatabaseEntity>)
+
+    @Query("DELETE FROM workout_exercise WHERE workout_id = :id")
+    abstract suspend fun deleteCrossRefsByWorkout(id: String)
+
+    @Query("DELETE FROM workout WHERE id = :id")
+    abstract suspend fun deleteWorkout(id: String)
+
+    /**
+     * Сохраняет граф тренировки одной транзакцией. Покрывает и создание (детей нет),
+     * и редактирование (старые связки и их подходы удаляются каскадом перед вставкой новых).
+     *
+     * Для [workout]/[exercises] используется `@Upsert`, а не `@Insert(REPLACE)`:
+     * `INSERT OR REPLACE` удалил бы конфликтную строку и через `ON DELETE CASCADE` снёс детей.
+     */
+    @Transaction
+    open suspend fun saveWorkoutGraph(
+        workout: WorkoutDatabaseEntity,
+        exercises: List<ExerciseDatabaseEntity>,
+        crossRefs: List<WorkoutExerciseCrossRefDatabaseEntity>,
+        sets: List<WorkoutSetDatabaseEntity>,
+    ) {
+        deleteCrossRefsByWorkout(workout.id)
+        upsertWorkout(workout)
+        upsertExercises(exercises)
+        insertCrossRefs(crossRefs)
+        insertSets(sets)
+    }
 }

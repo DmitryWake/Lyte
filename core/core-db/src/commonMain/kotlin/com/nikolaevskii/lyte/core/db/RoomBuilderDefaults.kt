@@ -8,3 +8,4 @@ import kotlinx.coroutines.IO
 fun <T : RoomDatabase> RoomDatabase.Builder<T>.applyLyteDefaults(): RoomDatabase.Builder<T> =
     setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
+        .fallbackToDestructiveMigration(dropAllTables = true)

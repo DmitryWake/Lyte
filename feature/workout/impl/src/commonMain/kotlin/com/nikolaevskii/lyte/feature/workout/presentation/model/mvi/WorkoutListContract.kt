@@ -2,11 +2,9 @@ package com.nikolaevskii.lyte.feature.workout.presentation.model.mvi
 
 import com.nikolaevskii.lyte.core.mvi.UiIntent
 import com.nikolaevskii.lyte.core.mvi.UiState
-import com.nikolaevskii.lyte.feature.workout.domain.Workout
 
 data class WorkoutListUiState(
-    val isLoading: Boolean = true,
-    val items: List<Workout> = emptyList(),
+    val isLoading: Boolean = false,
     val errorMessage: String? = null,
 ) : UiState
 

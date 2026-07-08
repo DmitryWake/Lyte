@@ -16,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nikolaevskii.lyte.core.design.LyteTheme
-import com.nikolaevskii.lyte.feature.workout.domain.Workout
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutDetailsIntent
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutDetailsUiState
 import com.nikolaevskii.lyte.feature.workout.presentation.viewmodel.WorkoutDetailsViewModel
@@ -45,7 +44,7 @@ fun WorkoutDetailsContent(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(state.workout?.name.orEmpty()) },
+                title = { Text("Тренировка") },
                 navigationIcon = {
                     IconButton(onClick = { onIntent(WorkoutDetailsIntent.Back) }) {
                         Text("<")
@@ -63,8 +62,6 @@ fun WorkoutDetailsContent(
             when {
                 state.errorMessage != null -> Text(state.errorMessage)
                 state.isLoading -> CircularProgressIndicator()
-                state.workout == null -> Text("Тренировка не найдена")
-                else -> Text("Тренировка: ${state.workout.name}")
             }
         }
     }
@@ -78,7 +75,6 @@ private fun WorkoutDetailsContentPreview() {
             state = WorkoutDetailsUiState(
                 id = 1L,
                 isLoading = false,
-                workout = Workout(id = 1L, name = "Утренняя пробежка", startedAt = 0L),
             ),
             onIntent = {},
         )
