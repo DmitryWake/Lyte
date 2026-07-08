@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="rest_title">Отдых</string>
+    <string name="rest_add_30">+30 сек</string>
+    <string name="rest_skip">Пропустить</string>
+    <string name="diff_reps">повт</string>
+    <string name="diff_weight">кг</string>
+    <string name="diff_skipped">пропущено</string>
+    <string name="dialog_confirm_default">Удалить</string>
+    <string name="dialog_cancel_default">Отмена</string>
+    <string name="stepper_edit">Ввести значение</string>
+    <string name="a11y_remove">Удалить</string>
+    <string name="a11y_menu">Меню</string>
+    <string name="a11y_back">Назад</string>
+    <string name="a11y_edit_sets">Редактировать подходы</string>
+    <string name="a11y_remove_from_program">Убрать из программы</string>
+    <string name="set_number">Подход %1$d</string>
+    <string name="set_last_time">в прошлый раз %1$s</string>
+    <string name="set_target">цель %1$s</string>
+    <string name="set_caption_reps">Повт</string>
+    <string name="set_caption_weight">Кг</string>
+</resources>

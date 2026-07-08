@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Lyte — фитнес-трекер на Kotlin Multiplatform (Android + iOS), UI шарится через Compose Multiplatform. Корневой пакет: `com.nikolaevskii.lyte`. Имя корневого Gradle-проекта: `Lyte`.
 
-Текущая стадия — **каркас**: выстроен пустой, но полностью «прошитый» по архитектуре скелет (модули, MVI, DI, навигация, БД). Цель — чтобы новая фича добавлялась без правок инфраструктуры. Дизайн-система и сеть — следующие этапы (см. соответствующие разделы ниже).
+Текущая стадия — **каркас**: выстроен пустой, но полностью «прошитый» по архитектуре скелет (модули, MVI, DI, навигация, БД), плюс готовая дизайн-система (`core-design`). Цель — чтобы новая фича добавлялась без правок инфраструктуры.
 
 ## Сборка и запуск
 
@@ -29,7 +29,7 @@ Lyte — фитнес-трекер на Kotlin Multiplatform (Android + iOS), UI
 - `:core:core-mvi` — чистый KMP-модуль (Android + iOS, без Compose UI), база MVI. Namespace `com.nikolaevskii.lyte.core.mvi`.
 - `:core:core-navigation` — KMP + Compose, общие нав-хелперы (`popUpToRoute<R>()`, `singleTop()`, `restorable()`), `LyteNavigator`/`LyteNavigatorImpl`, `TopLevelDestination`, собственный Koin-модуль `coreNavigationModule`. Namespace `com.nikolaevskii.lyte.core.navigation`.
 - `:core:core-di` — KMP, только инициализация Koin (`initKoin`). Общих синглтонов (Navigator, DispatcherProvider и т.п.) здесь нет — каждый core/feature-модуль владеет своим Koin-модулем и подключает его сам. Namespace `com.nikolaevskii.lyte.core.di`.
-- `:core:core-design` — **минимальный стаб на этом этапе**: `LyteTheme` — тонкая обёртка над `MaterialTheme`. Семантические токены (цвета, типографика, spacing, компонент-кит) — следующий этап. Namespace `com.nikolaevskii.lyte.core.design`.
+- `:core:core-design` — дизайн-система: `LyteTheme` (M3 `colorScheme`/`typography`/`shapes` + расширенные токены — spacing, elevation, числовая типографика, доп. формы) и компонент-кит (`Lyte*`) поверх M3-примитивов. Иконки — `LyteIcons` поверх `com.composables:icons-lucide-cmp`. Namespace `com.nikolaevskii.lyte.core.design`. Подробности и полный список компонентов — в `core/core-design/README.md`.
 - `:core:core-db` — Room KMP: `LyteDatabase` (`@ConstructedBy` + `expect object LyteDatabaseConstructor`), `WorkoutEntity`/`WorkoutDao`, expect/actual билдер БД (`androidMain`/`iosMain`), `coreDbModule()`. Namespace `com.nikolaevskii.lyte.core.db`.
 - `:feature:tracker:{api,impl}` — главная вкладка (фитнес-трекер, дашборд).
 - `:feature:workout:{api,impl}` — тренировки (список + детали). Эталонная фича — демонстрирует полный стек `domain/data/presentation` с Room-репозиторием.
@@ -83,9 +83,13 @@ Lyte — фитнес-трекер на Kotlin Multiplatform (Android + iOS), UI
 - Пока **не реализованы**: deep links, per-screen `Effect` для не-навигационных one-shot (toast/snackbar), адаптивный шелл.
 - При проектировании навигации, аргументов, стек-шейпинга и deep-links — skill `kotlin-navigation-compose-multiplatform`.
 
-## Тема (`:core:core-design`) — планируется
+## Дизайн-система (`:core:core-design`)
 
-Сейчас `LyteTheme` — тонкая обёртка над голым `MaterialTheme {}`, без токенов. Корень UI-дерева в `App()` уже оборачивается в `LyteTheme { ... }` — при появлении дизайн-системы токены подключатся здесь без изменений в фичах. Полная дизайн-система (семантические токены, компонент-кит, тёмная/светлая тема, иконки, шрифты) — следующий этап, по аналогии с `core-design` в референсном проекте Aerly.
+- `LyteTheme(darkTheme, content)` настраивает `MaterialTheme.colorScheme/typography/shapes` под токены Lyte (M3 tonal-палитра light/dark, типографика на Space Grotesk, форма) и прокидывает расширенные токены через `CompositionLocal`; доступ к ним — аксессор-object `LyteTheme.{extendedColors,spacing,elevation,numericTypography,extendedShapes}`, по аналогии с `MaterialTheme`. Корень UI-дерева в `App()` (`:shared`) оборачивается в `LyteTheme { ... }` один раз.
+- Шрифты — Space Grotesk (400/500/600/700, весь UI и цифры) и Inter Tight (700, только вордмарк) — бандлятся в `composeResources/font/` модуля (OFL).
+- Иконки — `LyteIcons`, курируемый словарь `ImageVector` поверх `com.composables:icons-lucide-cmp` (KMP-порт Lucide, Android/iOS/JVM/JS/Wasm).
+- Компонент-кит (`Lyte*`) — на M3-примитивах, где дизайн позволяет (`Button`, `TextField`, `Card`, `AlertDialog`, `ModalBottomSheet`, `TopAppBar`, `FilterChip`, `Switch`), кастомные composable — только там, где нет M3-аналога (`LyteStepper`, `LyteDiffRow`, `LyteBottomNavigationBar`, `LyteRestTimerOverlay`, `LyteSessionStopwatch`, `LyteEmptyState`, `LyteBadge`, `LyteOverline`, `LyteTopBar` size=Large, а также `component.session`: `LyteSetDots`/`LyteSetOverview`/`LyteTrackSetRow`/`LyteExerciseStrip`). Полный список и API — `core/core-design/README.md`.
+- Доменный текст (заголовки, сводки) — всегда параметр вызывающей фичи; компонентный «хром» модуля — в его собственном `composeResources/values/strings.xml`.
 
 ## БД (`:core:core-db`)
 
@@ -122,15 +126,17 @@ Lyte — фитнес-трекер на Kotlin Multiplatform (Android + iOS), UI
 
 ### Классы
 - Порядок членов: `public` (сначала `override`, потом обычные) → `protected` → `private`.
+- **Свойства объявляются до методов.** В классе: свойства → `init` → методы. В файле с топ-level декларациями (Composable-функции и т.п., без обёртывающего класса) — тот же порядок: `val`/`const val` выше, `fun` ниже.
 - `companion object` — внизу класса, все константы — в нём.
-- `init`-блок — после свойств, перед методами.
 - Для моделей-сущностей — `data class`.
+- **Крупные `data class`/классы-модели — в отдельном файле**, не соседствуют в одном файле с Compose-функцией, которая их использует (пример: `LyteBottomNavItem` — отдельно от `LyteBottomNavigationBar`). Не касается простых `enum class`-селекторов варианта/размера для одной функции (`LyteButtonVariant` и т.п.) — те остаются рядом с функцией.
 
 ### Ресурсы
 - Иконки — vector drawable в `composeResources/drawable/ic_*.xml`, подключение через `painterResource(Res.drawable.*)`.
 - Все строки — в `composeResources/values/strings.xml`, использование — через `stringResource(Res.string.*)`. Хардкод строк в `@Composable` запрещён.
 
 ### UI
+- **`modifier: Modifier = Modifier` — всегда последний параметр** `@Composable`-функции (и любой функции, принимающей `Modifier`). Единственное исключение — обязательная замыкающая content-лямбда без значения по умолчанию (слот содержимого, напр. `content` у `LyteBottomSheet`): она остаётся последней ради синтаксиса вызова с trailing-лямбдой, а `modifier` идёт прямо перед ней (как у M3 `ModalBottomSheet`/`Card`). Опциональные слоты со значением по умолчанию (`trailing = null`, `actions = {}`) — обычные необязательные параметры и идут до `modifier`.
 - **Корень каждого экрана — `Scaffold`**, даже если `TopBar`/`BottomBar` не нужны.
 - Заголовки экранов — `TopAppBar` в слоте `topBar` у `Scaffold`. Кнопка назад — `IconButton` в `navigationIcon`.
 - **`@Preview` обязателен** для всех экранов и публичных `@Composable`-компонентов.
@@ -144,10 +150,9 @@ Lyte — фитнес-трекер на Kotlin Multiplatform (Android + iOS), UI
 
 ## Tech stack
 
-Уже в проекте: Kotlin Multiplatform, Compose Multiplatform, Coroutines/Flow, MVI (`core-mvi`), Jetpack Navigation с типобезопасными `@Serializable` роутами, Koin (DI), Room (локальная БД).
+Уже в проекте: Kotlin Multiplatform, Compose Multiplatform, Coroutines/Flow, MVI (`core-mvi`), Jetpack Navigation с типобезопасными `@Serializable` роутами, Koin (DI), Room (локальная БД), дизайн-система (`core-design`, см. раздел выше).
 
 Запланировано (следующие этапы):
-- **Дизайн-система**: семантические токены, компонент-кит, тёмная/светлая тема (см. раздел «Тема» выше).
 - **Сеть**: Ktor Client + единый слой API-контрактов — модуль `core-network` пока не создан.
 - **Secure storage**: абстракция над `Keychain` (iOS) / `Keystore` (Android) — для будущих токенов авторизации.
 - **Тесты**: Unit — для сложной бизнес-логики; UI — для критичных экранов.

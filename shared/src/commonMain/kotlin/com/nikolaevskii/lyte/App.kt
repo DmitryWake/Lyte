@@ -1,20 +1,17 @@
 package com.nikolaevskii.lyte
 
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.nikolaevskii.lyte.core.design.LyteTheme
+import com.nikolaevskii.lyte.core.design.component.navigation.LyteBottomNavigationBar
+import com.nikolaevskii.lyte.core.design.component.navigation.LyteBottomNavigationBarItem
 import com.nikolaevskii.lyte.core.navigation.model.isTopLevelSelected
 import com.nikolaevskii.lyte.core.navigation.model.navigateToTopLevel
 import com.nikolaevskii.lyte.navigation.LyteBottomBarItem
 import com.nikolaevskii.lyte.navigation.LyteNavHost
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -25,16 +22,16 @@ fun App() {
 
         Scaffold(
             bottomBar = {
-                NavigationBar {
-                    LyteBottomBarItem.entries.forEach { tab ->
-                        NavigationBarItem(
+                LyteBottomNavigationBar(
+                    items = LyteBottomBarItem.entries.map { tab ->
+                        LyteBottomNavigationBarItem(
+                            icon = tab.icon,
+                            label = stringResource(tab.label),
                             selected = currentDestination.isTopLevelSelected(tab),
                             onClick = { navController.navigateToTopLevel(tab) },
-                            icon = { Icon(painterResource(tab.icon), contentDescription = null) },
-                            label = { Text(stringResource(tab.label)) },
                         )
-                    }
-                }
+                    },
+                )
             },
             // Верхний системный inset отдаём TopAppBar экранов — его фон закрывает зону статус-бара.
             // Шелл резервирует только высоту нижнего нав-бара.

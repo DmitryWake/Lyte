@@ -1,14 +1,12 @@
 package com.nikolaevskii.lyte.navigation
 
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.nikolaevskii.lyte.core.design.icon.LyteIcons
 import com.nikolaevskii.lyte.core.navigation.model.TopLevelDestination
 import lyte.shared.generated.resources.Res
-import lyte.shared.generated.resources.ic_tab_history
-import lyte.shared.generated.resources.ic_tab_tracker
-import lyte.shared.generated.resources.ic_tab_workout
 import lyte.shared.generated.resources.tab_history
 import lyte.shared.generated.resources.tab_tracker
 import lyte.shared.generated.resources.tab_workouts
-import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
 
 /**
@@ -17,10 +15,10 @@ import org.jetbrains.compose.resources.StringResource
  */
 enum class LyteBottomBarItem(
     override val graphRoute: Any,
-    val icon: DrawableResource,
+    val icon: ImageVector,
     val label: StringResource,
 ) : TopLevelDestination {
-    TRACKER(graphRoute = TrackerTabGraph, icon = Res.drawable.ic_tab_tracker, label = Res.string.tab_tracker),
-    WORKOUTS(graphRoute = WorkoutTabGraph, icon = Res.drawable.ic_tab_workout, label = Res.string.tab_workouts),
-    HISTORY(graphRoute = HistoryTabGraph, icon = Res.drawable.ic_tab_history, label = Res.string.tab_history),
+    TRACKER(graphRoute = TrackerTabGraph, icon = LyteIcons.ListChecks, label = Res.string.tab_tracker),
+    WORKOUTS(graphRoute = WorkoutTabGraph, icon = LyteIcons.Dumbbell, label = Res.string.tab_workouts),
+    HISTORY(graphRoute = HistoryTabGraph, icon = LyteIcons.History, label = Res.string.tab_history),
 }
