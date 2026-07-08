@@ -1,4 +1,4 @@
-package com.nikolaevskii.lyte.feature.tracker.navigation
+package com.nikolaevskii.lyte.feature.tracker
 
 import kotlinx.serialization.Serializable
 

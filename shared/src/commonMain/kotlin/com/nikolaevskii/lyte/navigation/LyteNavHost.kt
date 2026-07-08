@@ -13,11 +13,11 @@ import com.nikolaevskii.lyte.core.navigation.LyteNavigator
 import com.nikolaevskii.lyte.core.navigation.applyOptions
 import com.nikolaevskii.lyte.core.navigation.model.NavCommand
 import com.nikolaevskii.lyte.core.navigation.model.navigateToTopLevel
-import com.nikolaevskii.lyte.feature.history.navigation.HistoryRoute
+import com.nikolaevskii.lyte.feature.history.HistoryRoute
 import com.nikolaevskii.lyte.feature.history.presentation.navigation.historyGraph
-import com.nikolaevskii.lyte.feature.tracker.navigation.TrackerRoute
+import com.nikolaevskii.lyte.feature.tracker.TrackerRoute
 import com.nikolaevskii.lyte.feature.tracker.presentation.navigation.trackerGraph
-import com.nikolaevskii.lyte.feature.workout.navigation.WorkoutListRoute
+import com.nikolaevskii.lyte.feature.workout.WorkoutListRoute
 import com.nikolaevskii.lyte.feature.workout.presentation.navigation.workoutGraph
 import org.koin.compose.koinInject
 

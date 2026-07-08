@@ -4,7 +4,7 @@ import com.nikolaevskii.lyte.core.mvi.BaseViewModel
 import com.nikolaevskii.lyte.core.navigation.LyteNavigator
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.TrackerIntent
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.TrackerUiState
-import com.nikolaevskii.lyte.feature.workout.navigation.WorkoutListRoute
+import com.nikolaevskii.lyte.feature.workout.WorkoutListRoute
 
 class TrackerViewModel(
     private val lyteNavigator: LyteNavigator,

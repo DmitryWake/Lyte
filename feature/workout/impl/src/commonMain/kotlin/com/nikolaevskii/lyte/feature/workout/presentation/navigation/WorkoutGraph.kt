@@ -3,8 +3,8 @@ package com.nikolaevskii.lyte.feature.workout.presentation.navigation
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.nikolaevskii.lyte.feature.workout.navigation.WorkoutDetailsRoute
-import com.nikolaevskii.lyte.feature.workout.navigation.WorkoutListRoute
+import com.nikolaevskii.lyte.feature.workout.WorkoutDetailsRoute
+import com.nikolaevskii.lyte.feature.workout.WorkoutListRoute
 import com.nikolaevskii.lyte.feature.workout.presentation.screen.WorkoutDetailsScreen
 import com.nikolaevskii.lyte.feature.workout.presentation.screen.WorkoutListScreen
 

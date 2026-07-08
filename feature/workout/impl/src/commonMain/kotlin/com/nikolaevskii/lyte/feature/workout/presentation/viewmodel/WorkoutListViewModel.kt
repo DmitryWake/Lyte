@@ -3,7 +3,7 @@ package com.nikolaevskii.lyte.feature.workout.presentation.viewmodel
 import com.nikolaevskii.lyte.core.mvi.BaseViewModel
 import com.nikolaevskii.lyte.core.navigation.LyteNavigator
 import com.nikolaevskii.lyte.feature.workout.domain.WorkoutRepository
-import com.nikolaevskii.lyte.feature.workout.navigation.WorkoutDetailsRoute
+import com.nikolaevskii.lyte.feature.workout.WorkoutDetailsRoute
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutListIntent
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutListUiState
 import kotlinx.coroutines.launch

@@ -1,4 +1,4 @@
-package com.nikolaevskii.lyte.feature.workout.navigation
+package com.nikolaevskii.lyte.feature.workout
 
 import kotlinx.serialization.Serializable
 

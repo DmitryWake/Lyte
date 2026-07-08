@@ -1,4 +1,4 @@
-package com.nikolaevskii.lyte.feature.history.navigation
+package com.nikolaevskii.lyte.feature.history
 
 import kotlinx.serialization.Serializable
 
