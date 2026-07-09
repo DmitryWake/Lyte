@@ -51,6 +51,10 @@ private const val ExerciseCardTitleMaxLines = 2
  * «редактировать» и «убрать», и — снизу — раскладка подходов. [setLabels] (готовые подписи
  * подходов от вызывающей стороны) рендерятся переносящимся рядом пилюль и имеют приоритет над
  * компактным [summary]; единицы/формат числа выбирает вызывающая сторона.
+ *
+ * Сам компонент жестов не реализует: [dragHandleModifier] — точка подключения для
+ * `pointerInput`/`detectDragGestures` вызывающей стороны, привязанная к хэндлу, а не ко всей строке,
+ * чтобы drag не конфликтовал со скроллом списка.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -62,6 +66,7 @@ fun LyteExerciseCard(
     onClick: (() -> Unit)? = null,
     onEdit: (() -> Unit)? = null,
     onRemove: (() -> Unit)? = null,
+    dragHandleModifier: Modifier = Modifier,
     modifier: Modifier = Modifier,
 ) {
     val contentStartPadding = if (draggable) ExerciseCardContentStart else 0.dp
@@ -89,7 +94,7 @@ fun LyteExerciseCard(
                         imageVector = LyteIcons.GripVertical,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(end = ExerciseCardHandleGap).size(ExerciseCardHandleSize),
+                        modifier = dragHandleModifier.padding(end = ExerciseCardHandleGap).size(ExerciseCardHandleSize),
                     )
                 }
                 Text(

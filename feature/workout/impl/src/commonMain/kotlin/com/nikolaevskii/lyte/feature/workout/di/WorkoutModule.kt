@@ -15,9 +15,10 @@ val featureWorkoutModule = module {
     single<WorkoutExerciseRepository> { WorkoutExerciseRepositoryImpl(exerciseDao = get()) }
 
     viewModelOf(::WorkoutListViewModel)
-    viewModel { (initialId: Long) ->
+    viewModel { (initialId: String?) ->
         WorkoutDetailsViewModel(
             initialId = initialId,
+            workoutRepository = get(),
             lyteNavigator = get(),
         )
     }

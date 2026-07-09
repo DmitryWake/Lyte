@@ -61,7 +61,7 @@
 | `component.stepper` | `LyteStepper` (± контрол + ручной tap-to-edit ввод; `allowDecimal=false` — целочисленный режим для повторов, `fillMaxWidth` — для колонок) |
 | `component.card` | `LyteProgramCard` (+`trailing`), `LyteExerciseCard` (`setLabels`-пилюли + edit/remove), `LyteSessionCard`, `LyteListRow` |
 | `component.feedback` | `LyteDiffRow` (тона Met/Positive/Negative/Neutral/Skipped), `LyteDialog`, `LyteEmptyState` |
-| `component.navigation` | `LyteTopBar` (size Small/Large), `LyteBottomNavigationBar` |
+| `component.navigation` | `LyteTopBar` (size Small/Large), `LyteBottomNavigationBar` (+ `LyteBottomNavigationBarHeight` — резерв под него для контента, см. «Нюансы») |
 | `component.overlay` | `LyteBottomSheet`, `LyteRestTimerOverlay` |
 | `component.datadisplay` | `LyteSessionStopwatch` |
 | `component.session` | `LyteSetDots`, `LyteSetOverview`, `LyteTrackSetRow`, `LyteExerciseStrip` (экран активной сессии) |
@@ -121,6 +121,14 @@ implementation(projects.core.coreDesign)
 - **Backdrop-blur** плавающего `LyteBottomNavigationBar` из референса не воспроизведён — не
   переносится единообразно между Android/iOS в Compose Multiplatform; приближено полупрозрачной
   заливкой.
+- **`LyteBottomNavigationBar` не встраивается в `Scaffold.bottomBar`** (см. `App()` в `:shared`) —
+  этот layout-слот меряет фактическую высоту содержимого на каждый layout pass, а slide/fade-only
+  анимация показа/скрытия не уменьшает измеренный размер синхронно с визуальной анимацией (это делает
+  только `shrinkVertically`/`changeSize`), из-за чего contentPadding экрана держится полным весь exit
+  и потом падает в один кадр. Поэтому док рендерится как floating overlay поверх `NavHost`, а экраны —
+  корни вкладок, показывающиеся вместе с ним, — сами резервируют место под него константой
+  `LyteBottomNavigationBarHeight` в нижнем `contentPadding` своих скролл-контейнеров (см.
+  `WorkoutListScreen` в `feature:workout:impl`).
 - **`LyteBadge` — не M3 `Badge`.** M3 `Badge` — точка-уведомление; `LyteBadge` — пилюля для
   метаданных (счётчики), поэтому реализована кастомно поверх `Surface`.
 - **`androidLibrary { androidResources { enable = true } }` обязателен** для любого core/feature

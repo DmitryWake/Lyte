@@ -6,4 +6,4 @@ import kotlinx.serialization.Serializable
 data object WorkoutListRoute
 
 @Serializable
-data class WorkoutDetailsRoute(val id: Long)
+data class WorkoutDetailsRoute(val id: String? = null)

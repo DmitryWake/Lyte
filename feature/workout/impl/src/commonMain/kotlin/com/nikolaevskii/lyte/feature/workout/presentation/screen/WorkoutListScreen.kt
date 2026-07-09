@@ -11,6 +11,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,6 +24,7 @@ import com.nikolaevskii.lyte.core.design.component.card.LyteProgramCard
 import com.nikolaevskii.lyte.core.design.component.feedback.LyteDialog
 import com.nikolaevskii.lyte.core.design.component.feedback.LyteEmptyState
 import com.nikolaevskii.lyte.core.design.component.iconbutton.LyteIconButton
+import com.nikolaevskii.lyte.core.design.component.navigation.LyteBottomNavigationBarHeight
 import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBar
 import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBarSize
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
@@ -48,6 +50,13 @@ fun WorkoutListScreen(
     viewModel: WorkoutListViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Экран пересоздаётся при каждом возврате из редактора программы (NavHost не держит его в
+    // композиции, пока редактор сверху), а ViewModel переживает — без этого список показывал бы
+    // устаревшие данные после создания/переименования/удаления программы.
+    LaunchedEffect(Unit) {
+        viewModel.onIntent(WorkoutListIntent.Refresh)
+    }
 
     WorkoutListContent(
         state = state,
@@ -111,7 +120,15 @@ private fun WorkoutProgramList(
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
-        contentPadding = PaddingValues(horizontal = LyteTheme.spacing.s5, vertical = LyteTheme.spacing.s1),
+        // Список — корень вкладки «Тренировки», показывается вместе с плавающим bottom-доком: тот не
+        // резервирует место через Scaffold.bottomBar (см. App() в :shared), поэтому низ списка сам
+        // добавляет LyteBottomNavigationBarHeight, иначе «Новая программа» пряталась бы под доком.
+        contentPadding = PaddingValues(
+            start = LyteTheme.spacing.s5,
+            end = LyteTheme.spacing.s5,
+            top = LyteTheme.spacing.s1,
+            bottom = LyteBottomNavigationBarHeight,
+        ),
         verticalArrangement = Arrangement.spacedBy(LyteTheme.spacing.s3),
         modifier = modifier.fillMaxSize(),
     ) {

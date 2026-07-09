@@ -1,5 +1,7 @@
 package com.nikolaevskii.lyte.feature.workout.presentation.viewmodel
 
+import com.nikolaevskii.lyte.core.navigation.model.LyteNavOptions
+import com.nikolaevskii.lyte.feature.workout.WorkoutDetailsRoute
 import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutItemEntity
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutListIntent
 import kotlinx.coroutines.Dispatchers
@@ -35,7 +37,7 @@ class WorkoutListViewModelTest {
     @Test
     fun loadsWorkoutsOnInit() = runTest(testDispatcher) {
         val repository = FakeWorkoutRepository(initialItems = listOf(program(id = "w1", name = "Push Day", exerciseCount = 5)))
-        val viewModel = WorkoutListViewModel(workoutRepository = repository)
+        val viewModel = WorkoutListViewModel(workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
 
         runCurrent()
 
@@ -44,9 +46,22 @@ class WorkoutListViewModelTest {
     }
 
     @Test
+    fun refreshReloadsWorkoutsList() = runTest(testDispatcher) {
+        val repository = FakeWorkoutRepository(initialItems = listOf(program(id = "w1", name = "Push Day", exerciseCount = 5)))
+        val viewModel = WorkoutListViewModel(workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
+        runCurrent()
+        repository.items = listOf(program(id = "w1", name = "Push Day V2", exerciseCount = 4))
+
+        viewModel.onIntent(WorkoutListIntent.Refresh)
+        runCurrent()
+
+        assertEquals(listOf(program(id = "w1", name = "Push Day V2", exerciseCount = 4)), viewModel.uiState.value.programs)
+    }
+
+    @Test
     fun failedLoadSurfacesErrorMessage() = runTest(testDispatcher) {
         val repository = FakeWorkoutRepository().apply { getWorkoutsError = IllegalStateException("boom") }
-        val viewModel = WorkoutListViewModel(workoutRepository = repository)
+        val viewModel = WorkoutListViewModel(workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
 
         runCurrent()
 
@@ -58,7 +73,7 @@ class WorkoutListViewModelTest {
     @Test
     fun requestDeleteShowsConfirmationWithoutDeleting() = runTest(testDispatcher) {
         val repository = FakeWorkoutRepository(initialItems = listOf(program(id = "w1", name = "Push Day", exerciseCount = 5)))
-        val viewModel = WorkoutListViewModel(workoutRepository = repository)
+        val viewModel = WorkoutListViewModel(workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
         runCurrent()
 
         viewModel.onIntent(WorkoutListIntent.RequestDelete(id = "w1"))
@@ -70,7 +85,7 @@ class WorkoutListViewModelTest {
     @Test
     fun cancelDeleteClearsPendingDeleteWithoutDeleting() = runTest(testDispatcher) {
         val repository = FakeWorkoutRepository(initialItems = listOf(program(id = "w1", name = "Push Day", exerciseCount = 5)))
-        val viewModel = WorkoutListViewModel(workoutRepository = repository)
+        val viewModel = WorkoutListViewModel(workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
         runCurrent()
         viewModel.onIntent(WorkoutListIntent.RequestDelete(id = "w1"))
 
@@ -88,7 +103,7 @@ class WorkoutListViewModelTest {
                 program(id = "w2", name = "Pull Day", exerciseCount = 4),
             ),
         )
-        val viewModel = WorkoutListViewModel(workoutRepository = repository)
+        val viewModel = WorkoutListViewModel(workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
         runCurrent()
         viewModel.onIntent(WorkoutListIntent.RequestDelete(id = "w1"))
 
@@ -103,7 +118,7 @@ class WorkoutListViewModelTest {
     @Test
     fun confirmDeleteWithoutPendingIdDoesNothing() = runTest(testDispatcher) {
         val repository = FakeWorkoutRepository(initialItems = listOf(program(id = "w1", name = "Push Day", exerciseCount = 5)))
-        val viewModel = WorkoutListViewModel(workoutRepository = repository)
+        val viewModel = WorkoutListViewModel(workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
         runCurrent()
 
         viewModel.onIntent(WorkoutListIntent.ConfirmDelete)
@@ -113,15 +128,30 @@ class WorkoutListViewModelTest {
     }
 
     @Test
-    fun openDetailsAndCreateProgramAreStubsAndDoNotChangeState() = runTest(testDispatcher) {
+    fun openDetailsNavigatesToDetailsRouteWithProgramIdAndDoesNotChangeState() = runTest(testDispatcher) {
         val repository = FakeWorkoutRepository(initialItems = listOf(program(id = "w1", name = "Push Day", exerciseCount = 5)))
-        val viewModel = WorkoutListViewModel(workoutRepository = repository)
+        val navigator = FakeLyteNavigator()
+        val viewModel = WorkoutListViewModel(workoutRepository = repository, lyteNavigator = navigator)
         runCurrent()
         val stateBefore = viewModel.uiState.value
 
         viewModel.onIntent(WorkoutListIntent.OpenDetails(id = "w1"))
+
+        assertEquals(listOf<Pair<Any, LyteNavOptions?>>(WorkoutDetailsRoute(id = "w1") to null), navigator.navigateCalls)
+        assertEquals(stateBefore, viewModel.uiState.value)
+    }
+
+    @Test
+    fun createProgramNavigatesToDetailsRouteWithNullId() = runTest(testDispatcher) {
+        val repository = FakeWorkoutRepository(initialItems = listOf(program(id = "w1", name = "Push Day", exerciseCount = 5)))
+        val navigator = FakeLyteNavigator()
+        val viewModel = WorkoutListViewModel(workoutRepository = repository, lyteNavigator = navigator)
+        runCurrent()
+        val stateBefore = viewModel.uiState.value
+
         viewModel.onIntent(WorkoutListIntent.CreateProgram)
 
+        assertEquals(listOf<Pair<Any, LyteNavOptions?>>(WorkoutDetailsRoute(id = null) to null), navigator.navigateCalls)
         assertEquals(stateBefore, viewModel.uiState.value)
     }
 

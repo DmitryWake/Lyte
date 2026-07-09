@@ -53,8 +53,12 @@ private fun NavController.tabsHostStartDestinationId(): Int {
 }
 
 /**
- * Выбрана ли вкладка [destination] — проверка по иерархии текущего [NavDestination]
- * (учитывает вложенный граф вкладки, а не только конкретный экран).
+ * Выбрана ли вкладка [destination] — `true` только на её **стартовом** экране (списке), а не на
+ * любом экране внутри графа вкладки: иначе вложенные detail-экраны (напр. редактор программы)
+ * наследовали бы bottom-bar от корня вкладки, хотя сами его показывать не должны.
  */
-fun NavDestination?.isTopLevelSelected(destination: TopLevelDestination): Boolean =
-    this?.hierarchy?.any { it.hasRoute(destination.graphRoute::class) } == true
+fun NavDestination?.isTopLevelSelected(destination: TopLevelDestination): Boolean {
+    val current = this ?: return false
+    val tabGraph = current.hierarchy.firstOrNull { it.hasRoute(destination.graphRoute::class) } as? NavGraph ?: return false
+    return current.id == tabGraph.findStartDestination().id
+}

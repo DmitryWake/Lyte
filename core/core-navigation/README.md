@@ -14,7 +14,7 @@ DSL-хелперы стек-шейпинга поверх мультиплатф
 - `restorable()` — `restoreState = true`.
 - `TopLevelDestination` — контракт верхнеуровневой вкладки bottom-bar (маршрут её вложенного графа).
 - `NavController.navigateToTopLevel(destination)` — канонический переход на вкладку с сохранением/восстановлением её back stack.
-- `NavDestination?.isTopLevelSelected(destination)` — выбрана ли вкладка (проверка по иерархии).
+- `NavDestination?.isTopLevelSelected(destination)` — выбрана ли вкладка: `true` только на её стартовом экране, не на любом экране внутри графа вкладки.
 
 ## Навигация из ViewModel (LyteNavigator)
 
@@ -27,7 +27,7 @@ Routes лежат в `:feature:<name>:api`:
 data object WorkoutListRoute
 
 @Serializable
-data class WorkoutDetailsRoute(val id: Long)
+data class WorkoutDetailsRoute(val id: String? = null)
 ```
 
 VM шлёт команды (логика перехода — здесь, рядом с доменными решениями):
@@ -150,6 +150,7 @@ implementation(projects.core.coreNavigation)
 - Стек-шейпинг — из VM через `LyteNavOptions` либо хелперы (`popUpToRoute`/`singleTop`/`restorable`) в шелле; без сырых `popUpTo`/`launchSingleTop` по местам.
 - Кросс-фичевая навигация: VM зависит только от `:feature:<other>:api` (route-цели), не от её `:impl` (см. `TrackerViewModel` → `feature:workout:api`).
 - Multi-stack / bottom-bar — через `TopLevelDestination` + `navigateToTopLevel` (или `LyteNavigator.switchTab`).
+- `isTopLevelSelected` сверяет id текущего назначения со стартовым назначением графа вкладки, а не просто «внутри графа ли» — иначе detail-экраны вкладки (пушнутые поверх её списка) наследовали бы bottom-bar.
 - Пока не реализованы: deep links, общий per-screen `Effect` для не-навигационных one-shot (toast/snackbar), адаптивный шелл.
 
 > При изменении исходников модуля проверь и при необходимости обнови этот README в том же коммите.

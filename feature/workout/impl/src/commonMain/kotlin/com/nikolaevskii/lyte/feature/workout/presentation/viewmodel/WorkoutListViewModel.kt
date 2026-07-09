@@ -1,6 +1,8 @@
 package com.nikolaevskii.lyte.feature.workout.presentation.viewmodel
 
 import com.nikolaevskii.lyte.core.mvi.BaseViewModel
+import com.nikolaevskii.lyte.core.navigation.LyteNavigator
+import com.nikolaevskii.lyte.feature.workout.WorkoutDetailsRoute
 import com.nikolaevskii.lyte.feature.workout.domain.repository.WorkoutRepository
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutListIntent
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutListUiState
@@ -8,6 +10,7 @@ import kotlinx.coroutines.launch
 
 class WorkoutListViewModel(
     private val workoutRepository: WorkoutRepository,
+    private val lyteNavigator: LyteNavigator,
 ) : BaseViewModel<WorkoutListUiState, WorkoutListIntent>() {
 
     init {
@@ -16,9 +19,10 @@ class WorkoutListViewModel(
 
     override fun onIntent(intent: WorkoutListIntent) {
         when (intent) {
-            // Редактор программы (3.2) — отдельная задача, пока переход никуда не ведёт.
-            is WorkoutListIntent.OpenDetails -> Unit
-            WorkoutListIntent.CreateProgram -> Unit
+            WorkoutListIntent.Refresh -> launch { loadWorkouts() }
+
+            is WorkoutListIntent.OpenDetails -> lyteNavigator.navigate(WorkoutDetailsRoute(id = intent.id))
+            WorkoutListIntent.CreateProgram -> lyteNavigator.navigate(WorkoutDetailsRoute(id = null))
 
             is WorkoutListIntent.RequestDelete -> updateState { copy(pendingDeleteId = intent.id) }
             WorkoutListIntent.CancelDelete -> updateState { copy(pendingDeleteId = null) }

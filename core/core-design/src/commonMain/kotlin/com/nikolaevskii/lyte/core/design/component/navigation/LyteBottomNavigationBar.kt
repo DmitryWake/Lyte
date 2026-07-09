@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.nikolaevskii.lyte.core.design.LyteTheme
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
@@ -34,6 +35,16 @@ private val BottomNavItemPaddingVertical = 8.dp
 private val BottomNavIconLabelGap = 3.dp
 private val BottomNavIconSize = 22.dp
 private const val BottomNavContainerAlpha = 0.82f
+
+/**
+ * Место, которое [LyteBottomNavigationBar] в среднем занимает от нижнего края экрана поверх
+ * системных инсетов (margin + внутренние отступы + иконка + подпись, с небольшим запасом). Док —
+ * плавающий overlay, а не `Scaffold.bottomBar`-слот (тот дёргал бы contentPadding экрана при каждой
+ * анимации показа/скрытия дока), поэтому экраны, показывающиеся вместе с доком (корни вкладок),
+ * резервируют этим значением низ своих скролл-контейнеров сами — иначе последний элемент списка
+ * прячется под доком.
+ */
+val LyteBottomNavigationBarHeight: Dp = 88.dp
 
 /**
  * Плавающий пилюлеобразный нав-док (3 вкладки). Референс использует backdrop-blur —
