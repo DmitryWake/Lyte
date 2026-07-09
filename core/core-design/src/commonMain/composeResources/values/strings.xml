@@ -14,6 +14,7 @@
     <string name="a11y_back">Назад</string>
     <string name="a11y_edit_sets">Редактировать подходы</string>
     <string name="a11y_remove_from_program">Убрать из программы</string>
+    <string name="a11y_remove_set">Удалить подход</string>
     <string name="set_number">Подход %1$d</string>
     <string name="set_last_time">в прошлый раз %1$s</string>
     <string name="set_target">цель %1$s</string>

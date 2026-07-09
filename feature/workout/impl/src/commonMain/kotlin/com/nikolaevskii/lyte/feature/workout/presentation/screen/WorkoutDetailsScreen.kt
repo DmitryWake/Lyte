@@ -121,6 +121,11 @@ fun WorkoutDetailsContent(
                 )
             }
         }
+
+        val editingExercise = state.editingExerciseIndex?.let { index -> state.exercises.getOrNull(index)?.exercise }
+        if (editingExercise != null) {
+            WorkoutSetsEditorSheet(exercise = editingExercise, onIntent = onIntent)
+        }
     }
 }
 

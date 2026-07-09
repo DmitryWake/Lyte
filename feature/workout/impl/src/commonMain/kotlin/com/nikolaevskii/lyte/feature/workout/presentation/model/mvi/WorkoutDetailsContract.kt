@@ -9,6 +9,7 @@ data class WorkoutDetailsUiState(
     val name: String = "",
     val description: String? = null,
     val exercises: List<WorkoutExerciseUiModel> = emptyList(),
+    val editingExerciseIndex: Int? = null,
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
     val errorMessage: String? = null,
@@ -28,8 +29,23 @@ sealed interface WorkoutDetailsIntent : UiIntent {
     /** Добавить упражнение. Пока заглушка — пикер упражнений (3.3) появится отдельной задачей. */
     data object AddExercise : WorkoutDetailsIntent
 
-    /** Редактировать подходы упражнения [index]. Пока заглушка — редактор подходов (3.4) появится отдельной задачей. */
+    /** Открыть редактор подходов упражнения [index]. */
     data class EditExerciseSets(val index: Int) : WorkoutDetailsIntent
+
+    /** Закрыть редактор подходов (кнопка «Готово» либо системное закрытие шторки). */
+    data object CloseSetsEditor : WorkoutDetailsIntent
+
+    /** Изменить число повторений подхода [setIndex] у редактируемого упражнения. */
+    data class ChangeSetReps(val setIndex: Int, val reps: Int) : WorkoutDetailsIntent
+
+    /** Изменить вес подхода [setIndex] у редактируемого упражнения. */
+    data class ChangeSetWeight(val setIndex: Int, val weight: Double) : WorkoutDetailsIntent
+
+    /** Добавить подход в конец списка редактируемого упражнения — клон последнего подхода. */
+    data object AddSet : WorkoutDetailsIntent
+
+    /** Убрать подход [setIndex] у редактируемого упражнения. Не выполняется, если он последний. */
+    data class RemoveSet(val setIndex: Int) : WorkoutDetailsIntent
 
     /** Сохранить программу (создание или редактирование — в зависимости от того, как открыт экран) и вернуться назад. */
     data object Save : WorkoutDetailsIntent

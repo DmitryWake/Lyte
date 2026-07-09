@@ -1,0 +1,135 @@
+package com.nikolaevskii.lyte.feature.workout.presentation.screen
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.nikolaevskii.lyte.core.design.LyteTheme
+import com.nikolaevskii.lyte.core.design.component.button.LyteButton
+import com.nikolaevskii.lyte.core.design.component.button.LyteButtonSize
+import com.nikolaevskii.lyte.core.design.component.button.LyteButtonVariant
+import com.nikolaevskii.lyte.core.design.component.overlay.LyteBottomSheet
+import com.nikolaevskii.lyte.core.design.component.stepper.LyteSetEditRow
+import com.nikolaevskii.lyte.core.design.icon.LyteIcons
+import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseEntity
+import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseWithRepsEntity
+import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutRepEntity
+import com.nikolaevskii.lyte.feature.workout.generated.resources.Res
+import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_set_number
+import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_sets_add
+import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_sets_done
+import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutDetailsIntent
+import org.jetbrains.compose.resources.stringResource
+
+private val SetsEditorRowGap = 10.dp
+private val SetsEditorAddButtonTopSpacing = 12.dp
+
+/**
+ * Шторка редактирования подходов упражнения (3.4) — открывается по карандашу на карточке
+ * упражнения в редакторе программы. Правки применяются сразу к состоянию экрана; отдельного
+ * сохранения у шторки нет, «Готово» лишь закрывает её. Название/описание упражнения — в
+ * title/subtitle шторки (закреплены сверху), «Готово» — в её bottomBar (закреплена снизу):
+ * ни то ни другое не должно скроллиться вместе со списком подходов.
+ */
+@Composable
+fun WorkoutSetsEditorSheet(
+    exercise: WorkoutExerciseWithRepsEntity,
+    onIntent: (WorkoutDetailsIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LyteBottomSheet(
+        title = exercise.exercise.name,
+        subtitle = exercise.exercise.description,
+        onDismissRequest = { onIntent(WorkoutDetailsIntent.CloseSetsEditor) },
+        bottomBar = {
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceContainerLowest,
+                shadowElevation = LyteTheme.elevation.level2,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                LyteButton(
+                    text = stringResource(Res.string.workout_details_sets_done),
+                    onClick = { onIntent(WorkoutDetailsIntent.CloseSetsEditor) },
+                    fullWidth = true,
+                    modifier = Modifier.padding(horizontal = LyteTheme.spacing.s5, vertical = LyteTheme.spacing.s4),
+                )
+            }
+        },
+        modifier = modifier,
+    ) {
+        // animateContentSize сглаживает изменение высоты списка при добавлении/удалении подхода —
+        // без него соседние строки и кнопка ниже прыгали бы на новое место мгновенно. Плюс сама
+        // добавленная строка проявляется через AnimatedVisibility (fade+expand): нужен именно
+        // MutableTransitionState с initialState=false — обычный AnimatedVisibility(visible = true)
+        // не анимирует появление, если true уже на первой композиции.
+        Column(
+            verticalArrangement = Arrangement.spacedBy(SetsEditorRowGap),
+            modifier = Modifier.animateContentSize(),
+        ) {
+            exercise.reps.forEachIndexed { index, rep ->
+                key(index) {
+                    AnimatedVisibility(
+                        visibleState = remember { MutableTransitionState(false) }.apply { targetState = true },
+                        enter = fadeIn() + expandVertically(),
+                        exit = fadeOut() + shrinkVertically(),
+                    ) {
+                        LyteSetEditRow(
+                            title = stringResource(Res.string.workout_details_set_number, index + 1),
+                            reps = rep.count,
+                            weight = rep.weight ?: 0.0,
+                            onRepsChange = { reps -> onIntent(WorkoutDetailsIntent.ChangeSetReps(index, reps)) },
+                            onWeightChange = { weight -> onIntent(WorkoutDetailsIntent.ChangeSetWeight(index, weight)) },
+                            onRemove = { onIntent(WorkoutDetailsIntent.RemoveSet(index)) },
+                        )
+                    }
+                }
+            }
+        }
+        LyteButton(
+            text = stringResource(Res.string.workout_details_sets_add),
+            onClick = { onIntent(WorkoutDetailsIntent.AddSet) },
+            variant = LyteButtonVariant.Tonal,
+            size = LyteButtonSize.Small,
+            icon = LyteIcons.Plus,
+            fullWidth = true,
+            modifier = Modifier.padding(top = SetsEditorAddButtonTopSpacing),
+        )
+    }
+}
+
+@Composable
+@Preview
+private fun WorkoutSetsEditorSheetPreview() {
+    LyteTheme {
+        WorkoutSetsEditorSheet(
+            exercise = WorkoutExerciseWithRepsEntity(
+                exercise = WorkoutExerciseEntity(
+                    id = "1",
+                    name = "Жим лёжа",
+                    description = "Штанга, горизонтальная скамья, хват чуть шире плеч.",
+                ),
+                reps = listOf(
+                    WorkoutRepEntity(count = 8, weight = 80.0),
+                    WorkoutRepEntity(count = 8, weight = 80.0),
+                    WorkoutRepEntity(count = 8, weight = 77.5),
+                ),
+            ),
+            onIntent = {},
+        )
+    }
+}

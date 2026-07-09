@@ -5,6 +5,7 @@ package com.nikolaevskii.lyte.feature.workout.presentation.viewmodel
 import com.nikolaevskii.lyte.core.mvi.BaseViewModel
 import com.nikolaevskii.lyte.core.navigation.LyteNavigator
 import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutEntity
+import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutRepEntity
 import com.nikolaevskii.lyte.feature.workout.domain.repository.WorkoutRepository
 import com.nikolaevskii.lyte.feature.workout.presentation.model.WorkoutExerciseUiModel
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutDetailsIntent
@@ -28,13 +29,15 @@ class WorkoutDetailsViewModel(
         when (intent) {
             is WorkoutDetailsIntent.ChangeName -> updateState { copy(name = intent.name) }
             is WorkoutDetailsIntent.MoveExercise -> updateState { copy(exercises = exercises.moved(intent.fromIndex, intent.toIndex)) }
-            is WorkoutDetailsIntent.RemoveExercise -> updateState {
-                copy(exercises = exercises.filterIndexed { index, _ -> index != intent.index })
-            }
+            is WorkoutDetailsIntent.RemoveExercise -> removeExercise(intent.index)
             // Пикер упражнений (3.3) — отдельная задача, пока кнопка ничего не делает.
             WorkoutDetailsIntent.AddExercise -> Unit
-            // Редактор подходов (3.4) — отдельная задача, пока кнопка ничего не делает.
-            is WorkoutDetailsIntent.EditExerciseSets -> Unit
+            is WorkoutDetailsIntent.EditExerciseSets -> updateState { copy(editingExerciseIndex = intent.index) }
+            WorkoutDetailsIntent.CloseSetsEditor -> updateState { copy(editingExerciseIndex = null) }
+            is WorkoutDetailsIntent.ChangeSetReps -> changeSetReps(intent.setIndex, intent.reps)
+            is WorkoutDetailsIntent.ChangeSetWeight -> changeSetWeight(intent.setIndex, intent.weight)
+            WorkoutDetailsIntent.AddSet -> addSet()
+            is WorkoutDetailsIntent.RemoveSet -> removeSet(intent.setIndex)
             WorkoutDetailsIntent.Save -> save()
             WorkoutDetailsIntent.Back -> lyteNavigator.back()
         }
@@ -83,8 +86,43 @@ class WorkoutDetailsViewModel(
         }
     }
 
+    private fun removeExercise(index: Int) {
+        updateState { copy(exercises = exercises.filterIndexed { i, _ -> i != index }) }
+    }
+
+    private fun changeSetReps(setIndex: Int, reps: Int) {
+        updateState {
+            copy(exercises = updatingEditedSets { sets -> sets.mapIndexed { i, set -> if (i == setIndex) set.copy(count = reps) else set } })
+        }
+    }
+
+    private fun changeSetWeight(setIndex: Int, weight: Double) {
+        updateState {
+            copy(exercises = updatingEditedSets { sets -> sets.mapIndexed { i, set -> if (i == setIndex) set.copy(weight = weight) else set } })
+        }
+    }
+
+    private fun addSet() {
+        updateState { copy(exercises = updatingEditedSets { sets -> sets + sets.last() }) }
+    }
+
+    private fun removeSet(setIndex: Int) {
+        updateState {
+            copy(exercises = updatingEditedSets { sets -> if (sets.size > 1) sets.filterIndexed { i, _ -> i != setIndex } else sets })
+        }
+    }
+
     private fun List<WorkoutExerciseUiModel>.moved(fromIndex: Int, toIndex: Int): List<WorkoutExerciseUiModel> {
         if (fromIndex == toIndex || fromIndex !in indices || toIndex !in indices) return this
         return toMutableList().apply { add(toIndex, removeAt(fromIndex)) }
+    }
+
+    private fun WorkoutDetailsUiState.updatingEditedSets(
+        transform: (List<WorkoutRepEntity>) -> List<WorkoutRepEntity>,
+    ): List<WorkoutExerciseUiModel> {
+        val index = editingExerciseIndex ?: return exercises
+        return exercises.mapIndexed { i, model ->
+            if (i == index) model.copy(exercise = model.exercise.copy(reps = transform(model.exercise.reps))) else model
+        }
     }
 }
