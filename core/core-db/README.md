@@ -11,7 +11,8 @@ Room KMP: единая локальная база приложения, DAO т�
   - `WorkoutExerciseCrossRefDatabaseEntity` (`workout_exercise`) — упорядоченная связка «тренировка ↔ упражнение» (FK→`workout`/`exercise`, `ON DELETE CASCADE`, `position`).
   - `WorkoutSetDatabaseEntity` (`workout_set`) — подход внутри связки (FK→`workout_exercise` CASCADE, `position`, `count`, `weight?`).
   - `WorkoutWithExercises` / `WorkoutExerciseWithSets` — `@Relation`-POJО для чтения полного графа; порядок под-списков потребитель восстанавливает сортировкой по `position`.
-  - `WorkoutDao` (`abstract class`) — `getItems`, `getWithExercises` (`@Transaction`), гранулярные upsert/insert/delete и `@Transaction saveWorkoutGraph(...)` (единый путь create/edit; для `workout`/`exercise` — `@Upsert`, а не `@Insert(REPLACE)`, иначе `INSERT OR REPLACE` снёс бы детей каскадом).
+  - `WorkoutItemWithExerciseCount` — плоский POJO для списка: `id`/`name`/`description` тренировки + агрегированное `exerciseCount` (без загрузки графа упражнений/подходов).
+  - `WorkoutDao` (`abstract class`) — `getItems` (агрегирующий `@Query` с `LEFT JOIN workout_exercise` + `COUNT(...)`, возвращает `WorkoutItemWithExerciseCount`), `getWithExercises` (`@Transaction`), гранулярные upsert/insert/delete и `@Transaction saveWorkoutGraph(...)` (единый путь create/edit; для `workout`/`exercise` — `@Upsert`, а не `@Insert(REPLACE)`, иначе `INSERT OR REPLACE` снёс бы детей каскадом).
   - `ExerciseDao` — CRUD по упражнениям (`getAll`, `getById`, `@Upsert upsert`, `deleteById`).
 - Состояние приложения (`db/app/`):
   - `AppLaunchStateEntity` (`app_launch_state`) — singleton-строка (`id = AppLaunchStateEntity.SINGLETON_ROW_ID`, всегда `0`), `hasCompletedFirstLaunch: Boolean`. Переживает удаление любых доменных данных (например, если пользователь очистит библиотеку упражнений) — используется как независимый от содержимого других таблиц маркер «первый запуск уже прошёл», а не эвристика вида «таблица X пуста».

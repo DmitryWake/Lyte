@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="workout_list_title">Программы</string>
+    <string name="workout_list_new_program">Новая программа</string>
+    <string name="workout_list_empty_message">Создайте первую программу</string>
+    <string name="workout_list_empty_hint">Программа — шаблон тренировки: упражнения, подходы и веса</string>
+    <string name="workout_list_delete_a11y">Удалить программу</string>
+    <string name="workout_list_delete_dialog_title">Удалить программу «%1$s»?</string>
+    <string name="workout_list_delete_dialog_description">История сессий сохранится.</string>
+    <plurals name="workout_list_exercise_count">
+        <item quantity="one">%1$d упражнение</item>
+        <item quantity="few">%1$d упражнения</item>
+        <item quantity="many">%1$d упражнений</item>
+        <item quantity="other">%1$d упражнений</item>
+    </plurals>
+</resources>

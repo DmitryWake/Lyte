@@ -37,6 +37,16 @@ class WorkoutRepositoryImplTest {
     }
 
     @Test
+    fun getWorkoutsReturnsExerciseCountPerWorkout() = runTest {
+        val repository = repository()
+        repository.createWorkout(sampleWorkout(id = "w1", name = "A"))
+
+        val items = repository.getWorkouts()
+
+        assertEquals(2, items.single { it.id == "w1" }.exerciseCount)
+    }
+
+    @Test
     fun editWorkoutReplacesExercises() = runTest {
         val repository = repository()
         val original = sampleWorkout()

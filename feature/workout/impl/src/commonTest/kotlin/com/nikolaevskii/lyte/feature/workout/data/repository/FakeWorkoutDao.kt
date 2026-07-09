@@ -5,6 +5,7 @@ import com.nikolaevskii.lyte.core.db.workout.WorkoutDao
 import com.nikolaevskii.lyte.core.db.workout.WorkoutDatabaseEntity
 import com.nikolaevskii.lyte.core.db.workout.WorkoutExerciseCrossRefDatabaseEntity
 import com.nikolaevskii.lyte.core.db.workout.WorkoutExerciseWithSets
+import com.nikolaevskii.lyte.core.db.workout.WorkoutItemWithExerciseCount
 import com.nikolaevskii.lyte.core.db.workout.WorkoutSetDatabaseEntity
 import com.nikolaevskii.lyte.core.db.workout.WorkoutWithExercises
 
@@ -20,7 +21,15 @@ internal class FakeWorkoutDao : WorkoutDao() {
     private val crossRefs = mutableListOf<WorkoutExerciseCrossRefDatabaseEntity>()
     private val sets = mutableListOf<WorkoutSetDatabaseEntity>()
 
-    override suspend fun getItems(): List<WorkoutDatabaseEntity> = workouts.values.toList()
+    override suspend fun getItems(): List<WorkoutItemWithExerciseCount> =
+        workouts.values.map { workout ->
+            WorkoutItemWithExerciseCount(
+                id = workout.id,
+                name = workout.name,
+                description = workout.description,
+                exerciseCount = crossRefs.count { it.workoutId == workout.id },
+            )
+        }
 
     override suspend fun getWithExercises(id: String): WorkoutWithExercises? {
         val workout = workouts[id] ?: return null

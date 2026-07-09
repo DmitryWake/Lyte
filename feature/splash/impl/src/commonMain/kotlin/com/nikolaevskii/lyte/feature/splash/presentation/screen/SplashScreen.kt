@@ -37,7 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nikolaevskii.lyte.core.design.LyteTheme
 import com.nikolaevskii.lyte.core.design.component.button.LyteButton
 import com.nikolaevskii.lyte.core.design.theme.lyteWordmarkFontFamily
-import com.nikolaevskii.lyte.feature.splash.constant.SplashConstant.SPLASH_REVEAL_DURATION_MS
+import com.nikolaevskii.lyte.feature.splash.presentation.constant.SplashConstant.SPLASH_REVEAL_DURATION_MS
 import com.nikolaevskii.lyte.feature.splash.generated.resources.Res
 import com.nikolaevskii.lyte.feature.splash.generated.resources.splash_error_message
 import com.nikolaevskii.lyte.feature.splash.generated.resources.splash_retry

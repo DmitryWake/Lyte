@@ -9,8 +9,16 @@ import androidx.room.Upsert
 @Dao
 abstract class WorkoutDao {
 
-    @Query("SELECT * FROM workout")
-    abstract suspend fun getItems(): List<WorkoutDatabaseEntity>
+    @Query(
+        """
+        SELECT workout.id AS id, workout.name AS name, workout.description AS description,
+               COUNT(workout_exercise.id) AS exerciseCount
+        FROM workout
+        LEFT JOIN workout_exercise ON workout_exercise.workout_id = workout.id
+        GROUP BY workout.id
+        """,
+    )
+    abstract suspend fun getItems(): List<WorkoutItemWithExerciseCount>
 
     @Transaction
     @Query("SELECT * FROM workout WHERE id = :id LIMIT 1")

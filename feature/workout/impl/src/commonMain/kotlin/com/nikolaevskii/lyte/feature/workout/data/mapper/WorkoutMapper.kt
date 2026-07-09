@@ -4,6 +4,7 @@ import com.nikolaevskii.lyte.core.db.workout.ExerciseDatabaseEntity
 import com.nikolaevskii.lyte.core.db.workout.WorkoutDatabaseEntity
 import com.nikolaevskii.lyte.core.db.workout.WorkoutExerciseCrossRefDatabaseEntity
 import com.nikolaevskii.lyte.core.db.workout.WorkoutExerciseWithSets
+import com.nikolaevskii.lyte.core.db.workout.WorkoutItemWithExerciseCount
 import com.nikolaevskii.lyte.core.db.workout.WorkoutSetDatabaseEntity
 import com.nikolaevskii.lyte.core.db.workout.WorkoutWithExercises
 import com.nikolaevskii.lyte.feature.workout.data.model.WorkoutRowsModel
@@ -16,11 +17,12 @@ import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutRepEntity
 /** Разделитель сегментов синтетических id связок/подходов. */
 private const val ID_SEGMENT_SEPARATOR: String = "#"
 
-internal fun WorkoutDatabaseEntity.toItemEntity(): WorkoutItemEntity =
+internal fun WorkoutItemWithExerciseCount.toItemEntity(): WorkoutItemEntity =
     WorkoutItemEntity(
         id = id,
         name = name,
         description = description,
+        exerciseCount = exerciseCount,
     )
 
 internal fun ExerciseDatabaseEntity.toDomainEntity(): WorkoutExerciseEntity =

@@ -1,4 +1,4 @@
-package com.nikolaevskii.lyte.feature.splash.constant
+package com.nikolaevskii.lyte.feature.splash.presentation.constant
 
 object SplashConstant {
 

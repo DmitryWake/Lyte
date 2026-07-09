@@ -6,9 +6,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,6 +51,10 @@ private val TopBarLargeTitleTracking = (-0.6).sp
  * [LyteTopBarSize.Small] — компактная строка (кнопка назад + заголовок в одну строку, M3 [TopAppBar]);
  * [LyteTopBarSize.Large] — крупный iOS-заголовок: ряд действий сверху, крупный тайтл, опциональные
  * [subtitle] и [content] (метаданные/фильтры под заголовком).
+ *
+ * Оба размера сами учитывают статус-бар (M3 [TopAppBar] — из коробки, [LyteTopBarSize.Large] —
+ * через явный `windowInsetsPadding`, как [com.nikolaevskii.lyte.core.design.component.navigation.LyteBottomNavigationBar]
+ * учитывает нав-зону) — экрану не нужно оборачивать его в дополнительный inset-модификатор снаружи.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,12 +102,14 @@ private fun LargeTopBar(
 ) {
     val hasActionRow = onBack != null || trailing != null
     Column(
-        modifier = modifier.padding(
-            start = TopBarLargePaddingHorizontal,
-            end = TopBarLargePaddingHorizontal,
-            top = TopBarLargePaddingTop,
-            bottom = TopBarLargePaddingBottom,
-        ),
+        modifier = modifier
+            .windowInsetsPadding(WindowInsets.statusBars.only(WindowInsetsSides.Top))
+            .padding(
+                start = TopBarLargePaddingHorizontal,
+                end = TopBarLargePaddingHorizontal,
+                top = TopBarLargePaddingTop,
+                bottom = TopBarLargePaddingBottom,
+            ),
     ) {
         if (hasActionRow) {
             Row(

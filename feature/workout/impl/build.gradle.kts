@@ -20,6 +20,9 @@ kotlin {
         compilerOptions {
             jvmTarget = JvmTarget.JVM_11
         }
+        androidResources {
+            enable = true
+        }
         withHostTest {}
     }
 
@@ -42,6 +45,7 @@ kotlin {
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
             implementation(libs.compose.ui)
+            implementation(libs.compose.components.resources)
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.koin.core)
             implementation(libs.koin.compose.viewmodel.navigation)
@@ -52,6 +56,12 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
         }
     }
+}
+
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "com.nikolaevskii.lyte.feature.workout.generated.resources"
+    generateResClass = auto
 }
 
 dependencies {

@@ -4,8 +4,8 @@ import com.nikolaevskii.lyte.core.mvi.BaseViewModel
 import com.nikolaevskii.lyte.core.navigation.LyteNavigator
 import com.nikolaevskii.lyte.core.navigation.model.LyteNavOptions
 import com.nikolaevskii.lyte.feature.splash.SplashRoute
-import com.nikolaevskii.lyte.feature.splash.constant.SplashConstant.SPLASH_MIN_LOADING_DURATION_MS
-import com.nikolaevskii.lyte.feature.splash.constant.SplashConstant.SPLASH_REVEAL_DURATION_MS
+import com.nikolaevskii.lyte.feature.splash.presentation.constant.SplashConstant.SPLASH_MIN_LOADING_DURATION_MS
+import com.nikolaevskii.lyte.feature.splash.presentation.constant.SplashConstant.SPLASH_REVEAL_DURATION_MS
 import com.nikolaevskii.lyte.feature.splash.domain.initializer.AppInitializationManager
 import com.nikolaevskii.lyte.feature.splash.presentation.model.SplashPhaseUiModel
 import com.nikolaevskii.lyte.feature.splash.presentation.model.mvi.SplashIntent
