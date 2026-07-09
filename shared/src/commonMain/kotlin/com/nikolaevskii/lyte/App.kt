@@ -19,19 +19,22 @@ fun App() {
     LyteTheme {
         val navController = rememberNavController()
         val currentDestination = navController.currentBackStackEntryAsState().value?.destination
+        val showBottomBar = LyteBottomBarItem.entries.any { tab -> currentDestination.isTopLevelSelected(tab) }
 
         Scaffold(
             bottomBar = {
-                LyteBottomNavigationBar(
-                    items = LyteBottomBarItem.entries.map { tab ->
-                        LyteBottomNavigationBarItem(
-                            icon = tab.icon,
-                            label = stringResource(tab.label),
-                            selected = currentDestination.isTopLevelSelected(tab),
-                            onClick = { navController.navigateToTopLevel(tab) },
-                        )
-                    },
-                )
+                if (showBottomBar) {
+                    LyteBottomNavigationBar(
+                        items = LyteBottomBarItem.entries.map { tab ->
+                            LyteBottomNavigationBarItem(
+                                icon = tab.icon,
+                                label = stringResource(tab.label),
+                                selected = currentDestination.isTopLevelSelected(tab),
+                                onClick = { navController.navigateToTopLevel(tab) },
+                            )
+                        },
+                    )
+                }
             },
             // Верхний системный inset отдаём TopAppBar экранов — его фон закрывает зону статус-бара.
             // Шелл резервирует только высоту нижнего нав-бара.

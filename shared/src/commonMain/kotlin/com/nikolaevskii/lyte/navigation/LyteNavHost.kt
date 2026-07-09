@@ -15,6 +15,8 @@ import com.nikolaevskii.lyte.core.navigation.model.NavCommand
 import com.nikolaevskii.lyte.core.navigation.model.navigateToTopLevel
 import com.nikolaevskii.lyte.feature.history.HistoryRoute
 import com.nikolaevskii.lyte.feature.history.presentation.navigation.historyGraph
+import com.nikolaevskii.lyte.feature.splash.SplashRoute
+import com.nikolaevskii.lyte.feature.splash.presentation.navigation.splashGraph
 import com.nikolaevskii.lyte.feature.tracker.TrackerRoute
 import com.nikolaevskii.lyte.feature.tracker.presentation.navigation.trackerGraph
 import com.nikolaevskii.lyte.feature.workout.WorkoutListRoute
@@ -44,11 +46,13 @@ fun LyteNavHost(
 
     NavHost(
         navController = navController,
-        startDestination = BottomNavGraph,
+        startDestination = SplashRoute,
         modifier = Modifier
             .padding(paddingValues)
             .consumeWindowInsets(paddingValues),
     ) {
+        splashGraph()
+
         navigation<BottomNavGraph>(startDestination = TrackerTabGraph) {
             navigation<TrackerTabGraph>(startDestination = TrackerRoute) {
                 trackerGraph()

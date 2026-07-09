@@ -1,6 +1,7 @@
 package com.nikolaevskii.lyte.core.db.di
 
 import com.nikolaevskii.lyte.core.db.LyteDatabase
+import com.nikolaevskii.lyte.core.db.app.AppLaunchStateDao
 import com.nikolaevskii.lyte.core.db.applyLyteDefaults
 import com.nikolaevskii.lyte.core.db.internal.lyteDatabaseBuilder
 import com.nikolaevskii.lyte.core.db.workout.ExerciseDao
@@ -16,4 +17,5 @@ fun coreDbModule(): Module = module {
     }
     single<WorkoutDao> { get<LyteDatabase>().workoutDao() }
     single<ExerciseDao> { get<LyteDatabase>().exerciseDao() }
+    single<AppLaunchStateDao> { get<LyteDatabase>().appLaunchStateDao() }
 }

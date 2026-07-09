@@ -4,17 +4,20 @@ Room KMP: единая локальная база приложения, DAO т�
 
 ## Что внутри
 
-- `LyteDatabase` — `@Database(entities = [...], version = 2, exportSchema = true)`, `@ConstructedBy(LyteDatabaseConstructor::class)`.
+- `LyteDatabase` — `@Database(entities = [...], version = 3, exportSchema = true)`, `@ConstructedBy(LyteDatabaseConstructor::class)`.
 - `LyteDatabaseConstructor` — `expect object : RoomDatabaseConstructor<LyteDatabase>`; `actual`-реализация генерируется Room-компилятором (KSP) отдельно на каждой платформе.
 - Схема тренировок (`db/workout/`, `@Entity`-классы — с суффиксом `*DatabaseEntity`):
   - `WorkoutDatabaseEntity` (`workout`), `ExerciseDatabaseEntity` (`exercise`) — тренировка и упражнение-библиотека (`id: String`, `name`, `description?`).
   - `WorkoutExerciseCrossRefDatabaseEntity` (`workout_exercise`) — упорядоченная связка «тренировка ↔ упражнение» (FK→`workout`/`exercise`, `ON DELETE CASCADE`, `position`).
   - `WorkoutSetDatabaseEntity` (`workout_set`) — подход внутри связки (FK→`workout_exercise` CASCADE, `position`, `count`, `weight?`).
-  - `WorkoutWithExercises` / `WorkoutExerciseWithSets` — `@Relation`-POJO для чтения полного графа; порядок под-списков потребитель восстанавливает сортировкой по `position`.
+  - `WorkoutWithExercises` / `WorkoutExerciseWithSets` — `@Relation`-POJО для чтения полного графа; порядок под-списков потребитель восстанавливает сортировкой по `position`.
   - `WorkoutDao` (`abstract class`) — `getItems`, `getWithExercises` (`@Transaction`), гранулярные upsert/insert/delete и `@Transaction saveWorkoutGraph(...)` (единый путь create/edit; для `workout`/`exercise` — `@Upsert`, а не `@Insert(REPLACE)`, иначе `INSERT OR REPLACE` снёс бы детей каскадом).
   - `ExerciseDao` — CRUD по упражнениям (`getAll`, `getById`, `@Upsert upsert`, `deleteById`).
+- Состояние приложения (`db/app/`):
+  - `AppLaunchStateEntity` (`app_launch_state`) — singleton-строка (`id = AppLaunchStateEntity.SINGLETON_ROW_ID`, всегда `0`), `hasCompletedFirstLaunch: Boolean`. Переживает удаление любых доменных данных (например, если пользователь очистит библиотеку упражнений) — используется как независимый от содержимого других таблиц маркер «первый запуск уже прошёл», а не эвристика вида «таблица X пуста».
+  - `AppLaunchStateDao` — `get()` (singleton-строка или `null`, если ещё не создана), `@Upsert upsert(state)`.
 - `applyLyteDefaults()` — расширение `RoomDatabase.Builder<T>`: `BundledSQLiteDriver`, `setQueryCoroutineContext(Dispatchers.IO)` и `fallbackToDestructiveMigration(dropAllTables = true)` (на стадии каркаса миграций нет — при смене схемы БД пересоздаётся, данные теряются).
-- `coreDbModule()` — Koin-модуль: `single<LyteDatabase> { ... }` + `single<WorkoutDao>` + `single<ExerciseDao>`.
+- `coreDbModule()` — Koin-модуль: `single<LyteDatabase> { ... }` + `single<WorkoutDao>` + `single<ExerciseDao>` + `single<AppLaunchStateDao>`.
 - `lyteDatabaseBuilder()` (`internal`, expect/actual) — платформенный билдер: на Android контекст берётся через `Koin.GlobalContext` (`androidDatabaseContext()`), на iOS путь — `NSDocumentDirectory` (`iosDatabaseFilePath()`).
 
 ## Использование

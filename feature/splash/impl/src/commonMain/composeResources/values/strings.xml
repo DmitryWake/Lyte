@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="splash_wordmark">Lyte</string>
+    <string name="splash_wordmark_accent">.</string>
+    <string name="splash_error_message">Не удалось подготовить приложение. Попробуйте ещё раз.</string>
+    <string name="splash_retry">Повторить</string>
+</resources>
