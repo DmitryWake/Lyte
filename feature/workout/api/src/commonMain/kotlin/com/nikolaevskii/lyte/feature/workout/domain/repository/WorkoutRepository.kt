@@ -13,5 +13,10 @@ interface WorkoutRepository {
 
     suspend fun editWorkout(workoutEntity: WorkoutEntity)
 
+    /**
+     * Удаляет программу. Если на неё уже ссылаются завершённые/активные сессии трекера, программа
+     * не удаляется физически, а архивируется (пропадает из списков, но остаётся доступной по id) —
+     * чтобы история сессий сохранилась.
+     */
     suspend fun deleteWorkout(id: String)
 }

@@ -27,7 +27,9 @@ internal class WorkoutRepositoryImpl(
     }
 
     override suspend fun deleteWorkout(id: String) {
-        workoutDao.deleteWorkout(id)
+        // Программу, на которую ссылаются сессии трекера, архивируем (soft delete), а не удаляем —
+        // иначе история потеряет ссылку на программу. Решение принимает DAO в одной транзакции.
+        workoutDao.deleteOrArchiveWorkout(id)
     }
 
     private suspend fun save(workoutEntity: WorkoutEntity) {

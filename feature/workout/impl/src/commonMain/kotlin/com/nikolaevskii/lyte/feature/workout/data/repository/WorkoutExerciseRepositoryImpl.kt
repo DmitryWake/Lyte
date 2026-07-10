@@ -30,7 +30,9 @@ internal class WorkoutExerciseRepositoryImpl(
     }
 
     override suspend fun deleteExercise(id: String) {
-        exerciseDao.deleteById(id)
+        // Упражнение, на которое ссылаются программы или сессии, архивируется (soft delete), а не
+        // удаляется — иначе повисли бы ссылки и имя в истории. Решение принимает DAO в одной транзакции.
+        exerciseDao.deleteOrArchiveExercise(id)
     }
 
     /** Без экранирования введённые пользователем `%` и `_` работали бы как маски `LIKE`. */

@@ -3,17 +3,25 @@ package com.nikolaevskii.lyte.feature.workout.data.repository
 import com.nikolaevskii.lyte.core.db.workout.ExerciseDao
 import com.nikolaevskii.lyte.core.db.workout.ExerciseDatabaseEntity
 
-internal class FakeExerciseDao : ExerciseDao {
+/**
+ * In-memory реализация [ExerciseDao] для тестов репозитория. `deleteOrArchiveExercise` наследует
+ * транзакционное тело базового класса — проверяется и решение «удалить vs архивировать».
+ */
+internal class FakeExerciseDao : ExerciseDao() {
+
+    /** Число ссылок (программы + сессии) на упражнение — задаётся тестом, чтобы проверить архивацию. */
+    val referenceCountByExercise = mutableMapOf<String, Int>()
 
     private val exercises = mutableMapOf<String, ExerciseDatabaseEntity>()
 
     /**
-     * Повторяет контракт SQL-запроса: подстрока ищется по уже нормализованному названию, результат
-     * отсортирован по нему же. Экранирование `LIKE` здесь не воспроизводится — за него отвечает
-     * вызывающая сторона, и в фейке спецсимволы остаются обычными символами, как и в SQLite с `ESCAPE`.
+     * Повторяет контракт SQL-запроса: архивные упражнения скрыты, подстрока ищется по уже
+     * нормализованному названию, результат отсортирован по нему же. Экранирование `LIKE` здесь не
+     * воспроизводится — за него отвечает вызывающая сторона, спецсимволы остаются обычными, как с `ESCAPE`.
      */
     override suspend fun search(normalizedQuery: String): List<ExerciseDatabaseEntity> =
         exercises.values
+            .filterNot { exercise -> exercise.isArchived }
             .filter { exercise -> exercise.nameNormalized.contains(normalizedQuery.unescapedFromLike()) }
             .sortedBy { exercise -> exercise.nameNormalized }
 
@@ -21,6 +29,12 @@ internal class FakeExerciseDao : ExerciseDao {
 
     override suspend fun upsert(exercise: ExerciseDatabaseEntity) {
         exercises[exercise.id] = exercise
+    }
+
+    override suspend fun countReferences(id: String): Int = referenceCountByExercise[id] ?: 0
+
+    override suspend fun archiveExercise(id: String) {
+        exercises[id]?.let { exercises[id] = it.copy(isArchived = true) }
     }
 
     override suspend fun deleteById(id: String) {

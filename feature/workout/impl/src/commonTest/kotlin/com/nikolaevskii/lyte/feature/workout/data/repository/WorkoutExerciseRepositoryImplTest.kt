@@ -107,13 +107,28 @@ class WorkoutExerciseRepositoryImplTest {
     }
 
     @Test
-    fun deleteExerciseRemovesIt() = runTest {
+    fun deleteExerciseWithoutReferencesRemovesIt() = runTest {
         val repository = repository()
         repository.createExercise(WorkoutExerciseEntity(id = "ex-1", name = "Жим"))
 
         repository.deleteExercise("ex-1")
 
         assertNull(repository.getExercise("ex-1"))
+    }
+
+    @Test
+    fun deleteExerciseWithReferencesArchivesItInsteadOfDeleting() = runTest {
+        val dao = FakeExerciseDao()
+        val repository = WorkoutExerciseRepositoryImpl(exerciseDao = dao)
+        repository.createExercise(WorkoutExerciseEntity(id = "ex-1", name = "Жим", description = "Грудь"))
+        // На упражнение ссылается программа/сессия — физическое удаление запрещено.
+        dao.referenceCountByExercise["ex-1"] = 1
+
+        repository.deleteExercise("ex-1")
+
+        // Упражнение скрыто из библиотеки, но остаётся доступным по id (ссылки и история целы).
+        assertEquals(emptyList(), repository.getExercises(query = "жим"))
+        assertEquals("Жим", repository.getExercise("ex-1")?.name)
     }
 
     private fun repository(): WorkoutExerciseRepositoryImpl =

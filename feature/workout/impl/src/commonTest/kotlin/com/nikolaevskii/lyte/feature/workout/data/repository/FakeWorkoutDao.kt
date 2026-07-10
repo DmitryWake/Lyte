@@ -16,20 +16,25 @@ import com.nikolaevskii.lyte.core.db.workout.WorkoutWithExercises
  */
 internal class FakeWorkoutDao : WorkoutDao() {
 
+    /** Число сессий трекера, ссылающихся на программу — задаётся тестом, чтобы проверить архивацию. */
+    val sessionCountByWorkout = mutableMapOf<String, Int>()
+
     private val workouts = mutableMapOf<String, WorkoutDatabaseEntity>()
     private val exercises = mutableMapOf<String, ExerciseDatabaseEntity>()
     private val crossRefs = mutableListOf<WorkoutExerciseCrossRefDatabaseEntity>()
     private val sets = mutableListOf<WorkoutSetDatabaseEntity>()
 
     override suspend fun getItems(): List<WorkoutItemWithExerciseCount> =
-        workouts.values.map { workout ->
-            WorkoutItemWithExerciseCount(
-                id = workout.id,
-                name = workout.name,
-                description = workout.description,
-                exerciseCount = crossRefs.count { it.workoutId == workout.id },
-            )
-        }
+        workouts.values
+            .filterNot { it.isArchived }
+            .map { workout ->
+                WorkoutItemWithExerciseCount(
+                    id = workout.id,
+                    name = workout.name,
+                    description = workout.description,
+                    exerciseCount = crossRefs.count { it.workoutId == workout.id },
+                )
+            }
 
     override suspend fun getWithExercises(id: String): WorkoutWithExercises? {
         val workout = workouts[id] ?: return null
@@ -76,5 +81,12 @@ internal class FakeWorkoutDao : WorkoutDao() {
     override suspend fun deleteWorkout(id: String) {
         workouts.remove(id)
         deleteCrossRefsByWorkout(id)
+    }
+
+    override suspend fun countSessionsForWorkout(id: String): Int =
+        sessionCountByWorkout[id] ?: 0
+
+    override suspend fun archiveWorkout(id: String) {
+        workouts[id]?.let { workouts[id] = it.copy(isArchived = true) }
     }
 }

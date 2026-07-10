@@ -68,7 +68,7 @@ class WorkoutRepositoryImplTest {
     }
 
     @Test
-    fun deleteWorkoutRemovesIt() = runTest {
+    fun deleteWorkoutWithoutSessionsRemovesIt() = runTest {
         val repository = repository()
         val workout = sampleWorkout()
         repository.createWorkout(workout)
@@ -77,6 +77,22 @@ class WorkoutRepositoryImplTest {
 
         assertNull(repository.getWorkout(workout.id))
         assertTrue(repository.getWorkouts().isEmpty())
+    }
+
+    @Test
+    fun deleteWorkoutWithSessionsArchivesItInsteadOfDeleting() = runTest {
+        val dao = FakeWorkoutDao()
+        val repository = WorkoutRepositoryImpl(workoutDao = dao)
+        val workout = sampleWorkout()
+        repository.createWorkout(workout)
+        // На программу ссылается сессия трекера — физическое удаление запрещено.
+        dao.sessionCountByWorkout[workout.id] = 1
+
+        repository.deleteWorkout(workout.id)
+
+        // Программа скрыта из списка, но остаётся доступной по id (история сохранена).
+        assertTrue(repository.getWorkouts().none { it.id == workout.id })
+        assertEquals(workout, repository.getWorkout(workout.id))
     }
 
     private fun repository(): WorkoutRepositoryImpl =

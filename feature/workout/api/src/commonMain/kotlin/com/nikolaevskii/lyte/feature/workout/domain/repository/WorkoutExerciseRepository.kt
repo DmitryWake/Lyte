@@ -16,5 +16,10 @@ interface WorkoutExerciseRepository {
 
     suspend fun editExercises(workoutExerciseEntity: WorkoutExerciseEntity)
 
+    /**
+     * Удаляет упражнение. Если на него ссылаются программы или сессии трекера, упражнение не удаляется
+     * физически, а архивируется (пропадает из библиотеки, но остаётся доступным по id) — чтобы
+     * существующие программы и история сессий не потеряли ссылку и имя упражнения.
+     */
     suspend fun deleteExercise(id: String)
 }

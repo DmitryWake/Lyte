@@ -18,10 +18,13 @@ kotlin {
         compilerOptions {
             jvmTarget = JvmTarget.JVM_11
         }
+        withHostTest {}
     }
 
     sourceSets {
         commonMain.dependencies {
+            // WorkoutEntity/WorkoutExerciseEntity — часть публичного контракта сессий (снапшот программы).
+            api(projects.feature.workout.api)
             implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {

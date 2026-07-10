@@ -15,6 +15,7 @@ abstract class WorkoutDao {
                COUNT(workout_exercise.id) AS exerciseCount
         FROM workout
         LEFT JOIN workout_exercise ON workout_exercise.workout_id = workout.id
+        WHERE workout.is_archived = 0
         GROUP BY workout.id
         """,
     )
@@ -41,6 +42,26 @@ abstract class WorkoutDao {
 
     @Query("DELETE FROM workout WHERE id = :id")
     abstract suspend fun deleteWorkout(id: String)
+
+    @Query("SELECT COUNT(*) FROM workout_session WHERE program_id = :id")
+    abstract suspend fun countSessionsForWorkout(id: String): Int
+
+    @Query("UPDATE workout SET is_archived = 1 WHERE id = :id")
+    abstract suspend fun archiveWorkout(id: String)
+
+    /**
+     * Удаляет программу, если на неё не ссылается ни одна сессия трекера; иначе — архивирует
+     * (soft delete), чтобы история сохранила ссылку на программу. Всё одной транзакцией:
+     * подсчёт и запись атомарны.
+     */
+    @Transaction
+    open suspend fun deleteOrArchiveWorkout(id: String) {
+        if (countSessionsForWorkout(id) > 0) {
+            archiveWorkout(id)
+        } else {
+            deleteWorkout(id)
+        }
+    }
 
     /**
      * Сохраняет граф тренировки одной транзакцией. Покрывает и создание (детей нет),
