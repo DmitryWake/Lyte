@@ -3,7 +3,6 @@ package com.nikolaevskii.lyte.feature.workout.presentation.viewmodel
 import com.nikolaevskii.lyte.core.navigation.LyteNavigator
 import com.nikolaevskii.lyte.core.navigation.model.LyteNavOptions
 import com.nikolaevskii.lyte.core.navigation.model.NavCommand
-import com.nikolaevskii.lyte.core.navigation.model.TopLevelDestination
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 
@@ -23,5 +22,5 @@ internal class FakeLyteNavigator : LyteNavigator {
         backCallCount++
     }
 
-    override fun switchTab(destination: TopLevelDestination) = Unit
+    override fun switchTab(graphRoute: Any) = Unit
 }

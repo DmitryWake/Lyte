@@ -8,7 +8,7 @@ import com.nikolaevskii.lyte.feature.splash.domain.initializer.AppInitialization
 import com.nikolaevskii.lyte.feature.splash.domain.initializer.AppInitializer
 import com.nikolaevskii.lyte.feature.splash.presentation.model.SplashPhaseUiModel
 import com.nikolaevskii.lyte.feature.splash.presentation.model.mvi.SplashIntent
-import com.nikolaevskii.lyte.feature.tracker.TrackerRoute
+import com.nikolaevskii.lyte.feature.tracker.TrackerLandingRoute
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -72,7 +72,7 @@ class SplashViewModelTest {
             advanceTimeBy(SPLASH_REVEAL_DURATION_MS.milliseconds)
             runCurrent()
             val (route, options) = navigator.navigateCalls.single()
-            assertEquals(TrackerRoute, route)
+            assertEquals(TrackerLandingRoute, route)
             assertEquals(LyteNavOptions(popUpTo = SplashRoute, popUpToInclusive = true), options)
             assertFalse(viewModel.uiState.value.isError)
         }

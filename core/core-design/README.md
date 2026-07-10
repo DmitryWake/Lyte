@@ -37,7 +37,7 @@
 Значения — обычный `ImageVector`; зависимость от библиотеки Lucide — `implementation`-only внутри
 `core-design`, подключать её отдельно потребителям не нужно.
 
-Доступные иконки: `Dumbbell`, `ClipboardList`, `History`, `Plus`, `Minus`, `Check`, `Close`,
+Доступные иконки: `Dumbbell`, `ClipboardList`, `History`, `Play`, `Plus`, `Minus`, `Check`, `Close`,
 `ChevronRight`, `ChevronDown`, `ChevronLeft`, `GripVertical`, `OverflowMenu`, `Search`, `Sparkles`
 (зарезервирована для ИИ-поверхностей — не использовать как обычную иконку), `AddNote`,
 `SkipForward`, `AddCircle`, `Delete`, `Edit`, `ListChecks`, `Circle`, `CircleDot`, `CircleCheck`,

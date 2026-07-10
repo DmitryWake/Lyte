@@ -3,6 +3,9 @@ package com.nikolaevskii.lyte.navigation
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
 import com.nikolaevskii.lyte.core.navigation.model.TopLevelDestination
+import com.nikolaevskii.lyte.feature.history.HistoryTabGraph
+import com.nikolaevskii.lyte.feature.tracker.TrackerTabGraph
+import com.nikolaevskii.lyte.feature.workout.WorkoutTabGraph
 import lyte.shared.generated.resources.Res
 import lyte.shared.generated.resources.tab_history
 import lyte.shared.generated.resources.tab_tracker

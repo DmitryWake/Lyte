@@ -21,6 +21,7 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.MessageSquarePlus
 import com.composables.icons.lucide.Minus
 import com.composables.icons.lucide.PencilLine
+import com.composables.icons.lucide.Play
 import com.composables.icons.lucide.Plus
 import com.composables.icons.lucide.Search
 import com.composables.icons.lucide.SkipForward
@@ -37,6 +38,7 @@ object LyteIcons {
     val Dumbbell: ImageVector get() = Lucide.Dumbbell
     val ClipboardList: ImageVector get() = Lucide.ClipboardList
     val History: ImageVector get() = Lucide.History
+    val Play: ImageVector get() = Lucide.Play
     val Plus: ImageVector get() = Lucide.Plus
     val Minus: ImageVector get() = Lucide.Minus
     val Check: ImageVector get() = Lucide.Check

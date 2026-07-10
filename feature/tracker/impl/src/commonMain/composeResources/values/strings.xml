@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tracker_wordmark">Lyte</string>
+    <string name="tracker_wordmark_accent">.</string>
+
+    <string name="tracker_landing_title">Нет активной сессии</string>
+    <string name="tracker_landing_hint">Выберите программу, чтобы начать</string>
+    <string name="tracker_landing_pick_workout">Выбрать тренировку</string>
+
+    <string name="workout_picker_title">Выбрать тренировку</string>
+    <string name="workout_picker_empty_message">Пока нет ни одной программы</string>
+    <string name="workout_picker_empty_hint">Создайте программу — и она появится здесь</string>
+    <string name="workout_picker_new_program">Новая программа</string>
+    <plurals name="workout_picker_exercise_count">
+        <item quantity="one">%1$d упражнение</item>
+        <item quantity="few">%1$d упражнения</item>
+        <item quantity="many">%1$d упражнений</item>
+        <item quantity="other">%1$d упражнений</item>
+    </plurals>
+</resources>

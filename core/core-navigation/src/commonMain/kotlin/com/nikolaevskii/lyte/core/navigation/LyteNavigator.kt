@@ -2,7 +2,6 @@ package com.nikolaevskii.lyte.core.navigation
 
 import com.nikolaevskii.lyte.core.navigation.model.LyteNavOptions
 import com.nikolaevskii.lyte.core.navigation.model.NavCommand
-import com.nikolaevskii.lyte.core.navigation.model.TopLevelDestination
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -23,6 +22,12 @@ interface LyteNavigator {
     /** Вернуться назад. */
     fun back()
 
-    /** Переключиться на верхнеуровневую вкладку [destination]. */
-    fun switchTab(destination: TopLevelDestination)
+    /**
+     * Переключиться на вкладку, чей граф объявлен маршрутом [graphRoute] (напр. `WorkoutTabGraph`
+     * из `:feature:workout:api`).
+     *
+     * Именно маршрут **графа вкладки**, а не экрана внутри неё: обычный [navigate] на экран чужой
+     * вкладки кладёт её поверх текущей, и вкладка-источник становится недостижимой из bottom-bar.
+     */
+    fun switchTab(graphRoute: Any)
 }

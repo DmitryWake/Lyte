@@ -10,21 +10,21 @@
 ## Использование
 
 ```kotlin
-data class TrackerUiState(val completedWorkoutsToday: Int = 0) : UiState
+data class WorkoutPickerUiState(val programs: List<WorkoutItemEntity> = emptyList()) : UiState
 
-sealed interface TrackerIntent : UiIntent {
-    data object OpenWorkouts : TrackerIntent
+sealed interface WorkoutPickerIntent : UiIntent {
+    data class OnProgramClicked(val id: String) : WorkoutPickerIntent
 }
 
-class TrackerViewModel(
+class WorkoutPickerViewModel(
     private val lyteNavigator: LyteNavigator,
-) : BaseViewModel<TrackerUiState, TrackerIntent>() {
+) : BaseViewModel<WorkoutPickerUiState, WorkoutPickerIntent>() {
 
-    override fun getInitialState(): TrackerUiState = TrackerUiState()
+    override fun getInitialState(): WorkoutPickerUiState = WorkoutPickerUiState()
 
-    override fun onIntent(intent: TrackerIntent) {
+    override fun onIntent(intent: WorkoutPickerIntent) {
         when (intent) {
-            TrackerIntent.OpenWorkouts -> lyteNavigator.navigate(WorkoutListRoute)
+            is WorkoutPickerIntent.OnProgramClicked -> lyteNavigator.navigate(WorkoutDetailsRoute(id = intent.id))
         }
     }
 }

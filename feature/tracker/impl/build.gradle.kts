@@ -20,6 +20,10 @@ kotlin {
         compilerOptions {
             jvmTarget = JvmTarget.JVM_11
         }
+        androidResources {
+            enable = true
+        }
+        withHostTest {}
     }
 
     sourceSets {
@@ -41,6 +45,7 @@ kotlin {
             implementation(libs.compose.material3)
             implementation(libs.compose.ui)
             implementation(libs.compose.uiToolingPreview)
+            implementation(libs.compose.components.resources)
             implementation(libs.koin.core)
             implementation(libs.koin.compose.viewmodel.navigation)
             implementation(libs.kotlinx.coroutines.core)
@@ -50,6 +55,12 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
         }
     }
+}
+
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "com.nikolaevskii.lyte.feature.tracker.generated.resources"
+    generateResClass = auto
 }
 
 dependencies {

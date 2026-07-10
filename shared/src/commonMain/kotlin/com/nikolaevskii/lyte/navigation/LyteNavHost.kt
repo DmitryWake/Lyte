@@ -14,12 +14,15 @@ import com.nikolaevskii.lyte.core.navigation.applyOptions
 import com.nikolaevskii.lyte.core.navigation.model.NavCommand
 import com.nikolaevskii.lyte.core.navigation.model.navigateToTopLevel
 import com.nikolaevskii.lyte.feature.history.HistoryRoute
+import com.nikolaevskii.lyte.feature.history.HistoryTabGraph
 import com.nikolaevskii.lyte.feature.history.presentation.navigation.historyGraph
 import com.nikolaevskii.lyte.feature.splash.SplashRoute
 import com.nikolaevskii.lyte.feature.splash.presentation.navigation.splashGraph
-import com.nikolaevskii.lyte.feature.tracker.TrackerRoute
+import com.nikolaevskii.lyte.feature.tracker.TrackerLandingRoute
+import com.nikolaevskii.lyte.feature.tracker.TrackerTabGraph
 import com.nikolaevskii.lyte.feature.tracker.presentation.navigation.trackerGraph
 import com.nikolaevskii.lyte.feature.workout.WorkoutListRoute
+import com.nikolaevskii.lyte.feature.workout.WorkoutTabGraph
 import com.nikolaevskii.lyte.feature.workout.presentation.navigation.workoutGraph
 import org.koin.compose.koinInject
 
@@ -39,7 +42,7 @@ fun LyteNavHost(
                 }
 
                 NavCommand.Back -> navController.popBackStack()
-                is NavCommand.SwitchTab -> navController.navigateToTopLevel(command.destination)
+                is NavCommand.SwitchTab -> navController.navigateToTopLevel(command.graphRoute)
             }
         }
     }
@@ -54,7 +57,7 @@ fun LyteNavHost(
         splashGraph()
 
         navigation<BottomNavGraph>(startDestination = TrackerTabGraph) {
-            navigation<TrackerTabGraph>(startDestination = TrackerRoute) {
+            navigation<TrackerTabGraph>(startDestination = TrackerLandingRoute) {
                 trackerGraph()
             }
             navigation<WorkoutTabGraph>(startDestination = WorkoutListRoute) {

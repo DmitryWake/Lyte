@@ -12,7 +12,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
  *
  * [graphRoute] — `@Serializable`-маршрут **вложенного графа** вкладки (а не отдельного экрана):
  * каждая вкладка живёт в собственном `navigation<TabGraphRoute>(startDestination = …)`, чтобы у неё
- * был свой back stack. Сам маршрут лежит в `:feature:<name>:api` (либо, для демо-обёрток, в `:shared`).
+ * был свой back stack. Сам маршрут лежит в `:feature:<name>:api`.
  */
 interface TopLevelDestination {
     val graphRoute: Any
@@ -26,16 +26,26 @@ interface TopLevelDestination {
  * - `launchSingleTop` — не плодит дубликат корня вкладки при повторном тапе;
  * - `restoreState` — восстанавливает ранее сохранённый стек целевой вкладки.
  *
+ * [graphRoute] — маршрут **графа** вкладки. Передать сюда экран внутри вкладки нельзя: `navigate` тогда
+ * положит целевую вкладку поверх текущей (Navigation достроит недостающий entry её графа), а следующий
+ * `popUpTo(saveState) + restoreState` привяжет сохранённый стек к графу вкладки-источника и будет
+ * восстанавливать его вместо переключения — вкладка-источник станет недостижимой.
+ *
  * Вызывать только из агрегатора (`App()` / шелл), где живёт [NavController].
  */
-fun NavController.navigateToTopLevel(destination: TopLevelDestination) {
-    navigate(destination.graphRoute) {
+fun NavController.navigateToTopLevel(graphRoute: Any) {
+    navigate(graphRoute) {
         popUpTo(tabsHostStartDestinationId()) {
             saveState = true
         }
         launchSingleTop = true
         restoreState = true
     }
+}
+
+/** Перегрузка [navigateToTopLevel] для вкладки, описанной [TopLevelDestination] (bottom-bar). */
+fun NavController.navigateToTopLevel(destination: TopLevelDestination) {
+    navigateToTopLevel(destination.graphRoute)
 }
 
 /**

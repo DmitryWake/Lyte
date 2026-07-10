@@ -6,14 +6,14 @@ DSL-хелперы стек-шейпинга поверх мультиплатф
 
 - `LyteNavigator` — абстракция навигации для ViewModel: VM шлёт команды, шелл (`App()` / `LyteNavHost`) применяет их к `NavController`. Реализация — `LyteNavigatorImpl` (синглтон в DI).
 - `coreNavigationModule` (`di/NavigationModule.kt`) — Koin-модуль, регистрирующий `single<LyteNavigator> { LyteNavigatorImpl() }`.
-- `NavCommand` — команда навигации: `Forward(route, options)`, `Back`, `SwitchTab(destination)`.
+- `NavCommand` — команда навигации: `Forward(route, options)`, `Back`, `SwitchTab(graphRoute)`.
 - `LyteNavOptions` — декларативные опции стек-шейпинга (`popUpTo`/`popUpToInclusive`/`saveState`/`launchSingleTop`/`restoreState`), свободные от androidx-типов.
 - `NavOptionsBuilder.applyOptions(options)` — трансляция `LyteNavOptions` в `NavOptionsBuilder` (вызывается шеллом).
 - `popUpToRoute<R>(inclusive, saveState)` — типобезопасный `popUpTo` по `@Serializable`-роуту.
 - `singleTop()` — `launchSingleTop = true`.
 - `restorable()` — `restoreState = true`.
 - `TopLevelDestination` — контракт верхнеуровневой вкладки bottom-bar (маршрут её вложенного графа).
-- `NavController.navigateToTopLevel(destination)` — канонический переход на вкладку с сохранением/восстановлением её back stack.
+- `NavController.navigateToTopLevel(graphRoute)` — канонический переход на вкладку с сохранением/восстановлением её back stack; перегрузка `navigateToTopLevel(destination: TopLevelDestination)` делегирует в неё.
 - `NavDestination?.isTopLevelSelected(destination)` — выбрана ли вкладка: `true` только на её стартовом экране, не на любом экране внутри графа вкладки.
 
 ## Навигация из ViewModel (LyteNavigator)
@@ -68,7 +68,7 @@ LaunchedEffect(navController) {
                 command.options?.let { applyOptions(it) }
             }
             NavCommand.Back -> navController.popBackStack()
-            is NavCommand.SwitchTab -> navController.navigateToTopLevel(command.destination)
+            is NavCommand.SwitchTab -> navController.navigateToTopLevel(command.graphRoute)
         }
     }
 }
@@ -97,12 +97,21 @@ val coreNavigationModule = module {
 
 Каждая вкладка — **вложенный граф** со своим back stack. Вкладка описывается через `TopLevelDestination` (маршрут её графа); метаданные иконки/подписи и сам bottom-bar UI — на стороне `:shared` (`LyteBottomBarItem`, `App()`), здесь только логика стека.
 
+Маршруты графов вкладок (`TrackerTabGraph`, `WorkoutTabGraph`, `HistoryTabGraph`) лежат в соответствующих `:feature:<name>:api` — тогда фича может переключиться на чужую вкладку через `switchTab`, не завися от `:shared`. В `:shared` остаётся только граф-контейнер `BottomNavGraph`.
+
 ```kotlin
 enum class LyteBottomBarItem(override val graphRoute: Any, ...) : TopLevelDestination {
     TRACKER(graphRoute = TrackerTabGraph, ...),
     WORKOUTS(graphRoute = WorkoutTabGraph, ...),
     HISTORY(graphRoute = HistoryTabGraph, ...),
 }
+```
+
+Переход на другую вкладку **из VM** — только `switchTab` с маршрутом её графа:
+
+```kotlin
+// :feature:tracker:impl зависит от :feature:workout:api, поэтому видит WorkoutTabGraph
+lyteNavigator.switchTab(WorkoutTabGraph)
 ```
 
 В `LyteNavHost` (`:shared`) — каждая вкладка во вложенном `navigation<TabGraph>(...)`, выбор и переход через хелперы:
@@ -113,7 +122,7 @@ val current = navController.currentBackStackEntryAsState().value?.destination
 // onClick  = { navController.navigateToTopLevel(tab) }
 
 navigation<BottomNavGraph>(startDestination = TrackerTabGraph) {
-    navigation<TrackerTabGraph>(startDestination = TrackerRoute) { trackerGraph() }
+    navigation<TrackerTabGraph>(startDestination = TrackerLandingRoute) { trackerGraph() }
     navigation<WorkoutTabGraph>(startDestination = WorkoutListRoute) { workoutGraph() }
     navigation<HistoryTabGraph>(startDestination = HistoryRoute) { historyGraph() }
 }
@@ -148,8 +157,10 @@ implementation(projects.core.coreNavigation)
 - Подписчик `LyteNavigator.commands` — **один** (`LyteNavHost` в `:shared`). Несколько подписчиков «разорвут» поток команд (FIFO-канал).
 - Аргументы роутов — минимальные (id, enum), не доменные модели. Данные загружает сам экран через VM + Repository.
 - Стек-шейпинг — из VM через `LyteNavOptions` либо хелперы (`popUpToRoute`/`singleTop`/`restorable`) в шелле; без сырых `popUpTo`/`launchSingleTop` по местам.
-- Кросс-фичевая навигация: VM зависит только от `:feature:<other>:api` (route-цели), не от её `:impl` (см. `TrackerViewModel` → `feature:workout:api`).
+- Кросс-фичевая навигация: VM зависит только от `:feature:<other>:api` (route-цели), не от её `:impl` (см. `WorkoutPickerViewModel` в `:feature:tracker:impl` → `feature:workout:api`).
 - Multi-stack / bottom-bar — через `TopLevelDestination` + `navigateToTopLevel` (или `LyteNavigator.switchTab`).
+- **Между вкладками нельзя ходить обычным `navigate()`.** `navigate(WorkoutListRoute)` из вкладки «Трекер» кладёт граф вкладки «Тренировки» *поверх* трекера (Navigation достраивает недостающий entry её графа). Следующий `navigateToTopLevel` делает не-inclusive `popUpTo(saveState = true)` до старта графа-контейнера, а Navigation при этом привязывает сохранённый стек к цели `popUpTo` и всем её предкам по цепочке start-destination — то есть к `TrackerTabGraph`. Идущий следом `restoreState` восстанавливает по этому ключу стек **тренировок**, и вкладка «Трекер» перестаёт открываться, пока не нажмёшь системный «назад». Правильный переход — `switchTab(WorkoutTabGraph)`.
+- Уходя с не-стартового экрана вкладки на другую вкладку, сначала `back()`, потом `switchTab(...)`: иначе `saveState` сохранит вкладку вместе с этим экраном, и при возврате восстановится он, а не корень вкладки.
 - `isTopLevelSelected` сверяет id текущего назначения со стартовым назначением графа вкладки, а не просто «внутри графа ли» — иначе detail-экраны вкладки (пушнутые поверх её списка) наследовали бы bottom-bar.
 - Пока не реализованы: deep links, общий per-screen `Effect` для не-навигационных one-shot (toast/snackbar), адаптивный шелл.
 

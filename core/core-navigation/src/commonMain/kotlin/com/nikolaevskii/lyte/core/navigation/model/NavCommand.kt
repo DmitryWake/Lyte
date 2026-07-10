@@ -15,6 +15,9 @@ sealed interface NavCommand {
     /** Возврат на предыдущий экран (`popBackStack`). */
     data object Back : NavCommand
 
-    /** Переключение верхнеуровневой вкладки bottom-bar с сохранением/восстановлением её back stack. */
-    data class SwitchTab(val destination: TopLevelDestination) : NavCommand
+    /**
+     * Переключение верхнеуровневой вкладки bottom-bar с сохранением/восстановлением её back stack.
+     * [graphRoute] — маршрут графа вкладки (см. [com.nikolaevskii.lyte.core.navigation.LyteNavigator.switchTab]).
+     */
+    data class SwitchTab(val graphRoute: Any) : NavCommand
 }

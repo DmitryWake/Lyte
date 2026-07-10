@@ -10,7 +10,7 @@ import com.nikolaevskii.lyte.feature.splash.domain.initializer.AppInitialization
 import com.nikolaevskii.lyte.feature.splash.presentation.model.SplashPhaseUiModel
 import com.nikolaevskii.lyte.feature.splash.presentation.model.mvi.SplashIntent
 import com.nikolaevskii.lyte.feature.splash.presentation.model.mvi.SplashUiState
-import com.nikolaevskii.lyte.feature.tracker.TrackerRoute
+import com.nikolaevskii.lyte.feature.tracker.TrackerLandingRoute
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -65,7 +65,7 @@ class SplashViewModel(
                     updateState { copy(phase = SplashPhaseUiModel.Revealing) }
                     delay(SPLASH_REVEAL_DURATION_MS.milliseconds)
                     lyteNavigator.navigate(
-                        route = TrackerRoute,
+                        route = TrackerLandingRoute,
                         options = LyteNavOptions(popUpTo = SplashRoute, popUpToInclusive = true),
                     )
                 }
