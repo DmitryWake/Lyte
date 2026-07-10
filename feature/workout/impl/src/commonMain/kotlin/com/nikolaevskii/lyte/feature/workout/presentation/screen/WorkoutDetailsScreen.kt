@@ -50,6 +50,7 @@ import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_set_bodyweight
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_set_weight
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_title
+import com.nikolaevskii.lyte.feature.workout.presentation.model.WorkoutExerciseSheet
 import com.nikolaevskii.lyte.feature.workout.presentation.model.WorkoutExerciseUiModel
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutDetailsIntent
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutDetailsUiState
@@ -84,14 +85,14 @@ fun WorkoutDetailsContent(
         topBar = {
             LyteTopBar(
                 title = stringResource(Res.string.workout_details_title),
-                onBack = { onIntent(WorkoutDetailsIntent.Back) },
+                onBack = { onIntent(WorkoutDetailsIntent.OnBackClicked) },
             )
         },
         bottomBar = {
             if (!state.isLoading) {
                 WorkoutDetailsSaveBar(
                     isSaving = state.isSaving,
-                    onSave = { onIntent(WorkoutDetailsIntent.Save) },
+                    onSave = { onIntent(WorkoutDetailsIntent.OnSaveClicked) },
                 )
             }
         },
@@ -120,6 +121,24 @@ fun WorkoutDetailsContent(
                     modifier = Modifier.weight(1f),
                 )
             }
+        }
+
+        // Шторки добавления упражнения ведут свои ViewModel и отдают наверх только события.
+        when (val exerciseSheet = state.exerciseSheet) {
+            is WorkoutExerciseSheet.Picker -> WorkoutExercisePickerSheet(
+                onExercisePicked = { exercise -> onIntent(WorkoutDetailsIntent.OnExerciseSelected(exercise)) },
+                onCreateExerciseRequested = { query -> onIntent(WorkoutDetailsIntent.OnCreateExerciseClicked(query)) },
+                onDismissRequest = { onIntent(WorkoutDetailsIntent.OnExerciseSheetDismissed) },
+                initialQuery = exerciseSheet.query,
+            )
+
+            is WorkoutExerciseSheet.Creator -> WorkoutExerciseCreateSheet(
+                initialName = exerciseSheet.initialName,
+                onExerciseCreated = { exercise -> onIntent(WorkoutDetailsIntent.OnExerciseSelected(exercise)) },
+                onDismissRequest = { onIntent(WorkoutDetailsIntent.OnExerciseSheetDismissed) },
+            )
+
+            null -> Unit
         }
 
         val editingExercise = state.editingExerciseIndex?.let { index -> state.exercises.getOrNull(index)?.exercise }
@@ -180,7 +199,7 @@ private fun WorkoutDetailsForm(
         item(key = NAME_FIELD_KEY) {
             LyteTextField(
                 value = state.name,
-                onValueChange = { name -> onIntent(WorkoutDetailsIntent.ChangeName(name)) },
+                onValueChange = { name -> onIntent(WorkoutDetailsIntent.OnNameChanged(name)) },
                 label = stringResource(Res.string.workout_details_name_label),
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -193,8 +212,8 @@ private fun WorkoutDetailsForm(
             LyteExerciseCard(
                 title = item.exercise.exercise.name,
                 setLabels = item.exercise.reps.map { rep -> formatSetLabel(rep) },
-                onEdit = { onIntent(WorkoutDetailsIntent.EditExerciseSets(index)) },
-                onRemove = { onIntent(WorkoutDetailsIntent.RemoveExercise(index)) },
+                onEdit = { onIntent(WorkoutDetailsIntent.OnEditSetsClicked(index)) },
+                onRemove = { onIntent(WorkoutDetailsIntent.OnRemoveExerciseClicked(index)) },
                 dragHandleModifier = Modifier.pointerInput(item.key) {
                     detectDragGestures(
                         onDragStart = {
@@ -229,7 +248,7 @@ private fun WorkoutDetailsForm(
                             val toIndex = currentExercises.indexOfFirst { exercise -> exercise.key == targetInfo.key }
                             if (fromIndex != -1 && toIndex != -1) {
                                 dragOffset += draggedInfo.offset - targetInfo.offset
-                                currentOnIntent(WorkoutDetailsIntent.MoveExercise(fromIndex, toIndex))
+                                currentOnIntent(WorkoutDetailsIntent.OnExerciseMoved(fromIndex, toIndex))
                             }
                         },
                     )
@@ -243,7 +262,7 @@ private fun WorkoutDetailsForm(
         item(key = ADD_EXERCISE_BUTTON_KEY) {
             LyteButton(
                 text = stringResource(Res.string.workout_details_add_exercise),
-                onClick = { onIntent(WorkoutDetailsIntent.AddExercise) },
+                onClick = { onIntent(WorkoutDetailsIntent.OnAddExerciseClicked) },
                 variant = LyteButtonVariant.Tonal,
                 size = LyteButtonSize.Small,
                 icon = LyteIcons.Plus,

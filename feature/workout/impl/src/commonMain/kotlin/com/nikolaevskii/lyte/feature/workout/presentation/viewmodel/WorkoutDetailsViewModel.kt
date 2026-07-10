@@ -5,8 +5,11 @@ package com.nikolaevskii.lyte.feature.workout.presentation.viewmodel
 import com.nikolaevskii.lyte.core.mvi.BaseViewModel
 import com.nikolaevskii.lyte.core.navigation.LyteNavigator
 import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutEntity
+import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseEntity
+import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseWithRepsEntity
 import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutRepEntity
 import com.nikolaevskii.lyte.feature.workout.domain.repository.WorkoutRepository
+import com.nikolaevskii.lyte.feature.workout.presentation.model.WorkoutExerciseSheet
 import com.nikolaevskii.lyte.feature.workout.presentation.model.WorkoutExerciseUiModel
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutDetailsIntent
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutDetailsUiState
@@ -15,6 +18,11 @@ import kotlinx.coroutines.launch
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+/**
+ * Редактор программы. Библиотекой упражнений не занимается: её загрузка, поиск и создание живут в
+ * своих ViewModel-ях внутри шторок, а сюда через [WorkoutDetailsIntent.OnExerciseSelected] приходит уже
+ * готовое упражнение.
+ */
 class WorkoutDetailsViewModel(
     private val initialId: String?,
     private val workoutRepository: WorkoutRepository,
@@ -27,19 +35,22 @@ class WorkoutDetailsViewModel(
 
     override fun onIntent(intent: WorkoutDetailsIntent) {
         when (intent) {
-            is WorkoutDetailsIntent.ChangeName -> updateState { copy(name = intent.name) }
-            is WorkoutDetailsIntent.MoveExercise -> updateState { copy(exercises = exercises.moved(intent.fromIndex, intent.toIndex)) }
-            is WorkoutDetailsIntent.RemoveExercise -> removeExercise(intent.index)
-            // Пикер упражнений (3.3) — отдельная задача, пока кнопка ничего не делает.
-            WorkoutDetailsIntent.AddExercise -> Unit
-            is WorkoutDetailsIntent.EditExerciseSets -> updateState { copy(editingExerciseIndex = intent.index) }
-            WorkoutDetailsIntent.CloseSetsEditor -> updateState { copy(editingExerciseIndex = null) }
-            is WorkoutDetailsIntent.ChangeSetReps -> changeSetReps(intent.setIndex, intent.reps)
-            is WorkoutDetailsIntent.ChangeSetWeight -> changeSetWeight(intent.setIndex, intent.weight)
-            WorkoutDetailsIntent.AddSet -> addSet()
-            is WorkoutDetailsIntent.RemoveSet -> removeSet(intent.setIndex)
-            WorkoutDetailsIntent.Save -> save()
-            WorkoutDetailsIntent.Back -> lyteNavigator.back()
+            is WorkoutDetailsIntent.OnNameChanged -> updateState { copy(name = intent.name) }
+            is WorkoutDetailsIntent.OnExerciseMoved -> updateState { copy(exercises = exercises.moved(intent.fromIndex, intent.toIndex)) }
+            is WorkoutDetailsIntent.OnRemoveExerciseClicked -> removeExercise(intent.index)
+            WorkoutDetailsIntent.OnAddExerciseClicked -> updateState { copy(exerciseSheet = WorkoutExerciseSheet.Picker()) }
+            WorkoutDetailsIntent.OnExerciseSheetDismissed -> dismissExerciseSheet()
+            is WorkoutDetailsIntent.OnCreateExerciseClicked ->
+                updateState { copy(exerciseSheet = WorkoutExerciseSheet.Creator(initialName = intent.query)) }
+            is WorkoutDetailsIntent.OnExerciseSelected -> addExercise(intent.exercise)
+            is WorkoutDetailsIntent.OnEditSetsClicked -> updateState { copy(editingExerciseIndex = intent.index) }
+            WorkoutDetailsIntent.OnSetsEditorDismissed -> updateState { copy(editingExerciseIndex = null) }
+            is WorkoutDetailsIntent.OnSetRepsChanged -> changeSetReps(intent.setIndex, intent.reps)
+            is WorkoutDetailsIntent.OnSetWeightChanged -> changeSetWeight(intent.setIndex, intent.weight)
+            WorkoutDetailsIntent.OnAddSetClicked -> addSet()
+            is WorkoutDetailsIntent.OnRemoveSetClicked -> removeSet(intent.setIndex)
+            WorkoutDetailsIntent.OnSaveClicked -> save()
+            WorkoutDetailsIntent.OnBackClicked -> lyteNavigator.back()
         }
     }
 
@@ -90,6 +101,39 @@ class WorkoutDetailsViewModel(
         updateState { copy(exercises = exercises.filterIndexed { i, _ -> i != index }) }
     }
 
+    /**
+     * Закрытие формы создания — это возврат к шторке выбора, а не выход: пользователь передумал
+     * создавать упражнение, но не искать его. Поисковый запрос возвращаем тот же, с которым ушли,
+     * потому что шторка выбора пересоздаётся вместе со своей ViewModel.
+     */
+    private fun dismissExerciseSheet() {
+        updateState {
+            val sheet = exerciseSheet
+            copy(
+                exerciseSheet = when (sheet) {
+                    is WorkoutExerciseSheet.Creator -> WorkoutExerciseSheet.Picker(query = sheet.initialName)
+                    is WorkoutExerciseSheet.Picker, null -> null
+                },
+            )
+        }
+    }
+
+    /**
+     * Упражнение добавляется без подходов, поэтому шторка закрывается сразу в редактор подходов —
+     * иначе упражнение осталось бы в программе с пустым планом.
+     */
+    private fun addExercise(exercise: WorkoutExerciseEntity) {
+        updateState {
+            val updatedExercises = exercises +
+                WorkoutExerciseWithRepsEntity(exercise = exercise, reps = emptyList()).toUiModel()
+            copy(
+                exercises = updatedExercises,
+                exerciseSheet = null,
+                editingExerciseIndex = updatedExercises.lastIndex,
+            )
+        }
+    }
+
     private fun changeSetReps(setIndex: Int, reps: Int) {
         updateState {
             copy(exercises = updatingEditedSets { sets -> sets.mapIndexed { i, set -> if (i == setIndex) set.copy(count = reps) else set } })
@@ -102,13 +146,14 @@ class WorkoutDetailsViewModel(
         }
     }
 
+    /** Новый подход копирует предыдущий; у только что выбранного из библиотеки упражнения копировать нечего. */
     private fun addSet() {
-        updateState { copy(exercises = updatingEditedSets { sets -> sets + sets.last() }) }
+        updateState { copy(exercises = updatingEditedSets { sets -> sets + (sets.lastOrNull() ?: DEFAULT_REP) }) }
     }
 
     private fun removeSet(setIndex: Int) {
         updateState {
-            copy(exercises = updatingEditedSets { sets -> if (sets.size > 1) sets.filterIndexed { i, _ -> i != setIndex } else sets })
+            copy(exercises = updatingEditedSets { sets -> sets.filterIndexed { i, _ -> i != setIndex } })
         }
     }
 
@@ -124,5 +169,10 @@ class WorkoutDetailsViewModel(
         return exercises.mapIndexed { i, model ->
             if (i == index) model.copy(exercise = model.exercise.copy(reps = transform(model.exercise.reps))) else model
         }
+    }
+
+    private companion object {
+        /** Подход по умолчанию: 8 повторений со своим весом — вес пользователь проставит сам. */
+        val DEFAULT_REP = WorkoutRepEntity(count = 8, weight = null)
     }
 }

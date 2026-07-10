@@ -19,14 +19,14 @@ class WorkoutListViewModel(
 
     override fun onIntent(intent: WorkoutListIntent) {
         when (intent) {
-            WorkoutListIntent.Refresh -> launch { loadWorkouts() }
+            WorkoutListIntent.OnScreenShown -> launch { loadWorkouts() }
 
-            is WorkoutListIntent.OpenDetails -> lyteNavigator.navigate(WorkoutDetailsRoute(id = intent.id))
-            WorkoutListIntent.CreateProgram -> lyteNavigator.navigate(WorkoutDetailsRoute(id = null))
+            is WorkoutListIntent.OnProgramClicked -> lyteNavigator.navigate(WorkoutDetailsRoute(id = intent.id))
+            WorkoutListIntent.OnCreateProgramClicked -> lyteNavigator.navigate(WorkoutDetailsRoute(id = null))
 
-            is WorkoutListIntent.RequestDelete -> updateState { copy(pendingDeleteId = intent.id) }
-            WorkoutListIntent.CancelDelete -> updateState { copy(pendingDeleteId = null) }
-            WorkoutListIntent.ConfirmDelete -> confirmDelete()
+            is WorkoutListIntent.OnDeleteProgramClicked -> updateState { copy(pendingDeleteId = intent.id) }
+            WorkoutListIntent.OnDeleteDismissed -> updateState { copy(pendingDeleteId = null) }
+            WorkoutListIntent.OnDeleteConfirmed -> confirmDelete()
         }
     }
 

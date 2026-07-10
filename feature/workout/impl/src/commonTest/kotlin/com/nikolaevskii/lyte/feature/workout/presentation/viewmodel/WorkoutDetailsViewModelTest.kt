@@ -4,6 +4,7 @@ import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutEntity
 import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseEntity
 import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseWithRepsEntity
 import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutRepEntity
+import com.nikolaevskii.lyte.feature.workout.presentation.model.WorkoutExerciseSheet
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutDetailsIntent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -39,7 +40,7 @@ class WorkoutDetailsViewModelTest {
     @Test
     fun createModeStartsWithGeneratedIdBlankFormAndDoesNotLoad() = runTest(testDispatcher) {
         val repository = FakeWorkoutRepository()
-        val viewModel = WorkoutDetailsViewModel(initialId = null, workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
+        val viewModel = createViewModel(initialId = null, workoutRepository = repository)
         runCurrent()
 
         val state = viewModel.uiState.value
@@ -60,7 +61,7 @@ class WorkoutDetailsViewModelTest {
                 exercises = listOf(exercise("e1", "Bench Press", 8 to 70.0), exercise("e2", "Dips", 12 to null)),
             )
         }
-        val viewModel = WorkoutDetailsViewModel(initialId = "w1", workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
+        val viewModel = createViewModel(initialId = "w1", workoutRepository = repository)
 
         runCurrent()
 
@@ -75,8 +76,7 @@ class WorkoutDetailsViewModelTest {
 
     @Test
     fun editModeMissingWorkoutSurfacesErrorMessage() = runTest(testDispatcher) {
-        val repository = FakeWorkoutRepository()
-        val viewModel = WorkoutDetailsViewModel(initialId = "missing", workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
+        val viewModel = createViewModel(initialId = "missing", workoutRepository = FakeWorkoutRepository())
 
         runCurrent()
 
@@ -88,7 +88,7 @@ class WorkoutDetailsViewModelTest {
     @Test
     fun editModeLoadFailureSurfacesErrorMessage() = runTest(testDispatcher) {
         val repository = FakeWorkoutRepository().apply { getWorkoutError = IllegalStateException("boom") }
-        val viewModel = WorkoutDetailsViewModel(initialId = "w1", workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
+        val viewModel = createViewModel(initialId = "w1", workoutRepository = repository)
 
         runCurrent()
 
@@ -98,10 +98,10 @@ class WorkoutDetailsViewModelTest {
 
     @Test
     fun changeNameUpdatesState() = runTest(testDispatcher) {
-        val viewModel = WorkoutDetailsViewModel(initialId = null, workoutRepository = FakeWorkoutRepository(), lyteNavigator = FakeLyteNavigator())
+        val viewModel = createViewModel(initialId = null)
         runCurrent()
 
-        viewModel.onIntent(WorkoutDetailsIntent.ChangeName("Leg Day"))
+        viewModel.onIntent(WorkoutDetailsIntent.OnNameChanged("Leg Day"))
 
         assertEquals("Leg Day", viewModel.uiState.value.name)
     }
@@ -114,10 +114,10 @@ class WorkoutDetailsViewModelTest {
                 exercises = listOf(exercise("e1", "Squat", 8 to 90.0), exercise("e2", "Bench", 8 to 70.0), exercise("e3", "Row", 10 to 60.0)),
             )
         }
-        val viewModel = WorkoutDetailsViewModel(initialId = "w1", workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
+        val viewModel = createViewModel(initialId = "w1", workoutRepository = repository)
         runCurrent()
 
-        viewModel.onIntent(WorkoutDetailsIntent.MoveExercise(fromIndex = 0, toIndex = 2))
+        viewModel.onIntent(WorkoutDetailsIntent.OnExerciseMoved(fromIndex = 0, toIndex = 2))
 
         assertEquals(listOf("Bench", "Row", "Squat"), viewModel.uiState.value.exercises.map { it.exercise.exercise.name })
     }
@@ -127,10 +127,10 @@ class WorkoutDetailsViewModelTest {
         val repository = FakeWorkoutRepository().apply {
             workoutToReturn = workout(id = "w1", exercises = listOf(exercise("e1", "Squat", 8 to 90.0), exercise("e2", "Bench", 8 to 70.0)))
         }
-        val viewModel = WorkoutDetailsViewModel(initialId = "w1", workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
+        val viewModel = createViewModel(initialId = "w1", workoutRepository = repository)
         runCurrent()
 
-        viewModel.onIntent(WorkoutDetailsIntent.MoveExercise(fromIndex = 5, toIndex = 0))
+        viewModel.onIntent(WorkoutDetailsIntent.OnExerciseMoved(fromIndex = 5, toIndex = 0))
 
         assertEquals(listOf("Squat", "Bench"), viewModel.uiState.value.exercises.map { it.exercise.exercise.name })
     }
@@ -143,26 +143,73 @@ class WorkoutDetailsViewModelTest {
                 exercises = listOf(exercise("e1", "Squat", 8 to 90.0), exercise("e2", "Bench", 8 to 70.0), exercise("e3", "Row", 10 to 60.0)),
             )
         }
-        val viewModel = WorkoutDetailsViewModel(initialId = "w1", workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
+        val viewModel = createViewModel(initialId = "w1", workoutRepository = repository)
         runCurrent()
 
-        viewModel.onIntent(WorkoutDetailsIntent.RemoveExercise(index = 1))
+        viewModel.onIntent(WorkoutDetailsIntent.OnRemoveExerciseClicked(index = 1))
 
         assertEquals(listOf("Squat", "Row"), viewModel.uiState.value.exercises.map { it.exercise.exercise.name })
     }
 
     @Test
-    fun addExerciseIsStubAndDoesNotChangeState() = runTest(testDispatcher) {
+    fun addExerciseClickOpensPickerSheet() = runTest(testDispatcher) {
+        val viewModel = createViewModel(initialId = null)
+        runCurrent()
+
+        viewModel.onIntent(WorkoutDetailsIntent.OnAddExerciseClicked)
+
+        assertEquals(WorkoutExerciseSheet.Picker(), viewModel.uiState.value.exerciseSheet)
+    }
+
+    @Test
+    fun dismissingPickerClosesSheet() = runTest(testDispatcher) {
+        val viewModel = createViewModel(initialId = null)
+        runCurrent()
+        viewModel.onIntent(WorkoutDetailsIntent.OnAddExerciseClicked)
+
+        viewModel.onIntent(WorkoutDetailsIntent.OnExerciseSheetDismissed)
+
+        assertNull(viewModel.uiState.value.exerciseSheet)
+    }
+
+    @Test
+    fun createExerciseClickReplacesPickerWithPrefilledCreator() = runTest(testDispatcher) {
+        val viewModel = createViewModel(initialId = null)
+        runCurrent()
+        viewModel.onIntent(WorkoutDetailsIntent.OnAddExerciseClicked)
+
+        viewModel.onIntent(WorkoutDetailsIntent.OnCreateExerciseClicked(query = "Жим Арнольда"))
+
+        assertEquals(WorkoutExerciseSheet.Creator(initialName = "Жим Арнольда"), viewModel.uiState.value.exerciseSheet)
+    }
+
+    @Test
+    fun dismissingCreatorReturnsToPickerWithSearchQuery() = runTest(testDispatcher) {
+        val viewModel = createViewModel(initialId = null)
+        runCurrent()
+        viewModel.onIntent(WorkoutDetailsIntent.OnCreateExerciseClicked(query = "Жим Арнольда"))
+
+        viewModel.onIntent(WorkoutDetailsIntent.OnExerciseSheetDismissed)
+
+        assertEquals(WorkoutExerciseSheet.Picker(query = "Жим Арнольда"), viewModel.uiState.value.exerciseSheet)
+    }
+
+    @Test
+    fun addExerciseAppendsItWithoutSetsClosesSheetAndOpensSetsEditor() = runTest(testDispatcher) {
         val repository = FakeWorkoutRepository().apply {
             workoutToReturn = workout(id = "w1", exercises = listOf(exercise("e1", "Squat", 8 to 90.0)))
         }
-        val viewModel = WorkoutDetailsViewModel(initialId = "w1", workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
+        val viewModel = createViewModel(initialId = "w1", workoutRepository = repository)
         runCurrent()
-        val stateBefore = viewModel.uiState.value
+        viewModel.onIntent(WorkoutDetailsIntent.OnAddExerciseClicked)
 
-        viewModel.onIntent(WorkoutDetailsIntent.AddExercise)
+        viewModel.onIntent(WorkoutDetailsIntent.OnExerciseSelected(WorkoutExerciseEntity(id = "l2", name = "Жим лёжа")))
 
-        assertEquals(stateBefore, viewModel.uiState.value)
+        val state = viewModel.uiState.value
+        assertNull(state.exerciseSheet)
+        assertEquals(listOf("Squat", "Жим лёжа"), state.exercises.map { it.exercise.exercise.name })
+        assertTrue(state.exercises.last().exercise.reps.isEmpty())
+        assertEquals(state.exercises.lastIndex, state.editingExerciseIndex)
     }
 
     @Test
@@ -173,10 +220,10 @@ class WorkoutDetailsViewModelTest {
                 exercises = listOf(exercise("e1", "Squat", 8 to 90.0), exercise("e2", "Bench", 8 to 70.0)),
             )
         }
-        val viewModel = WorkoutDetailsViewModel(initialId = "w1", workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
+        val viewModel = createViewModel(initialId = "w1", workoutRepository = repository)
         runCurrent()
 
-        viewModel.onIntent(WorkoutDetailsIntent.EditExerciseSets(index = 1))
+        viewModel.onIntent(WorkoutDetailsIntent.OnEditSetsClicked(index = 1))
 
         assertEquals(1, viewModel.uiState.value.editingExerciseIndex)
     }
@@ -186,11 +233,11 @@ class WorkoutDetailsViewModelTest {
         val repository = FakeWorkoutRepository().apply {
             workoutToReturn = workout(id = "w1", exercises = listOf(exercise("e1", "Squat", 8 to 90.0)))
         }
-        val viewModel = WorkoutDetailsViewModel(initialId = "w1", workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
+        val viewModel = createViewModel(initialId = "w1", workoutRepository = repository)
         runCurrent()
-        viewModel.onIntent(WorkoutDetailsIntent.EditExerciseSets(index = 0))
+        viewModel.onIntent(WorkoutDetailsIntent.OnEditSetsClicked(index = 0))
 
-        viewModel.onIntent(WorkoutDetailsIntent.CloseSetsEditor)
+        viewModel.onIntent(WorkoutDetailsIntent.OnSetsEditorDismissed)
 
         assertNull(viewModel.uiState.value.editingExerciseIndex)
     }
@@ -200,11 +247,11 @@ class WorkoutDetailsViewModelTest {
         val repository = FakeWorkoutRepository().apply {
             workoutToReturn = workout(id = "w1", exercises = listOf(exercise("e1", "Squat", 8 to 90.0, 6 to 95.0)))
         }
-        val viewModel = WorkoutDetailsViewModel(initialId = "w1", workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
+        val viewModel = createViewModel(initialId = "w1", workoutRepository = repository)
         runCurrent()
-        viewModel.onIntent(WorkoutDetailsIntent.EditExerciseSets(index = 0))
+        viewModel.onIntent(WorkoutDetailsIntent.OnEditSetsClicked(index = 0))
 
-        viewModel.onIntent(WorkoutDetailsIntent.ChangeSetReps(setIndex = 1, reps = 5))
+        viewModel.onIntent(WorkoutDetailsIntent.OnSetRepsChanged(setIndex = 1, reps = 5))
 
         val reps = viewModel.uiState.value.exercises.single().exercise.reps
         assertEquals(listOf(8 to 90.0, 5 to 95.0), reps.map { it.count to it.weight })
@@ -215,11 +262,11 @@ class WorkoutDetailsViewModelTest {
         val repository = FakeWorkoutRepository().apply {
             workoutToReturn = workout(id = "w1", exercises = listOf(exercise("e1", "Squat", 8 to 90.0, 6 to 95.0)))
         }
-        val viewModel = WorkoutDetailsViewModel(initialId = "w1", workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
+        val viewModel = createViewModel(initialId = "w1", workoutRepository = repository)
         runCurrent()
-        viewModel.onIntent(WorkoutDetailsIntent.EditExerciseSets(index = 0))
+        viewModel.onIntent(WorkoutDetailsIntent.OnEditSetsClicked(index = 0))
 
-        viewModel.onIntent(WorkoutDetailsIntent.ChangeSetWeight(setIndex = 0, weight = 92.5))
+        viewModel.onIntent(WorkoutDetailsIntent.OnSetWeightChanged(setIndex = 0, weight = 92.5))
 
         val reps = viewModel.uiState.value.exercises.single().exercise.reps
         assertEquals(listOf(8 to 92.5, 6 to 95.0), reps.map { it.count to it.weight })
@@ -230,14 +277,29 @@ class WorkoutDetailsViewModelTest {
         val repository = FakeWorkoutRepository().apply {
             workoutToReturn = workout(id = "w1", exercises = listOf(exercise("e1", "Squat", 8 to 90.0, 6 to 95.0)))
         }
-        val viewModel = WorkoutDetailsViewModel(initialId = "w1", workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
+        val viewModel = createViewModel(initialId = "w1", workoutRepository = repository)
         runCurrent()
-        viewModel.onIntent(WorkoutDetailsIntent.EditExerciseSets(index = 0))
+        viewModel.onIntent(WorkoutDetailsIntent.OnEditSetsClicked(index = 0))
 
-        viewModel.onIntent(WorkoutDetailsIntent.AddSet)
+        viewModel.onIntent(WorkoutDetailsIntent.OnAddSetClicked)
 
         val reps = viewModel.uiState.value.exercises.single().exercise.reps
         assertEquals(listOf(8 to 90.0, 6 to 95.0, 6 to 95.0), reps.map { it.count to it.weight })
+    }
+
+    @Test
+    fun addSetOnExerciseWithoutSetsAppendsDefaultSet() = runTest(testDispatcher) {
+        val repository = FakeWorkoutRepository().apply {
+            workoutToReturn = workout(id = "w1", exercises = listOf(exercise("e1", "Squat")))
+        }
+        val viewModel = createViewModel(initialId = "w1", workoutRepository = repository)
+        runCurrent()
+        viewModel.onIntent(WorkoutDetailsIntent.OnEditSetsClicked(index = 0))
+
+        viewModel.onIntent(WorkoutDetailsIntent.OnAddSetClicked)
+
+        val reps = viewModel.uiState.value.exercises.single().exercise.reps
+        assertEquals(listOf(8 to null), reps.map { it.count to it.weight })
     }
 
     @Test
@@ -245,41 +307,40 @@ class WorkoutDetailsViewModelTest {
         val repository = FakeWorkoutRepository().apply {
             workoutToReturn = workout(id = "w1", exercises = listOf(exercise("e1", "Squat", 8 to 90.0, 6 to 95.0, 6 to 95.0)))
         }
-        val viewModel = WorkoutDetailsViewModel(initialId = "w1", workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
+        val viewModel = createViewModel(initialId = "w1", workoutRepository = repository)
         runCurrent()
-        viewModel.onIntent(WorkoutDetailsIntent.EditExerciseSets(index = 0))
+        viewModel.onIntent(WorkoutDetailsIntent.OnEditSetsClicked(index = 0))
 
-        viewModel.onIntent(WorkoutDetailsIntent.RemoveSet(setIndex = 1))
+        viewModel.onIntent(WorkoutDetailsIntent.OnRemoveSetClicked(setIndex = 1))
 
         val reps = viewModel.uiState.value.exercises.single().exercise.reps
         assertEquals(listOf(8 to 90.0, 6 to 95.0), reps.map { it.count to it.weight })
     }
 
     @Test
-    fun removeSetIsNoOpWhenOnlyOneSetRemains() = runTest(testDispatcher) {
+    fun removeSetCanEmptyThePlan() = runTest(testDispatcher) {
         val repository = FakeWorkoutRepository().apply {
             workoutToReturn = workout(id = "w1", exercises = listOf(exercise("e1", "Squat", 8 to 90.0)))
         }
-        val viewModel = WorkoutDetailsViewModel(initialId = "w1", workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
+        val viewModel = createViewModel(initialId = "w1", workoutRepository = repository)
         runCurrent()
-        viewModel.onIntent(WorkoutDetailsIntent.EditExerciseSets(index = 0))
+        viewModel.onIntent(WorkoutDetailsIntent.OnEditSetsClicked(index = 0))
 
-        viewModel.onIntent(WorkoutDetailsIntent.RemoveSet(setIndex = 0))
+        viewModel.onIntent(WorkoutDetailsIntent.OnRemoveSetClicked(setIndex = 0))
 
-        val reps = viewModel.uiState.value.exercises.single().exercise.reps
-        assertEquals(listOf(8 to 90.0), reps.map { it.count to it.weight })
+        assertTrue(viewModel.uiState.value.exercises.single().exercise.reps.isEmpty())
     }
 
     @Test
     fun saveInCreateModeCallsCreateWorkoutAndNavigatesBack() = runTest(testDispatcher) {
         val repository = FakeWorkoutRepository()
         val navigator = FakeLyteNavigator()
-        val viewModel = WorkoutDetailsViewModel(initialId = null, workoutRepository = repository, lyteNavigator = navigator)
+        val viewModel = createViewModel(initialId = null, workoutRepository = repository, lyteNavigator = navigator)
         runCurrent()
         val generatedId = viewModel.uiState.value.id
-        viewModel.onIntent(WorkoutDetailsIntent.ChangeName("New Program"))
+        viewModel.onIntent(WorkoutDetailsIntent.OnNameChanged("New Program"))
 
-        viewModel.onIntent(WorkoutDetailsIntent.Save)
+        viewModel.onIntent(WorkoutDetailsIntent.OnSaveClicked)
         runCurrent()
 
         assertEquals(listOf(WorkoutEntity(id = generatedId, name = "New Program", description = null, exercises = emptyList())), repository.createdWorkouts)
@@ -294,11 +355,11 @@ class WorkoutDetailsViewModelTest {
             workoutToReturn = workout(id = "w1", name = "Push Day", description = "Original description", exercises = listOf(exercise("e1", "Squat", 8 to 90.0)))
         }
         val navigator = FakeLyteNavigator()
-        val viewModel = WorkoutDetailsViewModel(initialId = "w1", workoutRepository = repository, lyteNavigator = navigator)
+        val viewModel = createViewModel(initialId = "w1", workoutRepository = repository, lyteNavigator = navigator)
         runCurrent()
-        viewModel.onIntent(WorkoutDetailsIntent.ChangeName("Renamed"))
+        viewModel.onIntent(WorkoutDetailsIntent.OnNameChanged("Renamed"))
 
-        viewModel.onIntent(WorkoutDetailsIntent.Save)
+        viewModel.onIntent(WorkoutDetailsIntent.OnSaveClicked)
         runCurrent()
 
         val saved = repository.editedWorkouts.single()
@@ -313,11 +374,11 @@ class WorkoutDetailsViewModelTest {
     fun saveFailureKeepsFormAndSurfacesErrorWithoutNavigating() = runTest(testDispatcher) {
         val repository = FakeWorkoutRepository().apply { createWorkoutError = IllegalStateException("save failed") }
         val navigator = FakeLyteNavigator()
-        val viewModel = WorkoutDetailsViewModel(initialId = null, workoutRepository = repository, lyteNavigator = navigator)
+        val viewModel = createViewModel(initialId = null, workoutRepository = repository, lyteNavigator = navigator)
         runCurrent()
-        viewModel.onIntent(WorkoutDetailsIntent.ChangeName("New Program"))
+        viewModel.onIntent(WorkoutDetailsIntent.OnNameChanged("New Program"))
 
-        viewModel.onIntent(WorkoutDetailsIntent.Save)
+        viewModel.onIntent(WorkoutDetailsIntent.OnSaveClicked)
         runCurrent()
 
         assertEquals("save failed", viewModel.uiState.value.errorMessage)
@@ -330,15 +391,25 @@ class WorkoutDetailsViewModelTest {
     fun backCallsNavigatorBackWithoutTouchingRepository() = runTest(testDispatcher) {
         val repository = FakeWorkoutRepository()
         val navigator = FakeLyteNavigator()
-        val viewModel = WorkoutDetailsViewModel(initialId = null, workoutRepository = repository, lyteNavigator = navigator)
+        val viewModel = createViewModel(initialId = null, workoutRepository = repository, lyteNavigator = navigator)
         runCurrent()
 
-        viewModel.onIntent(WorkoutDetailsIntent.Back)
+        viewModel.onIntent(WorkoutDetailsIntent.OnBackClicked)
 
         assertEquals(1, navigator.backCallCount)
         assertTrue(repository.createdWorkouts.isEmpty())
         assertTrue(repository.editedWorkouts.isEmpty())
     }
+
+    private fun createViewModel(
+        initialId: String?,
+        workoutRepository: FakeWorkoutRepository = FakeWorkoutRepository(),
+        lyteNavigator: FakeLyteNavigator = FakeLyteNavigator(),
+    ): WorkoutDetailsViewModel = WorkoutDetailsViewModel(
+        initialId = initialId,
+        workoutRepository = workoutRepository,
+        lyteNavigator = lyteNavigator,
+    )
 
     private fun workout(
         id: String,

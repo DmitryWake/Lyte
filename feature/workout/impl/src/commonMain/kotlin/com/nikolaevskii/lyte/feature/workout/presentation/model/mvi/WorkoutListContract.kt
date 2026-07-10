@@ -11,26 +11,27 @@ data class WorkoutListUiState(
     val pendingDeleteId: String? = null,
 ) : UiState
 
+/** События экрана списка программ; решение принимает `WorkoutListViewModel`. */
 sealed interface WorkoutListIntent : UiIntent {
 
     /**
-     * Перезагрузить список программ — экран шлёт при каждом появлении (в т.ч. при возврате из
-     * редактора программы, чтобы подхватить создание/переименование/удаление упражнений).
+     * Экран показан — в том числе при возврате из редактора программы, поэтому список нужно
+     * перечитать, чтобы подхватить создание/переименование/удаление.
      */
-    data object Refresh : WorkoutListIntent
+    data object OnScreenShown : WorkoutListIntent
 
-    /** Открыть детали программы [id] в редакторе программы (3.2). */
-    data class OpenDetails(val id: String) : WorkoutListIntent
+    /** Пользователь тапнул по программе [id]. */
+    data class OnProgramClicked(val id: String) : WorkoutListIntent
 
-    /** Создать новую программу — открывает редактор программы (3.2) в режиме создания. */
-    data object CreateProgram : WorkoutListIntent
+    /** Пользователь нажал «Новая программа». */
+    data object OnCreateProgramClicked : WorkoutListIntent
 
-    /** Запросить подтверждение удаления программы [id] — показывает диалог. */
-    data class RequestDelete(val id: String) : WorkoutListIntent
+    /** Пользователь нажал «удалить» на программе [id]. */
+    data class OnDeleteProgramClicked(val id: String) : WorkoutListIntent
 
-    /** Подтвердить удаление программы, отмеченной [WorkoutListUiState.pendingDeleteId]. */
-    data object ConfirmDelete : WorkoutListIntent
+    /** Пользователь подтвердил удаление программы, отмеченной [WorkoutListUiState.pendingDeleteId]. */
+    data object OnDeleteConfirmed : WorkoutListIntent
 
-    /** Отменить удаление, закрыть диалог подтверждения. */
-    data object CancelDelete : WorkoutListIntent
+    /** Пользователь закрыл диалог подтверждения удаления. */
+    data object OnDeleteDismissed : WorkoutListIntent
 }

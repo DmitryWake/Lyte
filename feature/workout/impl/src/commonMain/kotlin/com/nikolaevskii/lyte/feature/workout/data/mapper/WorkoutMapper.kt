@@ -36,6 +36,8 @@ internal fun WorkoutExerciseEntity.toDatabaseEntity(): ExerciseDatabaseEntity =
     ExerciseDatabaseEntity(
         id = id,
         name = name,
+        // Служебная колонка под поиск и сортировку — см. ExerciseDatabaseEntity.nameNormalized.
+        nameNormalized = name.lowercase(),
         description = description,
     )
 

@@ -1,0 +1,257 @@
+package com.nikolaevskii.lyte.feature.workout.presentation.screen
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.nikolaevskii.lyte.core.design.LyteTheme
+import com.nikolaevskii.lyte.core.design.component.button.LyteButton
+import com.nikolaevskii.lyte.core.design.component.card.LyteListRow
+import com.nikolaevskii.lyte.core.design.component.feedback.LyteEmptyState
+import com.nikolaevskii.lyte.core.design.component.overlay.LyteBottomSheet
+import com.nikolaevskii.lyte.core.design.component.textfield.LyteTextField
+import com.nikolaevskii.lyte.core.design.icon.LyteIcons
+import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseEntity
+import com.nikolaevskii.lyte.feature.workout.generated.resources.Res
+import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_picker_create
+import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_picker_empty_hint
+import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_picker_empty_message
+import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_picker_not_found_hint
+import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_picker_not_found_title
+import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_picker_search_placeholder
+import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_picker_title
+import com.nikolaevskii.lyte.feature.workout.presentation.model.ExercisePickerResult
+import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExercisePickerIntent
+import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExercisePickerUiState
+import com.nikolaevskii.lyte.feature.workout.presentation.viewmodel.ExercisePickerViewModel
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
+
+private val previewLibrary = listOf(
+    WorkoutExerciseEntity(
+        id = "1",
+        name = "Приседания со штангой",
+        description = "Штанга на верхней части спины, присед до параллели бёдер с полом.",
+    ),
+    WorkoutExerciseEntity(
+        id = "2",
+        name = "Становая тяга",
+        description = "Подъём штанги с пола за счёт разгибания бёдер и спины, руки прямые.",
+    ),
+    WorkoutExerciseEntity(
+        id = "3",
+        name = "Жим лёжа",
+        description = "Жим штанги от середины груди лёжа на горизонтальной скамье.",
+    ),
+    WorkoutExerciseEntity(id = "4", name = "Подтягивания", description = null),
+)
+
+/**
+ * Шторка выбора упражнения из библиотеки (3.3). Строка поиска закреплена сверху (`topContent`
+ * шторки), кнопка создания — снизу (`bottomBar`): ни та ни другая не должны уезжать вместе со
+ * списком. Библиотека может вырасти до сотен упражнений, поэтому список — [LazyColumn]; шторка
+ * своего скролла не имеет, его реализует потребитель.
+ *
+ * У шторки собственные [ExercisePickerViewModel] и MVI-контракт, а наружу она отдаёт только
+ * результат — через [onExercisePicked] / [onCreateExerciseRequested]. Владелец (экран редактора
+ * программы) решает, что с ним делать и когда шторку закрыть.
+ *
+ * `koinViewModel()` вызывается внутри [SheetViewModelStoreOwner], а не в параметрах функции: стор
+ * должен быть подменён выше по дереву, иначе ViewModel переживёт закрытие шторки.
+ */
+@Composable
+fun WorkoutExercisePickerSheet(
+    onExercisePicked: (WorkoutExerciseEntity) -> Unit,
+    onCreateExerciseRequested: (String) -> Unit,
+    onDismissRequest: () -> Unit,
+    initialQuery: String = "",
+    modifier: Modifier = Modifier,
+) {
+    SheetViewModelStoreOwner {
+        val viewModel: ExercisePickerViewModel = koinViewModel { parametersOf(initialQuery) }
+        val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+        LaunchedEffect(state.result) {
+            when (val result = state.result) {
+                is ExercisePickerResult.Picked -> onExercisePicked(result.exercise)
+                is ExercisePickerResult.CreationRequested -> onCreateExerciseRequested(result.name)
+                null -> Unit
+            }
+        }
+
+        WorkoutExercisePickerSheetContent(
+            state = state,
+            onIntent = viewModel::onIntent,
+            onDismissRequest = onDismissRequest,
+            modifier = modifier,
+        )
+    }
+}
+
+@Composable
+fun WorkoutExercisePickerSheetContent(
+    state: ExercisePickerUiState,
+    onIntent: (ExercisePickerIntent) -> Unit,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LyteBottomSheet(
+        title = stringResource(Res.string.workout_details_picker_title),
+        onDismissRequest = onDismissRequest,
+        topContent = {
+            LyteTextField(
+                value = state.query,
+                onValueChange = { query -> onIntent(ExercisePickerIntent.OnQueryChanged(query)) },
+                placeholder = stringResource(Res.string.workout_details_picker_search_placeholder),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = LyteTheme.spacing.s5, vertical = LyteTheme.spacing.s2),
+            )
+        },
+        bottomBar = {
+            // Подложка с тенью отделяет прибитую кнопку от списка, уезжающего под неё.
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceContainerLowest,
+                shadowElevation = LyteTheme.elevation.level2,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                LyteButton(
+                    text = stringResource(Res.string.workout_details_picker_create),
+                    onClick = { onIntent(ExercisePickerIntent.OnCreateExerciseClicked) },
+                    icon = LyteIcons.Plus,
+                    fullWidth = true,
+                    modifier = Modifier.padding(horizontal = LyteTheme.spacing.s5, vertical = LyteTheme.spacing.s4),
+                )
+            }
+        },
+        modifier = modifier,
+    ) {
+        when {
+            state.isLoading -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+
+            state.errorMessage != null -> Text(
+                text = state.errorMessage,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(horizontal = LyteTheme.spacing.s5, vertical = LyteTheme.spacing.s3),
+            )
+
+            // Пустой список читается по запросу: без запроса это пустая библиотека, с запросом —
+            // «ничего не найдено».
+            state.exercises.isEmpty() && state.query.isBlank() ->
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    LyteEmptyState(
+                        icon = LyteIcons.Dumbbell,
+                        message = stringResource(Res.string.workout_details_picker_empty_message),
+                        hint = stringResource(Res.string.workout_details_picker_empty_hint),
+                    )
+                }
+
+            state.exercises.isEmpty() -> ExercisePickerNotFound()
+
+            else -> LazyColumn(
+                contentPadding = PaddingValues(horizontal = LyteTheme.spacing.s5, vertical = LyteTheme.spacing.s2),
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                items(items = state.exercises, key = { exercise -> exercise.id }) { exercise ->
+                    LyteListRow(
+                        title = exercise.name,
+                        subtitle = exercise.description,
+                        onClick = { onIntent(ExercisePickerIntent.OnExerciseClicked(exercise.id)) },
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Пустой результат поиска — намеренно компактнее, чем `LyteEmptyState`: библиотека не пуста, это
+ * временное состояние строки поиска, и крупный бейдж с иконкой здесь читался бы как тупик.
+ */
+@Composable
+private fun ExercisePickerNotFound(modifier: Modifier = Modifier) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(LyteTheme.spacing.s1),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = LyteTheme.spacing.s4, vertical = LyteTheme.spacing.s10),
+    ) {
+        Text(
+            text = stringResource(Res.string.workout_details_picker_not_found_title),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Text(
+            text = stringResource(Res.string.workout_details_picker_not_found_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
+@Preview
+private fun WorkoutExercisePickerSheetContentPreview() {
+    LyteTheme {
+        WorkoutExercisePickerSheetContent(
+            state = ExercisePickerUiState(exercises = previewLibrary, isLoading = false),
+            onIntent = {},
+            onDismissRequest = {},
+        )
+    }
+}
+
+@Composable
+@Preview
+private fun WorkoutExercisePickerSheetContentNotFoundPreview() {
+    LyteTheme {
+        WorkoutExercisePickerSheetContent(
+            state = ExercisePickerUiState(query = "Жим Арнольда", isLoading = false),
+            onIntent = {},
+            onDismissRequest = {},
+        )
+    }
+}
+
+@Composable
+@Preview
+private fun WorkoutExercisePickerSheetContentEmptyLibraryPreview() {
+    LyteTheme {
+        WorkoutExercisePickerSheetContent(
+            state = ExercisePickerUiState(isLoading = false),
+            onIntent = {},
+            onDismissRequest = {},
+        )
+    }
+}
+
+@Composable
+@Preview
+private fun WorkoutExercisePickerSheetContentLoadingPreview() {
+    LyteTheme {
+        WorkoutExercisePickerSheetContent(state = ExercisePickerUiState(), onIntent = {}, onDismissRequest = {})
+    }
+}

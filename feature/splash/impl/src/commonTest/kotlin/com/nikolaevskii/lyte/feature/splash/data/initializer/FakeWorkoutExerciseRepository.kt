@@ -7,7 +7,8 @@ internal class FakeWorkoutExerciseRepository : WorkoutExerciseRepository {
 
     private val exercises = mutableMapOf<String, WorkoutExerciseEntity>()
 
-    override suspend fun getExercises(): List<WorkoutExerciseEntity> = exercises.values.toList()
+    override suspend fun getExercises(query: String): List<WorkoutExerciseEntity> =
+        exercises.values.filter { exercise -> exercise.name.contains(query.trim(), ignoreCase = true) }
 
     override suspend fun getExercise(id: String): WorkoutExerciseEntity? = exercises[id]
 

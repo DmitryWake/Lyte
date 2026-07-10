@@ -7,7 +7,15 @@ internal class FakeExerciseDao : ExerciseDao {
 
     private val exercises = mutableMapOf<String, ExerciseDatabaseEntity>()
 
-    override suspend fun getAll(): List<ExerciseDatabaseEntity> = exercises.values.toList()
+    /**
+     * Повторяет контракт SQL-запроса: подстрока ищется по уже нормализованному названию, результат
+     * отсортирован по нему же. Экранирование `LIKE` здесь не воспроизводится — за него отвечает
+     * вызывающая сторона, и в фейке спецсимволы остаются обычными символами, как и в SQLite с `ESCAPE`.
+     */
+    override suspend fun search(normalizedQuery: String): List<ExerciseDatabaseEntity> =
+        exercises.values
+            .filter { exercise -> exercise.nameNormalized.contains(normalizedQuery.unescapedFromLike()) }
+            .sortedBy { exercise -> exercise.nameNormalized }
 
     override suspend fun getById(id: String): ExerciseDatabaseEntity? = exercises[id]
 
@@ -18,4 +26,6 @@ internal class FakeExerciseDao : ExerciseDao {
     override suspend fun deleteById(id: String) {
         exercises.remove(id)
     }
+
+    private fun String.unescapedFromLike(): String = replace("\\%", "%").replace("\\_", "_").replace("\\\\", "\\")
 }

@@ -10,8 +10,13 @@ internal class WorkoutExerciseRepositoryImpl(
     private val exerciseDao: ExerciseDao,
 ) : WorkoutExerciseRepository {
 
-    override suspend fun getExercises(): List<WorkoutExerciseEntity> =
-        exerciseDao.getAll().map { exercise -> exercise.toDomainEntity() }
+    /**
+     * Фильтрация и сортировка — в SQL (см. [ExerciseDao.search]), сюда остаётся только привести
+     * запрос к тому же виду, в каком лежит `name_normalized`, и экранировать спецсимволы `LIKE`.
+     */
+    override suspend fun getExercises(query: String): List<WorkoutExerciseEntity> =
+        exerciseDao.search(normalizedQuery = query.trim().lowercase().escapedForLike())
+            .map { exercise -> exercise.toDomainEntity() }
 
     override suspend fun getExercise(id: String): WorkoutExerciseEntity? =
         exerciseDao.getById(id)?.toDomainEntity()
@@ -26,5 +31,15 @@ internal class WorkoutExerciseRepositoryImpl(
 
     override suspend fun deleteExercise(id: String) {
         exerciseDao.deleteById(id)
+    }
+
+    /** Без экранирования введённые пользователем `%` и `_` работали бы как маски `LIKE`. */
+    private fun String.escapedForLike(): String =
+        replace(LIKE_ESCAPE_CHAR, "$LIKE_ESCAPE_CHAR$LIKE_ESCAPE_CHAR")
+            .replace("%", "$LIKE_ESCAPE_CHAR%")
+            .replace("_", "${LIKE_ESCAPE_CHAR}_")
+
+    private companion object {
+        const val LIKE_ESCAPE_CHAR = "\\"
     }
 }

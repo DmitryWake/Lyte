@@ -62,13 +62,90 @@
 | `component.card` | `LyteProgramCard` (+`trailing`), `LyteExerciseCard` (`setLabels`-пилюли + edit/remove), `LyteSessionCard`, `LyteListRow` |
 | `component.feedback` | `LyteDiffRow` (тона Met/Positive/Negative/Neutral/Skipped), `LyteDialog`, `LyteEmptyState` |
 | `component.navigation` | `LyteTopBar` (size Small/Large), `LyteBottomNavigationBar` (+ `LyteBottomNavigationBarHeight` — резерв под него для контента, см. «Нюансы») |
-| `component.overlay` | `LyteBottomSheet`, `LyteRestTimerOverlay` |
+| `component.overlay` | `LyteBottomSheet` (слоты `title`/`subtitle`/`topContent`/`content`/`bottomBar` + `LyteBottomSheetHeight`, см. ниже), `LyteRestTimerOverlay` |
 | `component.datadisplay` | `LyteSessionStopwatch` |
 | `component.session` | `LyteSetDots`, `LyteSetOverview`, `LyteTrackSetRow`, `LyteExerciseStrip` (экран активной сессии) |
 
 `LyteDialog` / `LyteBottomSheet` / `LyteRestTimerOverlay` не принимают флаг видимости — видимостью
 управляет вызывающая сторона самим фактом композиции (`if (showDialog) { LyteDialog(...) }`), как
 принято в M3 (`AlertDialog`, `ModalBottomSheet` не имеют параметра `visible`).
+
+### Слоты `LyteBottomSheet`
+
+Сверху вниз: `title` → `subtitle` → `topContent` → `content` → `bottomBar`. Всё, кроме `content`,
+закреплено и не скроллится: `topContent` — под строку поиска или фильтры, `bottomBar` — под основное
+действие шторки, которое должно быть на виду независимо от длины контента.
+
+Три правила для потребителя:
+
+1. **Высота задаётся параметром `height`** (`LyteBottomSheetHeight`): `Full` — во весь экран, для
+   длинных и заранее неизвестных по высоте списков; `WrapContent` — по высоте контента, для коротких
+   форм на пару полей. В обоих режимах `bottomBar` прижат к низу шторки.
+2. **Скролл `content` реализует потребитель**, а не шторка. Длинные списки — `LazyColumn`
+   (ленивая отрисовка), короткий контент — `Column(Modifier.verticalScroll(...))`. При `Full`
+   `content` получает всю оставшуюся высоту (`weight(1f)`), при `WrapContent` — свою собственную.
+3. **Шторка паддингует только `title` и `subtitle`.** `topContent`, `content` и `bottomBar` паддингует
+   потребитель — иначе список скроллился бы не под самый край, а прибитая снизу кнопка не смогла бы
+   растянуть подложку с тенью на всю ширину. Горизонталь, к которой нужно выравниваться, —
+   `LyteTheme.spacing.s5`.
+
+```kotlin
+LyteBottomSheet(
+    title = "Добавить упражнение",
+    onDismissRequest = onDismiss,
+    topContent = {
+        LyteTextField(
+            value = query,
+            onValueChange = onQueryChange,
+            placeholder = "Поиск по названию",
+            modifier = Modifier.fillMaxWidth().padding(horizontal = LyteTheme.spacing.s5),
+        )
+    },
+    bottomBar = {
+        LyteButton(
+            text = "Создать новое упражнение",
+            onClick = onCreate,
+            fullWidth = true,
+            modifier = Modifier.padding(LyteTheme.spacing.s5),
+        )
+    },
+) {
+    LazyColumn(
+        contentPadding = PaddingValues(horizontal = LyteTheme.spacing.s5),
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        items(exercises, key = { it.id }) { exercise ->
+            LyteListRow(title = exercise.name, onClick = { onPick(exercise.id) })
+        }
+    }
+}
+```
+
+Короткая форма — та же шторка, но по высоте контента:
+
+```kotlin
+LyteBottomSheet(
+    title = "Новое упражнение",
+    onDismissRequest = onDismiss,
+    height = LyteBottomSheetHeight.WrapContent,
+    bottomBar = {
+        LyteButton(
+            text = "Создать",
+            onClick = onCreate,
+            enabled = isSubmitEnabled,
+            fullWidth = true,
+            modifier = Modifier.padding(LyteTheme.spacing.s5),
+        )
+    },
+) {
+    LyteTextField(
+        value = name,
+        onValueChange = onNameChange,
+        label = "Название",
+        modifier = Modifier.fillMaxWidth().padding(horizontal = LyteTheme.spacing.s5),
+    )
+}
+```
 
 ## Использование
 

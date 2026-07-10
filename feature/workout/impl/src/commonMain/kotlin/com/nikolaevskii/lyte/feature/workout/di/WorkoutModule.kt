@@ -4,6 +4,8 @@ import com.nikolaevskii.lyte.feature.workout.data.repository.WorkoutExerciseRepo
 import com.nikolaevskii.lyte.feature.workout.data.repository.WorkoutRepositoryImpl
 import com.nikolaevskii.lyte.feature.workout.domain.repository.WorkoutExerciseRepository
 import com.nikolaevskii.lyte.feature.workout.domain.repository.WorkoutRepository
+import com.nikolaevskii.lyte.feature.workout.presentation.viewmodel.ExerciseCreatorViewModel
+import com.nikolaevskii.lyte.feature.workout.presentation.viewmodel.ExercisePickerViewModel
 import com.nikolaevskii.lyte.feature.workout.presentation.viewmodel.WorkoutDetailsViewModel
 import com.nikolaevskii.lyte.feature.workout.presentation.viewmodel.WorkoutListViewModel
 import org.koin.core.module.dsl.viewModel
@@ -21,5 +23,11 @@ val featureWorkoutModule = module {
             workoutRepository = get(),
             lyteNavigator = get(),
         )
+    }
+    viewModel { (initialQuery: String) ->
+        ExercisePickerViewModel(initialQuery = initialQuery, workoutExerciseRepository = get())
+    }
+    viewModel { (initialName: String) ->
+        ExerciseCreatorViewModel(initialName = initialName, workoutExerciseRepository = get())
     }
 }

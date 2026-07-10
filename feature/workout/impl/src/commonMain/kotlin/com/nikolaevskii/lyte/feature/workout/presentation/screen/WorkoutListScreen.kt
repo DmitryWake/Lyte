@@ -55,7 +55,7 @@ fun WorkoutListScreen(
     // композиции, пока редактор сверху), а ViewModel переживает — без этого список показывал бы
     // устаревшие данные после создания/переименования/удаления программы.
     LaunchedEffect(Unit) {
-        viewModel.onIntent(WorkoutListIntent.Refresh)
+        viewModel.onIntent(WorkoutListIntent.OnScreenShown)
     }
 
     WorkoutListContent(
@@ -93,7 +93,7 @@ fun WorkoutListContent(
                         message = stringResource(Res.string.workout_list_empty_message),
                         hint = stringResource(Res.string.workout_list_empty_hint),
                         actionLabel = stringResource(Res.string.workout_list_new_program),
-                        onAction = { onIntent(WorkoutListIntent.CreateProgram) },
+                        onAction = { onIntent(WorkoutListIntent.OnCreateProgramClicked) },
                         modifier = Modifier.align(Alignment.Center),
                     )
 
@@ -106,8 +106,8 @@ fun WorkoutListContent(
             LyteDialog(
                 title = stringResource(Res.string.workout_list_delete_dialog_title, pendingDeleteName),
                 description = stringResource(Res.string.workout_list_delete_dialog_description),
-                onConfirm = { onIntent(WorkoutListIntent.ConfirmDelete) },
-                onDismissRequest = { onIntent(WorkoutListIntent.CancelDelete) },
+                onConfirm = { onIntent(WorkoutListIntent.OnDeleteConfirmed) },
+                onDismissRequest = { onIntent(WorkoutListIntent.OnDeleteDismissed) },
             )
         }
     }
@@ -140,12 +140,12 @@ private fun WorkoutProgramList(
                     program.exerciseCount,
                     program.exerciseCount,
                 ),
-                onClick = { onIntent(WorkoutListIntent.OpenDetails(program.id)) },
+                onClick = { onIntent(WorkoutListIntent.OnProgramClicked(program.id)) },
                 trailing = {
                     LyteIconButton(
                         icon = LyteIcons.Delete,
                         contentDescription = stringResource(Res.string.workout_list_delete_a11y),
-                        onClick = { onIntent(WorkoutListIntent.RequestDelete(program.id)) },
+                        onClick = { onIntent(WorkoutListIntent.OnDeleteProgramClicked(program.id)) },
                     )
                 },
             )
@@ -153,7 +153,7 @@ private fun WorkoutProgramList(
         item {
             LyteButton(
                 text = stringResource(Res.string.workout_list_new_program),
-                onClick = { onIntent(WorkoutListIntent.CreateProgram) },
+                onClick = { onIntent(WorkoutListIntent.OnCreateProgramClicked) },
                 variant = LyteButtonVariant.Tonal,
                 icon = LyteIcons.Plus,
                 fullWidth = true,

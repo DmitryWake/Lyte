@@ -28,6 +28,59 @@ class WorkoutExerciseRepositoryImplTest {
     }
 
     @Test
+    fun getExercisesSortsByNameAscendingIgnoringCase() = runTest {
+        val repository = repository()
+        repository.createExercise(WorkoutExerciseEntity(id = "ex-1", name = "Тяга штанги в наклоне"))
+        repository.createExercise(WorkoutExerciseEntity(id = "ex-2", name = "приседания со штангой"))
+        repository.createExercise(WorkoutExerciseEntity(id = "ex-3", name = "Жим лёжа"))
+        repository.createExercise(WorkoutExerciseEntity(id = "ex-4", name = "Bench Press"))
+
+        val names = repository.getExercises().map { exercise -> exercise.name }
+
+        assertEquals(listOf("Bench Press", "Жим лёжа", "приседания со штангой", "Тяга штанги в наклоне"), names)
+    }
+
+    @Test
+    fun getExercisesFiltersByNameIgnoringCaseAndSurroundingSpaces() = runTest {
+        val repository = repository()
+        repository.createExercise(WorkoutExerciseEntity(id = "ex-1", name = "Жим лёжа"))
+        repository.createExercise(WorkoutExerciseEntity(id = "ex-2", name = "жим стоя"))
+        repository.createExercise(WorkoutExerciseEntity(id = "ex-3", name = "Приседания со штангой"))
+
+        val names = repository.getExercises(query = "  ЖиМ  ").map { exercise -> exercise.name }
+
+        assertEquals(listOf("Жим лёжа", "жим стоя"), names)
+    }
+
+    @Test
+    fun getExercisesMatchesSubstringInTheMiddleOfTheName() = runTest {
+        val repository = repository()
+        repository.createExercise(WorkoutExerciseEntity(id = "ex-1", name = "Тяга штанги в наклоне"))
+        repository.createExercise(WorkoutExerciseEntity(id = "ex-2", name = "Приседания со штангой"))
+
+        assertEquals(2, repository.getExercises(query = "штанг").size)
+    }
+
+    @Test
+    fun getExercisesWithoutMatchesReturnsEmptyList() = runTest {
+        val repository = repository()
+        repository.createExercise(WorkoutExerciseEntity(id = "ex-1", name = "Жим лёжа"))
+
+        assertEquals(emptyList(), repository.getExercises(query = "Жим Арнольда"))
+    }
+
+    @Test
+    fun likeWildcardsInQueryAreTreatedAsPlainCharacters() = runTest {
+        val repository = repository()
+        repository.createExercise(WorkoutExerciseEntity(id = "ex-1", name = "Жим лёжа"))
+        repository.createExercise(WorkoutExerciseEntity(id = "ex-2", name = "Приседания 100%"))
+
+        // Без экранирования «%» совпал бы со всем, а «_» — с любым одиночным символом.
+        assertEquals(listOf("Приседания 100%"), repository.getExercises(query = "%").map { it.name })
+        assertEquals(emptyList(), repository.getExercises(query = "_"))
+    }
+
+    @Test
     fun editExercisesUpdatesInPlace() = runTest {
         val repository = repository()
         repository.createExercise(WorkoutExerciseEntity(id = "ex-1", name = "Жим"))
@@ -40,6 +93,17 @@ class WorkoutExerciseRepositoryImplTest {
         assertEquals("Жим лёжа", loaded?.name)
         assertEquals("Грудь", loaded?.description)
         assertEquals(1, repository.getExercises().size)
+    }
+
+    @Test
+    fun editExercisesKeepsNameSearchableAfterRename() = runTest {
+        val repository = repository()
+        repository.createExercise(WorkoutExerciseEntity(id = "ex-1", name = "Жим"))
+
+        repository.editExercises(WorkoutExerciseEntity(id = "ex-1", name = "Приседания", description = null))
+
+        assertEquals(emptyList(), repository.getExercises(query = "жим"))
+        assertEquals(1, repository.getExercises(query = "приседания").size)
     }
 
     @Test

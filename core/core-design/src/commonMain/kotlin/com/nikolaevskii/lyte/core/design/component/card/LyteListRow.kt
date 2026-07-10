@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -29,6 +30,7 @@ private val ListRowLeadingIconSize = 22.dp
 private val ListRowChevronSize = 18.dp
 private val ListRowSubtitleSpacing = 2.dp
 private val ListRowDividerWidth = 1.dp
+private const val ListRowSubtitleMaxLines = 2
 
 /**
  * Универсальная однострочная строка списка: опциональная ведущая иконка, заголовок+подпись,
@@ -71,6 +73,8 @@ fun LyteListRow(
                     text = it,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = ListRowSubtitleMaxLines,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(top = ListRowSubtitleSpacing),
                 )
             }

@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -41,10 +43,16 @@ private val SetsEditorAddButtonTopSpacing = 12.dp
 
 /**
  * Шторка редактирования подходов упражнения (3.4) — открывается по карандашу на карточке
- * упражнения в редакторе программы. Правки применяются сразу к состоянию экрана; отдельного
+ * упражнения в редакторе программы, а также сразу после выбора упражнения в
+ * [WorkoutExercisePickerSheet]. Правки применяются сразу к состоянию экрана; отдельного
  * сохранения у шторки нет, «Готово» лишь закрывает её. Название/описание упражнения — в
  * title/subtitle шторки (закреплены сверху), «Готово» — в её bottomBar (закреплена снизу):
  * ни то ни другое не должно скроллиться вместе со списком подходов.
+ *
+ * Скролл контента [LyteBottomSheet] не реализует — это делает потребитель. Подходов немного, а их
+ * появление/исчезновение анимируется через `animateContentSize` + `AnimatedVisibility`, поэтому
+ * здесь обычный `verticalScroll`, а не `LazyColumn`: ленивый список пересоздавал бы строки и ломал
+ * эти анимации.
  */
 @Composable
 fun WorkoutSetsEditorSheet(
@@ -55,7 +63,7 @@ fun WorkoutSetsEditorSheet(
     LyteBottomSheet(
         title = exercise.exercise.name,
         subtitle = exercise.exercise.description,
-        onDismissRequest = { onIntent(WorkoutDetailsIntent.CloseSetsEditor) },
+        onDismissRequest = { onIntent(WorkoutDetailsIntent.OnSetsEditorDismissed) },
         bottomBar = {
             Surface(
                 color = MaterialTheme.colorScheme.surfaceContainerLowest,
@@ -64,7 +72,7 @@ fun WorkoutSetsEditorSheet(
             ) {
                 LyteButton(
                     text = stringResource(Res.string.workout_details_sets_done),
-                    onClick = { onIntent(WorkoutDetailsIntent.CloseSetsEditor) },
+                    onClick = { onIntent(WorkoutDetailsIntent.OnSetsEditorDismissed) },
                     fullWidth = true,
                     modifier = Modifier.padding(horizontal = LyteTheme.spacing.s5, vertical = LyteTheme.spacing.s4),
                 )
@@ -72,43 +80,53 @@ fun WorkoutSetsEditorSheet(
         },
         modifier = modifier,
     ) {
-        // animateContentSize сглаживает изменение высоты списка при добавлении/удалении подхода —
-        // без него соседние строки и кнопка ниже прыгали бы на новое место мгновенно. Плюс сама
-        // добавленная строка проявляется через AnimatedVisibility (fade+expand): нужен именно
-        // MutableTransitionState с initialState=false — обычный AnimatedVisibility(visible = true)
-        // не анимирует появление, если true уже на первой композиции.
         Column(
-            verticalArrangement = Arrangement.spacedBy(SetsEditorRowGap),
-            modifier = Modifier.animateContentSize(),
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(
+                    start = LyteTheme.spacing.s5,
+                    end = LyteTheme.spacing.s5,
+                    bottom = LyteTheme.spacing.s5,
+                ),
         ) {
-            exercise.reps.forEachIndexed { index, rep ->
-                key(index) {
-                    AnimatedVisibility(
-                        visibleState = remember { MutableTransitionState(false) }.apply { targetState = true },
-                        enter = fadeIn() + expandVertically(),
-                        exit = fadeOut() + shrinkVertically(),
-                    ) {
-                        LyteSetEditRow(
-                            title = stringResource(Res.string.workout_details_set_number, index + 1),
-                            reps = rep.count,
-                            weight = rep.weight ?: 0.0,
-                            onRepsChange = { reps -> onIntent(WorkoutDetailsIntent.ChangeSetReps(index, reps)) },
-                            onWeightChange = { weight -> onIntent(WorkoutDetailsIntent.ChangeSetWeight(index, weight)) },
-                            onRemove = { onIntent(WorkoutDetailsIntent.RemoveSet(index)) },
-                        )
+            // animateContentSize сглаживает изменение высоты списка при добавлении/удалении подхода —
+            // без него соседние строки и кнопка ниже прыгали бы на новое место мгновенно. Плюс сама
+            // добавленная строка проявляется через AnimatedVisibility (fade+expand): нужен именно
+            // MutableTransitionState с initialState=false — обычный AnimatedVisibility(visible = true)
+            // не анимирует появление, если true уже на первой композиции.
+            Column(
+                verticalArrangement = Arrangement.spacedBy(SetsEditorRowGap),
+                modifier = Modifier.animateContentSize(),
+            ) {
+                exercise.reps.forEachIndexed { index, rep ->
+                    key(index) {
+                        AnimatedVisibility(
+                            visibleState = remember { MutableTransitionState(false) }.apply { targetState = true },
+                            enter = fadeIn() + expandVertically(),
+                            exit = fadeOut() + shrinkVertically(),
+                        ) {
+                            LyteSetEditRow(
+                                title = stringResource(Res.string.workout_details_set_number, index + 1),
+                                reps = rep.count,
+                                weight = rep.weight ?: 0.0,
+                                onRepsChange = { reps -> onIntent(WorkoutDetailsIntent.OnSetRepsChanged(index, reps)) },
+                                onWeightChange = { weight -> onIntent(WorkoutDetailsIntent.OnSetWeightChanged(index, weight)) },
+                                onRemove = { onIntent(WorkoutDetailsIntent.OnRemoveSetClicked(index)) },
+                            )
+                        }
                     }
                 }
             }
+            LyteButton(
+                text = stringResource(Res.string.workout_details_sets_add),
+                onClick = { onIntent(WorkoutDetailsIntent.OnAddSetClicked) },
+                variant = LyteButtonVariant.Tonal,
+                size = LyteButtonSize.Small,
+                icon = LyteIcons.Plus,
+                fullWidth = true,
+                modifier = Modifier.padding(top = SetsEditorAddButtonTopSpacing),
+            )
         }
-        LyteButton(
-            text = stringResource(Res.string.workout_details_sets_add),
-            onClick = { onIntent(WorkoutDetailsIntent.AddSet) },
-            variant = LyteButtonVariant.Tonal,
-            size = LyteButtonSize.Small,
-            icon = LyteIcons.Plus,
-            fullWidth = true,
-            modifier = Modifier.padding(top = SetsEditorAddButtonTopSpacing),
-        )
     }
 }
 

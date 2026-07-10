@@ -52,7 +52,7 @@ class WorkoutListViewModelTest {
         runCurrent()
         repository.items = listOf(program(id = "w1", name = "Push Day V2", exerciseCount = 4))
 
-        viewModel.onIntent(WorkoutListIntent.Refresh)
+        viewModel.onIntent(WorkoutListIntent.OnScreenShown)
         runCurrent()
 
         assertEquals(listOf(program(id = "w1", name = "Push Day V2", exerciseCount = 4)), viewModel.uiState.value.programs)
@@ -76,7 +76,7 @@ class WorkoutListViewModelTest {
         val viewModel = WorkoutListViewModel(workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
         runCurrent()
 
-        viewModel.onIntent(WorkoutListIntent.RequestDelete(id = "w1"))
+        viewModel.onIntent(WorkoutListIntent.OnDeleteProgramClicked(id = "w1"))
 
         assertEquals("w1", viewModel.uiState.value.pendingDeleteId)
         assertTrue(repository.deletedIds.isEmpty())
@@ -87,9 +87,9 @@ class WorkoutListViewModelTest {
         val repository = FakeWorkoutRepository(initialItems = listOf(program(id = "w1", name = "Push Day", exerciseCount = 5)))
         val viewModel = WorkoutListViewModel(workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
         runCurrent()
-        viewModel.onIntent(WorkoutListIntent.RequestDelete(id = "w1"))
+        viewModel.onIntent(WorkoutListIntent.OnDeleteProgramClicked(id = "w1"))
 
-        viewModel.onIntent(WorkoutListIntent.CancelDelete)
+        viewModel.onIntent(WorkoutListIntent.OnDeleteDismissed)
 
         assertNull(viewModel.uiState.value.pendingDeleteId)
         assertTrue(repository.deletedIds.isEmpty())
@@ -105,9 +105,9 @@ class WorkoutListViewModelTest {
         )
         val viewModel = WorkoutListViewModel(workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
         runCurrent()
-        viewModel.onIntent(WorkoutListIntent.RequestDelete(id = "w1"))
+        viewModel.onIntent(WorkoutListIntent.OnDeleteProgramClicked(id = "w1"))
 
-        viewModel.onIntent(WorkoutListIntent.ConfirmDelete)
+        viewModel.onIntent(WorkoutListIntent.OnDeleteConfirmed)
         runCurrent()
 
         assertEquals(listOf("w1"), repository.deletedIds)
@@ -121,7 +121,7 @@ class WorkoutListViewModelTest {
         val viewModel = WorkoutListViewModel(workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
         runCurrent()
 
-        viewModel.onIntent(WorkoutListIntent.ConfirmDelete)
+        viewModel.onIntent(WorkoutListIntent.OnDeleteConfirmed)
         runCurrent()
 
         assertTrue(repository.deletedIds.isEmpty())
@@ -135,7 +135,7 @@ class WorkoutListViewModelTest {
         runCurrent()
         val stateBefore = viewModel.uiState.value
 
-        viewModel.onIntent(WorkoutListIntent.OpenDetails(id = "w1"))
+        viewModel.onIntent(WorkoutListIntent.OnProgramClicked(id = "w1"))
 
         assertEquals(listOf<Pair<Any, LyteNavOptions?>>(WorkoutDetailsRoute(id = "w1") to null), navigator.navigateCalls)
         assertEquals(stateBefore, viewModel.uiState.value)
@@ -149,7 +149,7 @@ class WorkoutListViewModelTest {
         runCurrent()
         val stateBefore = viewModel.uiState.value
 
-        viewModel.onIntent(WorkoutListIntent.CreateProgram)
+        viewModel.onIntent(WorkoutListIntent.OnCreateProgramClicked)
 
         assertEquals(listOf<Pair<Any, LyteNavOptions?>>(WorkoutDetailsRoute(id = null) to null), navigator.navigateCalls)
         assertEquals(stateBefore, viewModel.uiState.value)
