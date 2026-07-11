@@ -12,7 +12,7 @@ data class WorkoutPickerUiState(
 
 sealed interface WorkoutPickerIntent : UiIntent {
 
-    /** Тап по программе: начать по ней тренировку. Экран превью (спека 4.2) ещё не реализован. */
+    /** Тап по программе: открыть её превью перед стартом тренировки (спека 4.2). */
     data class OnProgramClicked(val id: String) : WorkoutPickerIntent
 
     /** Пустой список: уйти на вкладку «Тренировки», где программу можно создать. */

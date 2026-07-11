@@ -6,17 +6,23 @@ import com.nikolaevskii.lyte.feature.workout.domain.repository.WorkoutRepository
 
 internal class FakeWorkoutRepository(
     initialItems: List<WorkoutItemEntity> = emptyList(),
+    initialWorkout: WorkoutEntity? = null,
 ) : WorkoutRepository {
 
     var items: List<WorkoutItemEntity> = initialItems
     var getWorkoutsError: Throwable? = null
+    var workout: WorkoutEntity? = initialWorkout
+    var getWorkoutError: Throwable? = null
 
     override suspend fun getWorkouts(): List<WorkoutItemEntity> {
         getWorkoutsError?.let { throw it }
         return items
     }
 
-    override suspend fun getWorkout(id: String): WorkoutEntity? = null
+    override suspend fun getWorkout(id: String): WorkoutEntity? {
+        getWorkoutError?.let { throw it }
+        return workout
+    }
 
     override suspend fun createWorkout(workoutEntity: WorkoutEntity) = Unit
 

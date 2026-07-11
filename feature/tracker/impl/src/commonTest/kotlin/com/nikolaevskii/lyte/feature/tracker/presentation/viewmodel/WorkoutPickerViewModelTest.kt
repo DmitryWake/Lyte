@@ -1,6 +1,7 @@
 package com.nikolaevskii.lyte.feature.tracker.presentation.viewmodel
 
 import com.nikolaevskii.lyte.core.navigation.model.NavCommand
+import com.nikolaevskii.lyte.feature.tracker.WorkoutPreviewRoute
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.WorkoutPickerIntent
 import com.nikolaevskii.lyte.feature.workout.WorkoutTabGraph
 import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutItemEntity
@@ -69,17 +70,18 @@ class WorkoutPickerViewModelTest {
     }
 
     @Test
-    fun programClickIsStillAStub() = runTest(testDispatcher) {
+    fun programClickOpensPreview() = runTest(testDispatcher) {
         val navigator = FakeLyteNavigator()
         val viewModel = viewModel(navigator = navigator)
         runCurrent()
-        val stateBefore = viewModel.uiState.value
 
         viewModel.onIntent(WorkoutPickerIntent.OnProgramClicked(id = "w1"))
         runCurrent()
 
-        assertTrue(navigator.commandLog.isEmpty())
-        assertEquals(stateBefore, viewModel.uiState.value)
+        assertEquals(
+            listOf<NavCommand>(NavCommand.Forward(route = WorkoutPreviewRoute(programId = "w1"))),
+            navigator.commandLog,
+        )
     }
 
     @Test

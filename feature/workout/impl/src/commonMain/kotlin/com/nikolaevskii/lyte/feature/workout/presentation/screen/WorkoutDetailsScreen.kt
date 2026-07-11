@@ -35,6 +35,7 @@ import com.nikolaevskii.lyte.core.design.component.button.LyteButton
 import com.nikolaevskii.lyte.core.design.component.button.LyteButtonSize
 import com.nikolaevskii.lyte.core.design.component.button.LyteButtonVariant
 import com.nikolaevskii.lyte.core.design.component.card.LyteExerciseCard
+import com.nikolaevskii.lyte.core.design.component.card.LyteExerciseCardVariant
 import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBar
 import com.nikolaevskii.lyte.core.design.component.overline.LyteOverline
 import com.nikolaevskii.lyte.core.design.component.textfield.LyteTextField
@@ -212,47 +213,49 @@ private fun WorkoutDetailsForm(
             LyteExerciseCard(
                 title = item.exercise.exercise.name,
                 setLabels = item.exercise.reps.map { rep -> formatSetLabel(rep) },
-                onEdit = { onIntent(WorkoutDetailsIntent.OnEditSetsClicked(index)) },
-                onRemove = { onIntent(WorkoutDetailsIntent.OnRemoveExerciseClicked(index)) },
-                dragHandleModifier = Modifier.pointerInput(item.key) {
-                    detectDragGestures(
-                        onDragStart = {
-                            draggingKey = item.key
-                            dragOffset = 0f
-                        },
-                        onDragEnd = {
-                            draggingKey = null
-                            dragOffset = 0f
-                        },
-                        onDragCancel = {
-                            draggingKey = null
-                            dragOffset = 0f
-                        },
-                        onDrag = { change, delta ->
-                            change.consume()
-                            dragOffset += delta.y
+                variant = LyteExerciseCardVariant.Editor(
+                    onEdit = { onIntent(WorkoutDetailsIntent.OnEditSetsClicked(index)) },
+                    onRemove = { onIntent(WorkoutDetailsIntent.OnRemoveExerciseClicked(index)) },
+                    dragHandleModifier = Modifier.pointerInput(item.key) {
+                        detectDragGestures(
+                            onDragStart = {
+                                draggingKey = item.key
+                                dragOffset = 0f
+                            },
+                            onDragEnd = {
+                                draggingKey = null
+                                dragOffset = 0f
+                            },
+                            onDragCancel = {
+                                draggingKey = null
+                                dragOffset = 0f
+                            },
+                            onDrag = { change, delta ->
+                                change.consume()
+                                dragOffset += delta.y
 
-                            val draggedInfo = listState.layoutInfo.visibleItemsInfo
-                                .firstOrNull { info -> info.key == item.key }
-                                ?: return@detectDragGestures
-                            val exerciseKeys = currentExercises.map { exercise -> exercise.key }.toSet()
-                            val draggedCenter = draggedInfo.offset + draggedInfo.size / 2f + dragOffset
-                            val targetInfo = listState.layoutInfo.visibleItemsInfo.firstOrNull { candidate ->
-                                candidate.key != item.key &&
-                                    candidate.key in exerciseKeys &&
-                                    draggedCenter >= candidate.offset &&
-                                    draggedCenter <= candidate.offset + candidate.size
-                            } ?: return@detectDragGestures
+                                val draggedInfo = listState.layoutInfo.visibleItemsInfo
+                                    .firstOrNull { info -> info.key == item.key }
+                                    ?: return@detectDragGestures
+                                val exerciseKeys = currentExercises.map { exercise -> exercise.key }.toSet()
+                                val draggedCenter = draggedInfo.offset + draggedInfo.size / 2f + dragOffset
+                                val targetInfo = listState.layoutInfo.visibleItemsInfo.firstOrNull { candidate ->
+                                    candidate.key != item.key &&
+                                        candidate.key in exerciseKeys &&
+                                        draggedCenter >= candidate.offset &&
+                                        draggedCenter <= candidate.offset + candidate.size
+                                } ?: return@detectDragGestures
 
-                            val fromIndex = currentExercises.indexOfFirst { exercise -> exercise.key == item.key }
-                            val toIndex = currentExercises.indexOfFirst { exercise -> exercise.key == targetInfo.key }
-                            if (fromIndex != -1 && toIndex != -1) {
-                                dragOffset += draggedInfo.offset - targetInfo.offset
-                                currentOnIntent(WorkoutDetailsIntent.OnExerciseMoved(fromIndex, toIndex))
-                            }
-                        },
-                    )
-                },
+                                val fromIndex = currentExercises.indexOfFirst { exercise -> exercise.key == item.key }
+                                val toIndex = currentExercises.indexOfFirst { exercise -> exercise.key == targetInfo.key }
+                                if (fromIndex != -1 && toIndex != -1) {
+                                    dragOffset += draggedInfo.offset - targetInfo.offset
+                                    currentOnIntent(WorkoutDetailsIntent.OnExerciseMoved(fromIndex, toIndex))
+                                }
+                            },
+                        )
+                    },
+                ),
                 modifier = Modifier
                     .zIndex(if (isDragging) 1f else 0f)
                     .graphicsLayer { translationY = if (isDragging) dragOffset else 0f }
