@@ -8,8 +8,8 @@ import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionSetOutcomeEntit
 import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionSetResultEntity
 import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionSetValueEntity
 import com.nikolaevskii.lyte.feature.tracker.domain.model.WorkoutSessionEntity
-import com.nikolaevskii.lyte.feature.tracker.domain.utils.hasWeight
-import com.nikolaevskii.lyte.feature.tracker.domain.utils.outcome
+import com.nikolaevskii.lyte.feature.tracker.domain.util.hasWeight
+import com.nikolaevskii.lyte.feature.tracker.domain.util.outcome
 import com.nikolaevskii.lyte.feature.tracker.presentation.util.formatWeight
 
 /**

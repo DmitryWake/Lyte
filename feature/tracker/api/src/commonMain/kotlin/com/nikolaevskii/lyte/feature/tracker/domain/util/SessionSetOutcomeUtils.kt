@@ -1,4 +1,4 @@
-package com.nikolaevskii.lyte.feature.tracker.domain.utils
+package com.nikolaevskii.lyte.feature.tracker.domain.util
 
 import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionSetEntity
 import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionSetOutcomeEntity

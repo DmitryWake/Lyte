@@ -1,8 +1,8 @@
 package com.nikolaevskii.lyte.feature.tracker.domain.model
 
 import com.nikolaevskii.lyte.feature.tracker.completed
-import com.nikolaevskii.lyte.feature.tracker.domain.utils.hasWeight
-import com.nikolaevskii.lyte.feature.tracker.domain.utils.outcome
+import com.nikolaevskii.lyte.feature.tracker.domain.util.hasWeight
+import com.nikolaevskii.lyte.feature.tracker.domain.util.outcome
 import com.nikolaevskii.lyte.feature.tracker.sessionSet
 import kotlin.test.Test
 import kotlin.test.assertEquals
