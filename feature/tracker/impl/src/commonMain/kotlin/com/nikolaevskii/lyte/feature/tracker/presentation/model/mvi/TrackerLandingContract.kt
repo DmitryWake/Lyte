@@ -4,12 +4,14 @@ import com.nikolaevskii.lyte.core.mvi.UiIntent
 import com.nikolaevskii.lyte.core.mvi.UiState
 
 /**
- * У лендинга пока нет состояния: сессии в домене ещё нет, и показывать нечего, кроме «нет активной
- * сессии». Когда появится флоу активной сессии (спека 4.3), это станет `data class` с ветками
- * «проверяем» / «сессии нет», а сам экран — гейтом: найдя сессию, он уводит на её маршрут вместо
- * отрисовки лендинга.
+ * Лендинг — гейт активной сессии (спека 4.3): на входе проверяем БД и, если сессия есть, уводим на её
+ * маршрут вместо отрисовки лендинга. [isCheckingSession] = true на старте: пока идёт проверка, экран
+ * пуст — без вспышки «Нет активной сессии» перед редиректом (локальный запрос быстрый, спиннер бы
+ * только мигал).
  */
-data object TrackerLandingUiState : UiState
+data class TrackerLandingUiState(
+    val isCheckingSession: Boolean = true,
+) : UiState
 
 sealed interface TrackerLandingIntent : UiIntent {
 

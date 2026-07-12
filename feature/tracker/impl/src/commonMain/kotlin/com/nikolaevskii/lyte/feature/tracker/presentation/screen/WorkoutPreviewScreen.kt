@@ -84,7 +84,10 @@ fun WorkoutPreviewContent(
         },
         bottomBar = {
             if (program != null) {
-                WorkoutPreviewStartBar(onStart = { onIntent(WorkoutPreviewIntent.OnStartClicked) })
+                WorkoutPreviewStartBar(
+                    enabled = !state.isStarting,
+                    onStart = { onIntent(WorkoutPreviewIntent.OnStartClicked) },
+                )
             }
         },
     ) { paddingValues ->
@@ -140,6 +143,7 @@ private fun WorkoutPreviewExerciseList(
 
 @Composable
 private fun WorkoutPreviewStartBar(
+    enabled: Boolean,
     onStart: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -153,6 +157,7 @@ private fun WorkoutPreviewStartBar(
             onClick = onStart,
             size = LyteButtonSize.Large,
             icon = LyteIcons.Play,
+            enabled = enabled,
             fullWidth = true,
             modifier = Modifier.padding(horizontal = LyteTheme.spacing.s5, vertical = LyteTheme.spacing.s4),
         )

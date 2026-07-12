@@ -64,7 +64,7 @@
 | `component.navigation` | `LyteTopBar` (size Small/Large), `LyteBottomNavigationBar` (+ `LyteBottomNavigationBarHeight` — резерв под него для контента, см. «Нюансы») |
 | `component.overlay` | `LyteBottomSheet` (слоты `title`/`subtitle`/`topContent`/`content`/`bottomBar` + `LyteBottomSheetHeight`, см. ниже), `LyteRestTimerOverlay` |
 | `component.datadisplay` | `LyteSessionStopwatch` |
-| `component.session` | `LyteSetDots`, `LyteSetOverview`, `LyteTrackSetRow`, `LyteExerciseStrip` (экран активной сессии) |
+| `component.session` | `LyteSetDots`, `LyteSetOverview` (`currentIndex` — автопрокрутка к плашке текущего подхода), `LyteTrackSetRow`, `LyteExerciseStrip` (экран активной сессии) |
 
 `LyteDialog` / `LyteBottomSheet` / `LyteRestTimerOverlay` не принимают флаг видимости — видимостью
 управляет вызывающая сторона самим фактом композиции (`if (showDialog) { LyteDialog(...) }`), как

@@ -1,0 +1,21 @@
+package com.nikolaevskii.lyte.feature.tracker.presentation.model
+
+/** Статус строки в шторке «Упражнения сессии». */
+enum class ActiveSessionSwitcherStatus { Current, Done, Pending }
+
+/**
+ * Строка упражнения в шторке переключения. [doneCount] — разрешённые подходы (выполненные и
+ * пропущенные). [currentSetIndex] 1-based, только у текущего упражнения — для подписи
+ * «сейчас · подход j из k». [targetPills] — цели всех подходов, только у ещё не начатых упражнений.
+ * [isSelectable] `false` у полностью закрытых: выбирать их текущими нельзя (нечего трекать).
+ */
+data class ActiveSessionSwitcherRowUiModel(
+    val exerciseId: String,
+    val name: String,
+    val status: ActiveSessionSwitcherStatus,
+    val doneCount: Int,
+    val setCount: Int,
+    val currentSetIndex: Int?,
+    val targetPills: List<ActiveSessionSetValueUiModel>,
+    val isSelectable: Boolean,
+)

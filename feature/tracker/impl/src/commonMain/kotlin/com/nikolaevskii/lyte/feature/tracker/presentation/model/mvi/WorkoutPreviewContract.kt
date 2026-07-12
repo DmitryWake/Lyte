@@ -10,17 +10,18 @@ import com.nikolaevskii.lyte.feature.tracker.presentation.model.WorkoutPreviewUi
  *
  * Стартуем сразу в [isLoading] = true: экран всегда открывается с загрузки по id, поэтому пустого кадра
  * «нет данных» до первого запроса быть не должно. [program] `null`, пока идёт загрузка или произошла
- * ошибка.
+ * ошибка. [isStarting] — идёт создание сессии: guard от дабл-тапа по «Начать тренировку».
  */
 data class WorkoutPreviewUiState(
     val isLoading: Boolean = true,
     val errorMessage: String? = null,
     val program: WorkoutPreviewUiModel? = null,
+    val isStarting: Boolean = false,
 ) : UiState
 
 sealed interface WorkoutPreviewIntent : UiIntent {
 
-    /** Старт сессии по программе. Реализация — в спеке 4.3 (экрана активной сессии ещё нет). */
+    /** Старт сессии по программе: снапшот в БД и переход на экран активной сессии (спека 4.3). */
     data object OnStartClicked : WorkoutPreviewIntent
 
     data object OnBack : WorkoutPreviewIntent

@@ -36,4 +36,47 @@
         <item quantity="many">%1$d подходов</item>
         <item quantity="other">%1$d подходов</item>
     </plurals>
+
+    <string name="active_session_exercise_position">Упражнение %1$d из %2$d</string>
+    <string name="active_session_set_position">Подход %1$d из %2$d</string>
+    <string name="active_session_set_value_weighted">%1$d×%2$s кг</string>
+    <string name="active_session_set_value_bodyweight">%1$d повт</string>
+    <string name="active_session_overview_caption_number">№%1$d</string>
+    <string name="active_session_overview_caption_current">Сейчас</string>
+    <string name="active_session_overview_value_skipped">—</string>
+    <string name="active_session_stepper_reps">Повторения</string>
+    <string name="active_session_stepper_weight">Вес</string>
+    <string name="active_session_stepper_weight_unit">кг</string>
+    <string name="active_session_target">Цель: %1$s</string>
+    <string name="active_session_add_note">Добавить заметку</string>
+    <string name="active_session_note_sheet_title">Заметка к подходу</string>
+    <string name="active_session_note_placeholder">Комментарий…</string>
+    <string name="active_session_note_save">Готово</string>
+    <string name="active_session_complete_set">Готово</string>
+    <string name="active_session_skip_set">Пропустить</string>
+    <string name="active_session_exercises_sheet_title">Упражнения сессии</string>
+    <string name="active_session_exercises_cd">Все упражнения</string>
+    <string name="active_session_end_early_cd">Завершить тренировку</string>
+    <string name="active_session_switcher_now">Сейчас</string>
+    <string name="active_session_switcher_current_subtitle">сейчас · подход %1$d из %2$d</string>
+    <string name="active_session_switcher_done_subtitle">выполнено · %1$d из %2$d</string>
+    <string name="active_session_switcher_done">выполнено</string>
+    <string name="active_session_end_early_title">Завершить тренировку досрочно?</string>
+    <string name="active_session_end_early_description">Невыполненные подходы будут отмечены как пропущенные.</string>
+    <string name="active_session_end_early_confirm">Завершить</string>
+    <string name="active_session_end_early_cancel">Отмена</string>
+    <string name="active_session_all_done_title">Все подходы выполнены</string>
+    <!-- Сводка на экране-итоге: «Push Day · выполнено 15 из 16 подходов». -->
+    <string name="active_session_all_done_summary">%1$s · выполнено %2$s</string>
+    <plurals name="active_session_summary_set_count">
+        <item quantity="one">%1$d из %2$d подхода</item>
+        <item quantity="few">%1$d из %2$d подходов</item>
+        <item quantity="many">%1$d из %2$d подходов</item>
+        <item quantity="other">%1$d из %2$d подходов</item>
+    </plurals>
+    <string name="active_session_finish">Завершить тренировку</string>
+    <string name="active_session_error">Не удалось загрузить сессию</string>
+    <string name="active_session_mutation_error">Не удалось сохранить изменение</string>
+    <string name="active_session_retry">Повторить</string>
+    <string name="active_session_to_landing">На главную</string>
 </resources>

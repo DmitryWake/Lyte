@@ -83,20 +83,24 @@ fun TrackerLandingContent(
                 .fillMaxSize()
                 .padding(paddingValues),
         ) {
-            TrackerWordmark(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(top = WordmarkPaddingTop, start = WordmarkPaddingHorizontal, end = WordmarkPaddingHorizontal),
-            )
+            // Пока гейт проверяет активную сессию, экран пуст: найдётся сессия — уйдём на её маршрут
+            // без вспышки «Нет активной сессии»; локальный запрос быстрый, спиннер бы только мигал.
+            if (!state.isCheckingSession) {
+                TrackerWordmark(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(top = WordmarkPaddingTop, start = WordmarkPaddingHorizontal, end = WordmarkPaddingHorizontal),
+                )
 
-            NoActiveSessionContent(
-                onPickWorkout = { onIntent(TrackerLandingIntent.OpenWorkoutPicker) },
-                // Корень вкладки показывается вместе с плавающим доком, а тот не резервирует место
-                // через Scaffold.bottomBar (см. App() в :shared) — центрируем контент над ним.
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(bottom = LyteBottomNavigationBarHeight),
-            )
+                NoActiveSessionContent(
+                    onPickWorkout = { onIntent(TrackerLandingIntent.OpenWorkoutPicker) },
+                    // Корень вкладки показывается вместе с плавающим доком, а тот не резервирует место
+                    // через Scaffold.bottomBar (см. App() в :shared) — центрируем контент над ним.
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(bottom = LyteBottomNavigationBarHeight),
+                )
+            }
         }
     }
 }
@@ -180,7 +184,7 @@ private fun NoActiveSessionContent(
 private fun TrackerLandingContentPreview() {
     LyteTheme {
         TrackerLandingContent(
-            state = TrackerLandingUiState,
+            state = TrackerLandingUiState(isCheckingSession = false),
             onIntent = {},
         )
     }

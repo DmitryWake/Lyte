@@ -7,10 +7,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -38,13 +40,24 @@ private const val SetOverviewCaptionAlpha = 0.75f
  * Горизонтальная прокручиваемая карусель плашек подходов активного упражнения. Каждая плашка
  * целиком залита своим тоном-результатом, текущая — шире и с тенью. Спутник «крупным планом»
  * текущего подхода — [LyteTrackSetRow]. Подписи/значения приходят готовыми из [LyteSetOverviewItem].
+ *
+ * [currentIndex] — индекс плашки текущего подхода: при каждой его смене карусель плавно
+ * докручивается, чтобы текущая плашка была видна (`null` — без автопрокрутки).
  */
 @Composable
 fun LyteSetOverview(
     sets: List<LyteSetOverviewItem>,
+    currentIndex: Int? = null,
     modifier: Modifier = Modifier,
 ) {
+    val listState = rememberLazyListState()
+    LaunchedEffect(currentIndex) {
+        if (currentIndex != null && currentIndex in sets.indices) {
+            listState.animateScrollToItem(currentIndex)
+        }
+    }
     LazyRow(
+        state = listState,
         horizontalArrangement = Arrangement.spacedBy(SetOverviewGap),
         contentPadding = PaddingValues(horizontal = SetOverviewContentPadding),
         modifier = modifier,

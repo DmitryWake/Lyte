@@ -24,3 +24,13 @@ data object WorkoutPickerRoute
  */
 @Serializable
 data class WorkoutPreviewRoute(val programId: String)
+
+/**
+ * Активная сессия тренировки (спека 4.3). Экран сам грузит сессию по [sessionId]; после смерти
+ * процесса Navigation восстанавливает маршрут с аргументом, и состояние сессии поднимается из БД.
+ * Не стартовый экран вкладки, поэтому bottom-bar на нём скрыт — во время сессии приложение
+ * сфокусировано на ней. В стек вкладки экран ставится единственным (popUpTo лендинга включительно):
+ * выйти из сессии можно только завершив её.
+ */
+@Serializable
+data class ActiveSessionRoute(val sessionId: String)

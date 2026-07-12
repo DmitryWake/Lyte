@@ -1,7 +1,13 @@
 package com.nikolaevskii.lyte.feature.tracker.presentation.viewmodel
 
+import com.nikolaevskii.lyte.core.navigation.model.LyteNavOptions
 import com.nikolaevskii.lyte.core.navigation.model.NavCommand
+import com.nikolaevskii.lyte.feature.tracker.ActiveSessionRoute
+import com.nikolaevskii.lyte.feature.tracker.TrackerLandingRoute
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.WorkoutPreviewIntent
+import com.nikolaevskii.lyte.feature.tracker.sessionExercise
+import com.nikolaevskii.lyte.feature.tracker.sessionSet
+import com.nikolaevskii.lyte.feature.tracker.workoutSession
 import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutEntity
 import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseEntity
 import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseWithRepsEntity
@@ -91,26 +97,111 @@ class WorkoutPreviewViewModelTest {
     }
 
     @Test
-    fun startIsStubbedUntilActiveSessionExists() = runTest(testDispatcher) {
+    fun startCreatesSessionAndReplacesStackWithSessionScreen() = runTest(testDispatcher) {
         val navigator = FakeLyteNavigator()
-        val viewModel = viewModel(repository = FakeWorkoutRepository(initialWorkout = pushDay()), navigator = navigator)
+        val sessionRepository = FakeWorkoutSessionRepository().apply { startedSessionId = "session-9" }
+        val viewModel = viewModel(
+            repository = FakeWorkoutRepository(initialWorkout = pushDay()),
+            sessionRepository = sessionRepository,
+            navigator = navigator,
+        )
         runCurrent()
-        val stateBefore = viewModel.uiState.value
 
         viewModel.onIntent(WorkoutPreviewIntent.OnStartClicked)
         runCurrent()
 
-        // Экран активной сессии (4.3) ещё не реализован — старт не должен ни навигировать, ни менять стейт.
+        assertEquals(1, sessionRepository.startSessionCalls.size)
+        assertEquals(
+            listOf<NavCommand>(
+                NavCommand.Forward(
+                    route = ActiveSessionRoute(sessionId = "session-9"),
+                    options = LyteNavOptions(popUpTo = TrackerLandingRoute, popUpToInclusive = true),
+                ),
+            ),
+            navigator.commandLog,
+        )
+    }
+
+    @Test
+    fun startWhenActiveSessionExistsOpensThatSession() = runTest(testDispatcher) {
+        // Инвариант БД «не больше одной активной сессии» кидает при старте — открываем существующую.
+        val navigator = FakeLyteNavigator()
+        val sessionRepository = FakeWorkoutSessionRepository().apply {
+            startSessionError = IllegalStateException("active session exists")
+            activeSession = workoutSession(
+                id = "existing-1",
+                exercises = listOf(
+                    sessionExercise(id = "e1", name = "Жим", sets = listOf(sessionSet(id = "s1", targetCount = 10, targetWeight = 60.0))),
+                ),
+            )
+        }
+        val viewModel = viewModel(
+            repository = FakeWorkoutRepository(initialWorkout = pushDay()),
+            sessionRepository = sessionRepository,
+            navigator = navigator,
+        )
+        runCurrent()
+
+        viewModel.onIntent(WorkoutPreviewIntent.OnStartClicked)
+        runCurrent()
+
+        assertEquals(
+            listOf<NavCommand>(
+                NavCommand.Forward(
+                    route = ActiveSessionRoute(sessionId = "existing-1"),
+                    options = LyteNavOptions(popUpTo = TrackerLandingRoute, popUpToInclusive = true),
+                ),
+            ),
+            navigator.commandLog,
+        )
+    }
+
+    @Test
+    fun doubleTapStartCreatesSessionOnce() = runTest(testDispatcher) {
+        val sessionRepository = FakeWorkoutSessionRepository()
+        val viewModel = viewModel(
+            repository = FakeWorkoutRepository(initialWorkout = pushDay()),
+            sessionRepository = sessionRepository,
+        )
+        runCurrent()
+
+        viewModel.onIntent(WorkoutPreviewIntent.OnStartClicked)
+        viewModel.onIntent(WorkoutPreviewIntent.OnStartClicked)
+        runCurrent()
+
+        assertEquals(1, sessionRepository.startSessionCalls.size)
+    }
+
+    @Test
+    fun startFailureSurfacesError() = runTest(testDispatcher) {
+        val navigator = FakeLyteNavigator()
+        val sessionRepository = FakeWorkoutSessionRepository().apply {
+            startSessionError = IllegalStateException("boom")
+        }
+        val viewModel = viewModel(
+            repository = FakeWorkoutRepository(initialWorkout = pushDay()),
+            sessionRepository = sessionRepository,
+            navigator = navigator,
+        )
+        runCurrent()
+
+        viewModel.onIntent(WorkoutPreviewIntent.OnStartClicked)
+        runCurrent()
+
+        val state = viewModel.uiState.value
+        assertEquals("boom", state.errorMessage)
+        assertFalse(state.isStarting)
         assertTrue(navigator.commandLog.isEmpty())
-        assertEquals(stateBefore, viewModel.uiState.value)
     }
 
     private fun viewModel(
         repository: FakeWorkoutRepository = FakeWorkoutRepository(),
+        sessionRepository: FakeWorkoutSessionRepository = FakeWorkoutSessionRepository(),
         navigator: FakeLyteNavigator = FakeLyteNavigator(),
     ): WorkoutPreviewViewModel = WorkoutPreviewViewModel(
         programId = PROGRAM_ID,
         workoutRepository = repository,
+        workoutSessionRepository = sessionRepository,
         lyteNavigator = navigator,
     )
 

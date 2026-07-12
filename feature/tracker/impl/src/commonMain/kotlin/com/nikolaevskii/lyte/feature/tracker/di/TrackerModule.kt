@@ -2,6 +2,7 @@ package com.nikolaevskii.lyte.feature.tracker.di
 
 import com.nikolaevskii.lyte.feature.tracker.data.repository.WorkoutSessionRepositoryImpl
 import com.nikolaevskii.lyte.feature.tracker.domain.repository.WorkoutSessionRepository
+import com.nikolaevskii.lyte.feature.tracker.presentation.viewmodel.ActiveSessionViewModel
 import com.nikolaevskii.lyte.feature.tracker.presentation.viewmodel.TrackerLandingViewModel
 import com.nikolaevskii.lyte.feature.tracker.presentation.viewmodel.WorkoutPickerViewModel
 import com.nikolaevskii.lyte.feature.tracker.presentation.viewmodel.WorkoutPreviewViewModel
@@ -19,6 +20,19 @@ val featureTrackerModule = module {
     viewModelOf(::WorkoutPickerViewModel)
     // WorkoutRepository приходит из featureWorkoutModule (трекер уже зависит от :feature:workout:api).
     viewModel { (programId: String) ->
-        WorkoutPreviewViewModel(programId = programId, workoutRepository = get(), lyteNavigator = get())
+        WorkoutPreviewViewModel(
+            programId = programId,
+            workoutRepository = get(),
+            workoutSessionRepository = get(),
+            lyteNavigator = get(),
+        )
+    }
+    viewModel { (sessionId: String) ->
+        ActiveSessionViewModel(
+            sessionId = sessionId,
+            workoutSessionRepository = get(),
+            lyteNavigator = get(),
+            clock = Clock.System,
+        )
     }
 }
