@@ -20,6 +20,10 @@ kotlin {
         compilerOptions {
             jvmTarget = JvmTarget.JVM_11
         }
+        androidResources {
+            enable = true
+        }
+        withHostTest {}
     }
 
     sourceSets {
@@ -28,6 +32,7 @@ kotlin {
         }
         commonMain.dependencies {
             api(projects.feature.history.api)
+            implementation(projects.feature.tracker.api)
             implementation(projects.core.coreMvi)
             implementation(projects.core.coreNavigation)
             implementation(projects.core.coreDi)
@@ -39,15 +44,24 @@ kotlin {
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
             implementation(libs.compose.ui)
+            implementation(libs.compose.components.resources)
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.koin.core)
             implementation(libs.koin.compose.viewmodel.navigation)
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.datetime)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
+}
+
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "com.nikolaevskii.lyte.feature.history.generated.resources"
+    generateResClass = auto
 }
 
 dependencies {

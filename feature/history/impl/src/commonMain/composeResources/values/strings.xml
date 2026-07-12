@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="history_title">История</string>
+    <string name="history_empty_message">Здесь появятся ваши тренировки</string>
+    <string name="history_empty_hint">Итоги каждой сессии сохраняются автоматически</string>
+    <string name="history_error">Не удалось загрузить историю</string>
+    <string name="history_date">%1$d %2$s</string>
+    <string name="history_session_summary">%1$d мин · выполнено %2$d/%3$d подходов</string>
+    <string-array name="history_month_names">
+        <item>Январь</item>
+        <item>Февраль</item>
+        <item>Март</item>
+        <item>Апрель</item>
+        <item>Май</item>
+        <item>Июнь</item>
+        <item>Июль</item>
+        <item>Август</item>
+        <item>Сентябрь</item>
+        <item>Октябрь</item>
+        <item>Ноябрь</item>
+        <item>Декабрь</item>
+    </string-array>
+    <string-array name="history_month_names_short">
+        <item>янв</item>
+        <item>фев</item>
+        <item>мар</item>
+        <item>апр</item>
+        <item>май</item>
+        <item>июн</item>
+        <item>июл</item>
+        <item>авг</item>
+        <item>сен</item>
+        <item>окт</item>
+        <item>ноя</item>
+        <item>дек</item>
+    </string-array>
+</resources>
