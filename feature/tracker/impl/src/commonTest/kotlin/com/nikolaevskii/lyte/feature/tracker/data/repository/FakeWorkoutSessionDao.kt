@@ -96,11 +96,12 @@ internal class FakeWorkoutSessionDao : WorkoutSessionDao() {
 
     override suspend fun markPendingSets(sessionId: String, status: String) {
         val exerciseIds = exercises.filter { it.sessionId == sessionId }.map { it.id }.toSet()
-        sets.replaceAll { set ->
+        // Индексный проход вместо MutableList.replaceAll: последний на Kotlin/Native требует opt-in
+        // (@ExperimentalNativeApi), а обновление по индексу — обычный stdlib (как в updateSet ниже).
+        for (index in sets.indices) {
+            val set = sets[index]
             if (set.sessionExerciseId in exerciseIds && set.resultStatus == null) {
-                set.copy(resultStatus = status)
-            } else {
-                set
+                sets[index] = set.copy(resultStatus = status)
             }
         }
     }
