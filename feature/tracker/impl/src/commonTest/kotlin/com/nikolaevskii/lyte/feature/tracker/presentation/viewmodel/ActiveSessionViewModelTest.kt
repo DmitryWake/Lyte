@@ -1,11 +1,13 @@
 package com.nikolaevskii.lyte.feature.tracker.presentation.viewmodel
 
+import androidx.lifecycle.viewModelScope
 import com.nikolaevskii.lyte.core.navigation.model.LyteNavOptions
 import com.nikolaevskii.lyte.core.navigation.model.NavCommand
+import com.nikolaevskii.lyte.feature.history.HistorySessionDetailsRoute
+import com.nikolaevskii.lyte.feature.history.HistoryTabGraph
 import com.nikolaevskii.lyte.feature.tracker.ActiveSessionRoute
 import com.nikolaevskii.lyte.feature.tracker.TrackerLandingRoute
 import com.nikolaevskii.lyte.feature.tracker.completed
-import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionSetResultEntity
 import com.nikolaevskii.lyte.feature.tracker.domain.model.WorkoutSessionEntity
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionOverlayUiModel
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionIntent
@@ -14,7 +16,6 @@ import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessio
 import com.nikolaevskii.lyte.feature.tracker.sessionExercise
 import com.nikolaevskii.lyte.feature.tracker.sessionSet
 import com.nikolaevskii.lyte.feature.tracker.workoutSession
-import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
@@ -37,6 +38,7 @@ import kotlin.time.Instant
 class ActiveSessionViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
+
     // Секундомер VM тикает бесконечным циклом на viewModelScope — по завершении тела теста отменяем
     // его, иначе runTest зависнет на очистке, докручивая delay-цикл в виртуальном времени.
     private val createdViewModels = mutableListOf<ActiveSessionViewModel>()
@@ -71,8 +73,16 @@ class ActiveSessionViewModelTest {
         val session = workoutSession(
             currentExerciseId = "e2",
             exercises = listOf(
-                sessionExercise(id = "e1", name = "Жим", sets = listOf(sessionSet(id = "s1", targetCount = 8, targetWeight = 80.0))),
-                sessionExercise(id = "e2", name = "Тяга", sets = listOf(sessionSet(id = "s2", targetCount = 10, targetWeight = 50.0))),
+                sessionExercise(
+                    id = "e1",
+                    name = "Жим",
+                    sets = listOf(sessionSet(id = "s1", targetCount = 8, targetWeight = 80.0))
+                ),
+                sessionExercise(
+                    id = "e2",
+                    name = "Тяга",
+                    sets = listOf(sessionSet(id = "s2", targetCount = 10, targetWeight = 50.0))
+                ),
             ),
         )
         val viewModel = viewModel(repository = repository(session))
@@ -120,7 +130,10 @@ class ActiveSessionViewModelTest {
         viewModel.onIntent(ActiveSessionIntent.OnCompleteSetClicked)
         runCurrent()
 
-        assertEquals(listOf(Triple<String, Int, Double?>("s1", 9, 62.5)), repository.completeSetCalls)
+        assertEquals(
+            listOf(Triple<String, Int, Double?>("s1", 9, 62.5)),
+            repository.completeSetCalls
+        )
         val tracking = viewModel.uiState.value.tracking
         // Текущим стал второй подход, драфты перезаполнились его целью (8×62.5).
         assertEquals("s2", tracking.current.currentSetId)
@@ -132,8 +145,16 @@ class ActiveSessionViewModelTest {
     fun completingLastSetAdvancesToNextExerciseWithoutPersistingSelection() = activeSessionTest {
         val session = workoutSession(
             exercises = listOf(
-                sessionExercise(id = "e1", name = "Жим", sets = listOf(sessionSet(id = "s1", targetCount = 10, targetWeight = 60.0))),
-                sessionExercise(id = "e2", name = "Тяга", sets = listOf(sessionSet(id = "s2", targetCount = 12, targetWeight = 50.0))),
+                sessionExercise(
+                    id = "e1",
+                    name = "Жим",
+                    sets = listOf(sessionSet(id = "s1", targetCount = 10, targetWeight = 60.0))
+                ),
+                sessionExercise(
+                    id = "e2",
+                    name = "Тяга",
+                    sets = listOf(sessionSet(id = "s2", targetCount = 12, targetWeight = 50.0))
+                ),
             ),
         )
         val repository = repository(session)
@@ -152,7 +173,11 @@ class ActiveSessionViewModelTest {
     fun completingBodyweightSetPassesNullWeight() = activeSessionTest {
         val session = workoutSession(
             exercises = listOf(
-                sessionExercise(id = "e1", name = "Брусья", sets = listOf(sessionSet(id = "s1", targetCount = 12, targetWeight = null))),
+                sessionExercise(
+                    id = "e1",
+                    name = "Брусья",
+                    sets = listOf(sessionSet(id = "s1", targetCount = 12, targetWeight = null))
+                ),
             ),
         )
         val repository = repository(session)
@@ -162,7 +187,10 @@ class ActiveSessionViewModelTest {
         viewModel.onIntent(ActiveSessionIntent.OnCompleteSetClicked)
         runCurrent()
 
-        assertEquals(listOf(Triple<String, Int, Double?>("s1", 12, null)), repository.completeSetCalls)
+        assertEquals(
+            listOf(Triple<String, Int, Double?>("s1", 12, null)),
+            repository.completeSetCalls
+        )
     }
 
     @Test
@@ -185,10 +213,16 @@ class ActiveSessionViewModelTest {
         runCurrent()
 
         viewModel.onIntent(ActiveSessionIntent.OnOpenNoteSheetClicked)
-        assertEquals(ActiveSessionOverlayUiModel.NoteSheet(draft = ""), viewModel.uiState.value.tracking.overlay)
+        assertEquals(
+            ActiveSessionOverlayUiModel.NoteSheet(draft = ""),
+            viewModel.uiState.value.tracking.overlay
+        )
 
         viewModel.onIntent(ActiveSessionIntent.OnNoteDraftChanged("тяжело"))
-        assertEquals(ActiveSessionOverlayUiModel.NoteSheet(draft = "тяжело"), viewModel.uiState.value.tracking.overlay)
+        assertEquals(
+            ActiveSessionOverlayUiModel.NoteSheet(draft = "тяжело"),
+            viewModel.uiState.value.tracking.overlay
+        )
 
         viewModel.onIntent(ActiveSessionIntent.OnSaveNoteClicked)
         runCurrent()
@@ -202,8 +236,16 @@ class ActiveSessionViewModelTest {
     fun selectingExercisePersistsSelectionAndClosesOverlay() = activeSessionTest {
         val session = workoutSession(
             exercises = listOf(
-                sessionExercise(id = "e1", name = "Жим", sets = listOf(sessionSet(id = "s1", targetCount = 10, targetWeight = 60.0))),
-                sessionExercise(id = "e2", name = "Тяга", sets = listOf(sessionSet(id = "s2", targetCount = 12, targetWeight = 50.0))),
+                sessionExercise(
+                    id = "e1",
+                    name = "Жим",
+                    sets = listOf(sessionSet(id = "s1", targetCount = 10, targetWeight = 60.0))
+                ),
+                sessionExercise(
+                    id = "e2",
+                    name = "Тяга",
+                    sets = listOf(sessionSet(id = "s2", targetCount = 12, targetWeight = 50.0))
+                ),
             ),
         )
         val repository = repository(session)
@@ -226,9 +268,20 @@ class ActiveSessionViewModelTest {
                 sessionExercise(
                     id = "e1",
                     name = "Жим",
-                    sets = listOf(sessionSet(id = "s1", targetCount = 10, targetWeight = 60.0, result = completed(count = 10, weight = 60.0))),
+                    sets = listOf(
+                        sessionSet(
+                            id = "s1",
+                            targetCount = 10,
+                            targetWeight = 60.0,
+                            result = completed(count = 10, weight = 60.0)
+                        )
+                    ),
                 ),
-                sessionExercise(id = "e2", name = "Тяга", sets = listOf(sessionSet(id = "s2", targetCount = 12, targetWeight = 50.0))),
+                sessionExercise(
+                    id = "e2",
+                    name = "Тяга",
+                    sets = listOf(sessionSet(id = "s2", targetCount = 12, targetWeight = 50.0))
+                ),
             ),
         )
         val repository = repository(session)
@@ -243,7 +296,7 @@ class ActiveSessionViewModelTest {
     }
 
     @Test
-    fun endEarlyConfirmedFinishesAndNavigatesToLandingReplacingStack() = activeSessionTest {
+    fun endEarlyConfirmedFinishesAndNavigatesToSessionDetails() = activeSessionTest {
         val repository = repository(twoSetSession())
         val navigator = FakeLyteNavigator()
         val viewModel = viewModel(repository = repository, navigator = navigator)
@@ -254,17 +307,24 @@ class ActiveSessionViewModelTest {
         runCurrent()
 
         assertEquals(listOf("session-1"), repository.finishSessionCalls)
-        assertEquals(listOf(landingReplacingSession()), navigator.commandLog)
+        assertEquals(finishNavigation(), navigator.commandLog)
     }
 
     @Test
-    fun finishFromAllDoneNavigatesToLanding() = activeSessionTest {
+    fun finishFromAllDoneNavigatesToSessionDetails() = activeSessionTest {
         val session = workoutSession(
             exercises = listOf(
                 sessionExercise(
                     id = "e1",
                     name = "Жим",
-                    sets = listOf(sessionSet(id = "s1", targetCount = 10, targetWeight = 60.0, result = completed(count = 10, weight = 60.0))),
+                    sets = listOf(
+                        sessionSet(
+                            id = "s1",
+                            targetCount = 10,
+                            targetWeight = 60.0,
+                            result = completed(count = 10, weight = 60.0)
+                        )
+                    ),
                 ),
             ),
         )
@@ -279,7 +339,7 @@ class ActiveSessionViewModelTest {
         runCurrent()
 
         assertEquals(listOf("session-1"), repository.finishSessionCalls)
-        assertEquals(listOf(landingReplacingSession()), navigator.commandLog)
+        assertEquals(finishNavigation(), navigator.commandLog)
     }
 
     @Test
@@ -296,7 +356,11 @@ class ActiveSessionViewModelTest {
         val session = workoutSession(
             finishedAtMillis = 1_000,
             exercises = listOf(
-                sessionExercise(id = "e1", name = "Жим", sets = listOf(sessionSet(id = "s1", targetCount = 10, targetWeight = 60.0))),
+                sessionExercise(
+                    id = "e1",
+                    name = "Жим",
+                    sets = listOf(sessionSet(id = "s1", targetCount = 10, targetWeight = 60.0))
+                ),
             ),
         )
         val navigator = FakeLyteNavigator()
@@ -325,7 +389,9 @@ class ActiveSessionViewModelTest {
 
     @Test
     fun mutationFailureSurfacesErrorAndKeepsSession() = activeSessionTest {
-        val repository = repository(twoSetSession()).apply { completeSetError = IllegalStateException("db down") }
+        val repository = repository(twoSetSession()).apply {
+            completeSetError = IllegalStateException("db down")
+        }
         val viewModel = viewModel(repository = repository)
         runCurrent()
 
@@ -374,7 +440,23 @@ class ActiveSessionViewModelTest {
 
     private fun landingReplacingSession(): NavCommand = NavCommand.Forward(
         route = TrackerLandingRoute,
-        options = LyteNavOptions(popUpTo = ActiveSessionRoute(sessionId = SESSION_ID), popUpToInclusive = true),
+        options = LyteNavOptions(
+            popUpTo = ActiveSessionRoute(sessionId = SESSION_ID),
+            popUpToInclusive = true
+        ),
+    )
+
+    /**
+     * Финиш: сперва выкинуть завершённую сессию из стека трекера (иначе вкладка сохранилась бы на ней),
+     * затем переключиться на «Историю» и положить детали поверх её списка — «назад» уходит в список.
+     */
+    private fun finishNavigation(): List<NavCommand> = listOf(
+        landingReplacingSession(),
+        NavCommand.SwitchTab(graphRoute = HistoryTabGraph),
+        NavCommand.Forward(
+            route = HistorySessionDetailsRoute(sessionId = SESSION_ID),
+            options = null
+        ),
     )
 
     private companion object {

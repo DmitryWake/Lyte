@@ -6,6 +6,12 @@
     <string name="history_error">Не удалось загрузить историю</string>
     <string name="history_date">%1$d %2$s</string>
     <string name="history_session_summary">%1$d мин · выполнено %2$d/%3$d подходов</string>
+    <string name="history_details_title">Тренировка</string>
+    <string name="history_details_error">Не удалось загрузить сессию</string>
+    <string name="history_details_meta">%1$d %2$s · начало %3$s</string>
+    <string name="history_duration">%1$d мин</string>
+    <string name="history_details_sets">%1$d/%2$d</string>
+    <string name="history_bodyweight">%1$d повт</string>
     <string-array name="history_month_names">
         <item>Январь</item>
         <item>Февраль</item>
@@ -33,5 +39,19 @@
         <item>окт</item>
         <item>ноя</item>
         <item>дек</item>
+    </string-array>
+    <string-array name="history_month_names_genitive">
+        <item>января</item>
+        <item>февраля</item>
+        <item>марта</item>
+        <item>апреля</item>
+        <item>мая</item>
+        <item>июня</item>
+        <item>июля</item>
+        <item>августа</item>
+        <item>сентября</item>
+        <item>октября</item>
+        <item>ноября</item>
+        <item>декабря</item>
     </string-array>
 </resources>

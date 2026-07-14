@@ -11,3 +11,10 @@ data object HistoryTabGraph
 
 @Serializable
 data object HistoryRoute
+
+/**
+ * Экран деталей завершённой сессии (спека 5.2). Живёт в `:api`, чтобы на него могли навигироваться и
+ * список Истории, и трекер сразу после завершения сессии. [sessionId] — id завершённой сессии.
+ */
+@Serializable
+data class HistorySessionDetailsRoute(val sessionId: String)

@@ -33,6 +33,7 @@ kotlin {
         commonMain.dependencies {
             api(projects.feature.tracker.api)
             implementation(projects.feature.workout.api)
+            implementation(projects.feature.history.api)
             implementation(projects.core.coreMvi)
             implementation(projects.core.coreNavigation)
             implementation(projects.core.coreDi)

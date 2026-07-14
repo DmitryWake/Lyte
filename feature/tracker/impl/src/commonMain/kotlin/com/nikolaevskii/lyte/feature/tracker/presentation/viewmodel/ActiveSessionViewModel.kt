@@ -3,6 +3,8 @@ package com.nikolaevskii.lyte.feature.tracker.presentation.viewmodel
 import com.nikolaevskii.lyte.core.mvi.BaseViewModel
 import com.nikolaevskii.lyte.core.navigation.LyteNavigator
 import com.nikolaevskii.lyte.core.navigation.model.LyteNavOptions
+import com.nikolaevskii.lyte.feature.history.HistorySessionDetailsRoute
+import com.nikolaevskii.lyte.feature.history.HistoryTabGraph
 import com.nikolaevskii.lyte.feature.tracker.ActiveSessionRoute
 import com.nikolaevskii.lyte.feature.tracker.TrackerLandingRoute
 import com.nikolaevskii.lyte.feature.tracker.domain.model.WorkoutSessionEntity
@@ -17,6 +19,7 @@ import kotlin.time.Instant
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Экран активной сессии (спека 4.3). SSOT — БД: каждая мутация уходит в [workoutSessionRepository],
@@ -200,7 +203,7 @@ class ActiveSessionViewModel(
         updateTracking { copy(overlay = ActiveSessionOverlayUiModel.None) }
         launch {
             runCatching { workoutSessionRepository.finishSession(sessionId) }
-                .onSuccess { navigateToLanding() }
+                .onSuccess { navigateToSessionDetails() }
                 .onFailure { error ->
                     if (error is CancellationException) throw error
                     updateState { copy(isMutating = false) }
@@ -214,9 +217,9 @@ class ActiveSessionViewModel(
             val startedAt = uiStateValue.startedAt
             if (startedAt != null) {
                 updateState { copy(elapsedSeconds = elapsedSecondsFrom(startedAt)) }
-                delay(millisUntilNextSecond(startedAt))
+                delay(millisUntilNextSecond(startedAt).milliseconds)
             } else {
-                delay(MILLIS_PER_SECOND)
+                delay(MILLIS_PER_SECOND.milliseconds)
             }
         }
     }
@@ -249,6 +252,20 @@ class ActiveSessionViewModel(
                 popUpToInclusive = true,
             ),
         )
+    }
+
+    /**
+     * После финиша — на детали завершённой сессии (5.2). Экран живёт во вкладке «История», поэтому
+     * переключаем вкладку и кладём детали поверх её списка: «назад» с деталей уходит в список Истории.
+     *
+     * Порядок важен: сперва выкидываем завершённую сессию из стека трекера ([navigateToLanding]) —
+     * иначе `switchTab` сохранил бы стек вкладки на мёртвом экране активной сессии, и возврат на
+     * трекер показывал бы её вместо лендинга.
+     */
+    private fun navigateToSessionDetails() {
+        navigateToLanding()
+        lyteNavigator.switchTab(HistoryTabGraph)
+        lyteNavigator.navigate(route = HistorySessionDetailsRoute(sessionId = sessionId))
     }
 
     private companion object {

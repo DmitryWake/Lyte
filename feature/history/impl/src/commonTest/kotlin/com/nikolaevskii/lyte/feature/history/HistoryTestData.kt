@@ -1,7 +1,13 @@
 package com.nikolaevskii.lyte.feature.history
 
+import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionExerciseEntity
 import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionProgramEntity
+import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionSetEntity
+import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionSetResultEntity
+import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionSetValueEntity
+import com.nikolaevskii.lyte.feature.tracker.domain.model.WorkoutSessionEntity
 import com.nikolaevskii.lyte.feature.tracker.domain.model.WorkoutSessionItemEntity
+import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseEntity
 import kotlin.time.Duration.Companion.minutes
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -33,3 +39,45 @@ internal fun finishedSession(
         totalSetCount = totalSetCount,
     )
 }
+
+/**
+ * Полный граф завершённой сессии для деталей (5.2): старт [startedAt] (в [timeZone]), финиш —
+ * на [durationMinutes] позже.
+ */
+internal fun finishedSessionEntity(
+    id: String = "session-1",
+    programName: String = "Push Day",
+    startedAt: LocalDateTime = LocalDateTime(2026, kotlinx.datetime.Month.JULY, 2, 18, 24),
+    durationMinutes: Int = 52,
+    exercises: List<SessionExerciseEntity>,
+    timeZone: TimeZone = TEST_TIME_ZONE,
+): WorkoutSessionEntity {
+    val start = startedAt.toInstant(timeZone)
+    return WorkoutSessionEntity(
+        id = id,
+        program = SessionProgramEntity(id = "prog-$id", name = programName),
+        startedAt = start,
+        finishedAt = start + durationMinutes.minutes,
+        currentExerciseId = null,
+        exercises = exercises,
+    )
+}
+
+internal fun sessionExercise(id: String, name: String, sets: List<SessionSetEntity>): SessionExerciseEntity =
+    SessionExerciseEntity(id = id, exercise = WorkoutExerciseEntity(id = "ex-$id", name = name), sets = sets)
+
+internal fun sessionSet(
+    id: String,
+    targetCount: Int,
+    targetWeight: Double?,
+    result: SessionSetResultEntity?,
+    note: String = "",
+): SessionSetEntity = SessionSetEntity(
+    id = id,
+    target = SessionSetValueEntity(count = targetCount, weight = targetWeight),
+    result = result,
+    note = note,
+)
+
+internal fun completed(count: Int, weight: Double?): SessionSetResultEntity.Completed =
+    SessionSetResultEntity.Completed(SessionSetValueEntity(count = count, weight = weight))

@@ -1,6 +1,8 @@
 package com.nikolaevskii.lyte.feature.history.presentation.viewmodel
 
 import com.nikolaevskii.lyte.core.mvi.BaseViewModel
+import com.nikolaevskii.lyte.core.navigation.LyteNavigator
+import com.nikolaevskii.lyte.feature.history.HistorySessionDetailsRoute
 import com.nikolaevskii.lyte.feature.history.presentation.model.mvi.HistoryIntent
 import com.nikolaevskii.lyte.feature.history.presentation.model.mvi.HistoryUiState
 import com.nikolaevskii.lyte.feature.history.presentation.model.toMonthGroups
@@ -10,7 +12,7 @@ import kotlinx.datetime.TimeZone
 
 class HistoryViewModel(
     private val workoutSessionRepository: WorkoutSessionRepository,
-    private val timeZone: TimeZone,
+    private val lyteNavigator: LyteNavigator,
 ) : BaseViewModel<HistoryUiState, HistoryIntent>() {
 
     init {
@@ -20,8 +22,8 @@ class HistoryViewModel(
     override fun onIntent(intent: HistoryIntent) {
         when (intent) {
             HistoryIntent.OnScreenShown -> launch { loadSessions() }
-            // Детали сессии (5.2) — вне объёма текущей задачи; интент зарезервирован под переход.
-            is HistoryIntent.OnSessionClicked -> Unit
+            is HistoryIntent.OnSessionClicked ->
+                lyteNavigator.navigate(HistorySessionDetailsRoute(sessionId = intent.id))
         }
     }
 
@@ -34,7 +36,9 @@ class HistoryViewModel(
         }
         runCatching { workoutSessionRepository.getFinishedSessions() }
             .onSuccess { sessions ->
-                val groups = sessions.toMonthGroups(timeZone)
+                // Зону берём в точке использования, а не фиксируем при создании VM: перечитывание
+                // списка подхватит смену системной таймзоны.
+                val groups = sessions.toMonthGroups(TimeZone.currentSystemDefault())
                 updateState { if (groups.isEmpty()) HistoryUiState.Empty else HistoryUiState.Content(groups) }
             }
             .onFailure { error ->

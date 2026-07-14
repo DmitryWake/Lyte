@@ -12,9 +12,11 @@ import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutEntity
  */
 internal class FakeWorkoutSessionRepository(
     var finishedSessions: List<WorkoutSessionItemEntity> = emptyList(),
+    var session: WorkoutSessionEntity? = null,
 ) : WorkoutSessionRepository {
 
     var getFinishedSessionsError: Throwable? = null
+    var getSessionError: Throwable? = null
 
     override suspend fun getFinishedSessions(): List<WorkoutSessionItemEntity> {
         getFinishedSessionsError?.let { error -> throw error }
@@ -23,7 +25,10 @@ internal class FakeWorkoutSessionRepository(
 
     override suspend fun getActiveSession(): WorkoutSessionEntity? = null
 
-    override suspend fun getSession(id: String): WorkoutSessionEntity? = null
+    override suspend fun getSession(id: String): WorkoutSessionEntity? {
+        getSessionError?.let { error -> throw error }
+        return session?.takeIf { candidate -> candidate.id == id }
+    }
 
     override suspend fun getLastSessionDates(): List<LastSessionDateEntity> = emptyList()
 

@@ -1,6 +1,7 @@
 package com.nikolaevskii.lyte.feature.history.presentation.viewmodel
 
-import com.nikolaevskii.lyte.feature.history.TEST_TIME_ZONE
+import com.nikolaevskii.lyte.core.navigation.model.NavCommand
+import com.nikolaevskii.lyte.feature.history.HistorySessionDetailsRoute
 import com.nikolaevskii.lyte.feature.history.finishedSession
 import com.nikolaevskii.lyte.feature.history.presentation.model.mvi.HistoryIntent
 import com.nikolaevskii.lyte.feature.history.presentation.model.mvi.HistoryUiState
@@ -34,15 +35,19 @@ class HistoryViewModelTest {
         Dispatchers.resetMain()
     }
 
+    // VM берёт системную таймзону в точке использования, а тест-данные строятся в UTC, поэтому даты
+    // взяты в середине месяца в полдень: сдвиг любой реальной зоны (±14 ч) не переносит их в соседний
+    // месяц, и утверждение не зависит от зоны машины. Точная логика разбора даты — в тесте маппера,
+    // где зона задаётся явно.
     @Test
     fun loadsSessionsGroupedByMonthOnInit() = runTest(testDispatcher) {
         val repository = FakeWorkoutSessionRepository(
             finishedSessions = listOf(
-                finishedSession("1", "Push Day", LocalDateTime(2026, Month.JULY, 2, 12, 0), durationMinutes = 52, completedSetCount = 15, totalSetCount = 16),
-                finishedSession("2", "Pull Day", LocalDateTime(2026, Month.JUNE, 30, 12, 0), durationMinutes = 58, completedSetCount = 17, totalSetCount = 17),
+                finishedSession("1", "Push Day", LocalDateTime(2026, Month.JULY, 15, 12, 0), durationMinutes = 52, completedSetCount = 15, totalSetCount = 16),
+                finishedSession("2", "Pull Day", LocalDateTime(2026, Month.JUNE, 15, 12, 0), durationMinutes = 58, completedSetCount = 17, totalSetCount = 17),
             ),
         )
-        val viewModel = HistoryViewModel(workoutSessionRepository = repository, timeZone = TEST_TIME_ZONE)
+        val viewModel = viewModel(repository)
 
         runCurrent()
 
@@ -52,7 +57,7 @@ class HistoryViewModelTest {
 
     @Test
     fun emptyRepositoryProducesEmptyState() = runTest(testDispatcher) {
-        val viewModel = HistoryViewModel(workoutSessionRepository = FakeWorkoutSessionRepository(), timeZone = TEST_TIME_ZONE)
+        val viewModel = viewModel(FakeWorkoutSessionRepository())
 
         runCurrent()
 
@@ -62,7 +67,7 @@ class HistoryViewModelTest {
     @Test
     fun screenShownReloadsSessions() = runTest(testDispatcher) {
         val repository = FakeWorkoutSessionRepository(finishedSessions = emptyList())
-        val viewModel = HistoryViewModel(workoutSessionRepository = repository, timeZone = TEST_TIME_ZONE)
+        val viewModel = viewModel(repository)
         runCurrent()
         assertEquals(HistoryUiState.Empty, viewModel.uiState.value)
         repository.finishedSessions = listOf(
@@ -79,7 +84,7 @@ class HistoryViewModelTest {
     @Test
     fun failedLoadSurfacesError() = runTest(testDispatcher) {
         val repository = FakeWorkoutSessionRepository().apply { getFinishedSessionsError = IllegalStateException("boom") }
-        val viewModel = HistoryViewModel(workoutSessionRepository = repository, timeZone = TEST_TIME_ZONE)
+        val viewModel = viewModel(repository)
 
         runCurrent()
 
@@ -94,7 +99,7 @@ class HistoryViewModelTest {
                 finishedSession("1", "Push Day", LocalDateTime(2026, Month.JULY, 2, 12, 0), durationMinutes = 52, completedSetCount = 15, totalSetCount = 16),
             ),
         )
-        val viewModel = HistoryViewModel(workoutSessionRepository = repository, timeZone = TEST_TIME_ZONE)
+        val viewModel = viewModel(repository)
         runCurrent()
         val loaded = assertIs<HistoryUiState.Content>(viewModel.uiState.value)
         repository.getFinishedSessionsError = IllegalStateException("boom")
@@ -107,18 +112,28 @@ class HistoryViewModelTest {
     }
 
     @Test
-    fun sessionClickDoesNotChangeState() = runTest(testDispatcher) {
+    fun sessionClickNavigatesToDetailsWithoutChangingState() = runTest(testDispatcher) {
         val repository = FakeWorkoutSessionRepository(
             finishedSessions = listOf(
-                finishedSession("1", "Push Day", LocalDateTime(2026, Month.JULY, 2, 12, 0), durationMinutes = 52, completedSetCount = 15, totalSetCount = 16),
+                finishedSession("s1", "Push Day", LocalDateTime(2026, Month.JULY, 2, 12, 0), durationMinutes = 52, completedSetCount = 15, totalSetCount = 16),
             ),
         )
-        val viewModel = HistoryViewModel(workoutSessionRepository = repository, timeZone = TEST_TIME_ZONE)
+        val navigator = FakeLyteNavigator()
+        val viewModel = viewModel(repository, navigator)
         runCurrent()
         val stateBefore = viewModel.uiState.value
 
-        viewModel.onIntent(HistoryIntent.OnSessionClicked(id = "1"))
+        viewModel.onIntent(HistoryIntent.OnSessionClicked(id = "s1"))
 
+        assertEquals(listOf<NavCommand>(NavCommand.Forward(HistorySessionDetailsRoute(sessionId = "s1"), null)), navigator.commandLog)
         assertEquals(stateBefore, viewModel.uiState.value)
     }
+
+    private fun viewModel(
+        repository: FakeWorkoutSessionRepository,
+        navigator: FakeLyteNavigator = FakeLyteNavigator(),
+    ): HistoryViewModel = HistoryViewModel(
+        workoutSessionRepository = repository,
+        lyteNavigator = navigator,
+    )
 }
