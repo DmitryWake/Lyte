@@ -43,6 +43,10 @@
 `SkipForward`, `AddCircle`, `Delete`, `Edit`, `ListChecks`, `Circle`, `CircleDot`, `CircleCheck`,
 `CircleX`, `CircleMinus` (кружки-статусы подходов).
 
+### Форматирование
+
+- `com.nikolaevskii.lyte.core.design.format.formatWeight(weight: Double): String` — единый формат веса (целый — «60», дробный — «62.5»). Одна реализация на все фичи, чтобы правило отображения жило в одном месте.
+
 ### Компоненты
 
 Каждый — стейтлес `@Composable` на M3-примитивах (где дизайн позволяет), с собственным `@Preview`.

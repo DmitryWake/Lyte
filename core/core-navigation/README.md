@@ -9,9 +9,7 @@ DSL-хелперы стек-шейпинга поверх мультиплатф
 - `NavCommand` — команда навигации: `Forward(route, options)`, `Back`, `SwitchTab(graphRoute)`.
 - `LyteNavOptions` — декларативные опции стек-шейпинга (`popUpTo`/`popUpToInclusive`/`saveState`/`launchSingleTop`/`restoreState`), свободные от androidx-типов.
 - `NavOptionsBuilder.applyOptions(options)` — трансляция `LyteNavOptions` в `NavOptionsBuilder` (вызывается шеллом).
-- `popUpToRoute<R>(inclusive, saveState)` — типобезопасный `popUpTo` по `@Serializable`-роуту.
-- `singleTop()` — `launchSingleTop = true`.
-- `restorable()` — `restoreState = true`.
+- `applyOptions(LyteNavOptions)` — транслирует декларативные `LyteNavOptions` из VM в `NavOptionsBuilder`; вызывается только шеллом (`LyteNavHost`). Внутренние хелперы `singleTop()`/`restorable()` — `internal`, наружу не нужны (VM шейпит стек через `LyteNavOptions`).
 - `TopLevelDestination` — контракт верхнеуровневой вкладки bottom-bar (маршрут её вложенного графа).
 - `NavController.navigateToTopLevel(graphRoute)` — канонический переход на вкладку с сохранением/восстановлением её back stack; перегрузка `navigateToTopLevel(destination: TopLevelDestination)` делегирует в неё.
 - `NavDestination?.isTopLevelSelected(destination)` — выбрана ли вкладка: `true` только на её стартовом экране, не на любом экране внутри графа вкладки.
@@ -121,10 +119,14 @@ val current = navController.currentBackStackEntryAsState().value?.destination
 // selected = current.isTopLevelSelected(tab)
 // onClick  = { navController.navigateToTopLevel(tab) }
 
-navigation<BottomNavGraph>(startDestination = TrackerTabGraph) {
-    navigation<TrackerTabGraph>(startDestination = TrackerLandingRoute) { trackerGraph() }
-    navigation<WorkoutTabGraph>(startDestination = WorkoutListRoute) { workoutGraph() }
-    navigation<HistoryTabGraph>(startDestination = HistoryRoute) { historyGraph() }
+// Корень NavHost — SplashRoute; BottomNavGraph входится после инициализации.
+NavHost(navController, startDestination = SplashRoute) {
+    splashGraph()
+    navigation<BottomNavGraph>(startDestination = TrackerTabGraph) {
+        navigation<TrackerTabGraph>(startDestination = TrackerLandingRoute) { trackerGraph() }
+        navigation<WorkoutTabGraph>(startDestination = WorkoutListRoute) { workoutGraph() }
+        navigation<HistoryTabGraph>(startDestination = HistoryRoute) { historyGraph() }
+    }
 }
 ```
 
@@ -156,7 +158,7 @@ implementation(projects.core.coreNavigation)
 - `NavController` глубже `:shared` не пробрасываем; навигацию инициирует VM через `LyteNavigator`, а графы/экраны навигационных колбэков не принимают.
 - Подписчик `LyteNavigator.commands` — **один** (`LyteNavHost` в `:shared`). Несколько подписчиков «разорвут» поток команд (FIFO-канал).
 - Аргументы роутов — минимальные (id, enum), не доменные модели. Данные загружает сам экран через VM + Repository.
-- Стек-шейпинг — из VM через `LyteNavOptions` либо хелперы (`popUpToRoute`/`singleTop`/`restorable`) в шелле; без сырых `popUpTo`/`launchSingleTop` по местам.
+- Стек-шейпинг — из VM через `LyteNavOptions` (шелл применяет их через `applyOptions`); без сырых `popUpTo`/`launchSingleTop` по местам.
 - Кросс-фичевая навигация: VM зависит только от `:feature:<other>:api` (route-цели), не от её `:impl` (см. `WorkoutPickerViewModel` в `:feature:tracker:impl` → `feature:workout:api`).
 - Multi-stack / bottom-bar — через `TopLevelDestination` + `navigateToTopLevel` (или `LyteNavigator.switchTab`).
 - **Между вкладками нельзя ходить обычным `navigate()`.** `navigate(WorkoutListRoute)` из вкладки «Трекер» кладёт граф вкладки «Тренировки» *поверх* трекера (Navigation достраивает недостающий entry её графа). Следующий `navigateToTopLevel` делает не-inclusive `popUpTo(saveState = true)` до старта графа-контейнера, а Navigation при этом привязывает сохранённый стек к цели `popUpTo` и всем её предкам по цепочке start-destination — то есть к `TrackerTabGraph`. Идущий следом `restoreState` восстанавливает по этому ключу стек **тренировок**, и вкладка «Трекер» перестаёт открываться, пока не нажмёшь системный «назад». Правильный переход — `switchTab(WorkoutTabGraph)`.
