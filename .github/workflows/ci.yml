@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    # macOS-раннер: iOS-таргеты собираются только на macOS.
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # GATE 1 — unit-тесты на Android/JVM-хосте (быстро).
+      - name: Host unit tests
+        run: >
+          ./gradlew
+          :core:core-mvi:testAndroidHostTest
+          :core:core-workout:testAndroidHostTest
+          :core:core-session:testAndroidHostTest
+          :feature:tracker:impl:testAndroidHostTest
+          :feature:workout:impl:testAndroidHostTest
+          :feature:history:impl:testAndroidHostTest
+          :feature:splash:impl:testAndroidHostTest
+
+      # GATE 2 — те же commonTest на iOS-симуляторе (ловит Kotlin/Native-only поломки).
+      - name: iOS simulator tests
+        run: >
+          ./gradlew
+          :core:core-mvi:iosSimulatorArm64Test
+          :core:core-workout:iosSimulatorArm64Test
+          :core:core-session:iosSimulatorArm64Test
+          :feature:tracker:impl:iosSimulatorArm64Test
+          :feature:workout:impl:iosSimulatorArm64Test
+          :feature:history:impl:iosSimulatorArm64Test
+          :feature:splash:impl:iosSimulatorArm64Test
+
+      # GATE 3 — обе платформы собираются.
+      - name: Android debug build
+        run: ./gradlew :androidApp:assembleDebug
+
+      - name: iOS framework link
+        run: ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
