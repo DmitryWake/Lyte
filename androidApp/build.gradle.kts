@@ -1,10 +1,28 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
 }
+
+// Подпись релиза берётся из keystore.properties (в .gitignore) или из переменных окружения (CI).
+// Ни keystore, ни пароли в репозиторий не коммитятся. Если ни того, ни другого нет — релиз
+// подписывается debug-ключом (чтобы assembleRelease/bundleRelease собирались в dev/CI без секретов;
+// для публикации в стор нужен настоящий ключ).
+val keystoreProperties = Properties().apply {
+    val file = rootProject.file("keystore.properties")
+    if (file.exists()) {
+        file.inputStream().use { load(it) }
+    }
+}
+
+fun secret(propertyKey: String, envKey: String): String? =
+    keystoreProperties.getProperty(propertyKey) ?: System.getenv(envKey)
+
+fun releaseStoreFile(): File? =
+    secret("storeFile", "LYTE_KEYSTORE_FILE")?.let { rootProject.file(it) }
 
 kotlin {
     compilerOptions {
@@ -32,6 +50,17 @@ android {
         versionCode = 1
         versionName = "1.0"
     }
+    signingConfigs {
+        create("release") {
+            val store = releaseStoreFile()
+            if (store != null) {
+                storeFile = store
+                storePassword = secret("storePassword", "LYTE_KEYSTORE_PASSWORD")
+                keyAlias = secret("keyAlias", "LYTE_KEY_ALIAS")
+                keyPassword = secret("keyPassword", "LYTE_KEY_PASSWORD")
+            }
+        }
+    }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -39,7 +68,17 @@ android {
     }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+            signingConfig = if (releaseStoreFile() != null) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
     compileOptions {

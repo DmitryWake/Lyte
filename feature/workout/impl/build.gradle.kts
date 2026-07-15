@@ -38,7 +38,6 @@ kotlin {
             implementation(projects.core.coreDesign)
             implementation(projects.core.coreDb)
             implementation(libs.androidx.navigation.compose)
-            implementation(libs.androidx.room.runtime)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.compose.runtime)

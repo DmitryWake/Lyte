@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Фон окна до первого кадра Compose. Совпадает с surface-токеном LyteTheme (light),
+         в values-night — с dark, чтобы холодный старт в тёмной теме не мигал белым. -->
+    <color name="lyte_window_background">#FBFDF4</color>
+</resources>

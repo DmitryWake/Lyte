@@ -1,24 +1,77 @@
-This is a Kotlin Multiplatform project targeting Android, iOS.
+# Lyte
 
-* [/iosApp](./iosApp/iosApp) contains an iOS application. Even if you’re sharing your UI with Compose Multiplatform,
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+Lyte — фитнес-трекер на **Kotlin Multiplatform** (Android + iOS) с общим UI на **Compose Multiplatform**.
+Приложение **offline-first**: все данные (программы, упражнения, сессии тренировок, история) хранятся
+локально на устройстве, без сети, аккаунтов и аналитики. UI — русскоязычный.
 
-* [/shared](./shared/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./shared/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./shared/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./shared/src/jvmMain/kotlin)
-    folder is the appropriate location.
+Корневой пакет: `com.nikolaevskii.lyte`.
 
-### Running the apps
+## Возможности
 
-Use the run configurations provided by the run widget in your IDE's toolbar. You can also use these commands and options:
+- **Трекер** — старт тренировки по программе, пошаговое выполнение подходов (готово/пропустить),
+  секундомер сессии, досрочное завершение; активная сессия переживает перезапуск процесса.
+- **Программы** — список программ, редактор (упражнения, порядок, подходы: повторения × вес),
+  библиотека упражнений с поиском и созданием новых.
+- **История** — завершённые сессии с группировкой по месяцам и экран деталей сессии (план против факта).
+- **Splash** — первый запуск сидит библиотеку упражнений и стартовые программы.
 
-- Android app: `./gradlew :androidApp:assembleDebug`
-- iOS app: open the [/iosApp](./iosApp) directory in Xcode and run it from there.
+## Архитектура
 
----
+- **Multi-Module по фичам, api/impl-split**: каждая фича — пара модулей `feature/<name>/{api,impl}`.
+  `:api` — pure KMP (`@Serializable` роуты и доменные контракты), `:impl` — Compose UI + ViewModel-и.
+- **MVI** (`:core:core-mvi`): `UiState`/`UiIntent`, `BaseViewModel`, единый `onIntent`.
+- **Навигация** (`:core:core-navigation`): типобезопасные роуты (Jetpack Navigation), команды через
+  `LyteNavigator`; `NavController` живёт только в шелле (`:shared`).
+- **DI** — Koin (`:core:core-di` + Koin-модуль на каждый модуль).
+- **БД** — Room KMP (`:core:core-db`), `BundledSQLiteDriver`, offline-first.
+- **Дизайн-система** — `:core:core-design` (`LyteTheme` + компонент-кит `Lyte*`).
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+Полное описание архитектуры, кодстайла и правил — в [CLAUDE.md](CLAUDE.md); у каждого `:core:*`-модуля
+есть свой `README.md`.
+
+## Сборка и запуск
+
+**Требования:** JDK 11+, Android SDK (`compileSdk 36`), для iOS — macOS + Xcode.
+
+- Android (debug APK): `./gradlew :androidApp:assembleDebug`
+- Android (релиз AAB): `./gradlew :androidApp:bundleRelease` — требует ключа подписи
+  (см. «Подпись релиза»).
+- iOS: открыть `iosApp/iosApp.xcodeproj` в Xcode и запустить.
+
+### Подпись релиза (Android)
+
+Релизная сборка подписывается ключом из `keystore.properties` (в `.gitignore`) или из переменных
+окружения (`LYTE_KEYSTORE_FILE`, `LYTE_KEYSTORE_PASSWORD`, `LYTE_KEY_ALIAS`, `LYTE_KEY_PASSWORD`).
+Без них релиз собирается debug-ключом (годится для проверки, не для публикации). `keystore.properties`:
+
+```
+storeFile=/absolute/path/to/lyte-release.jks
+storePassword=…
+keyAlias=…
+keyPassword=…
+```
+
+## Тесты
+
+Unit-тесты (host/JVM):
+
+```
+./gradlew :core:core-mvi:testAndroidHostTest \
+          :feature:tracker:impl:testAndroidHostTest \
+          :feature:workout:impl:testAndroidHostTest \
+          :feature:history:impl:testAndroidHostTest \
+          :feature:splash:impl:testAndroidHostTest
+```
+
+Те же наборы на iOS-симуляторе — `:iosSimulatorArm64Test` у соответствующих модулей.
+
+## Лицензии
+
+Исходный код — проприетарный, см. [LICENSE](LICENSE).
+
+Шрифты **Space Grotesk** и **Inter Tight** распространяются под **SIL Open Font License 1.1** —
+[OFL.txt](core/core-design/src/commonMain/composeResources/files/OFL.txt).
+
+## Конфиденциальность
+
+Приложение не собирает и не передаёт данные — [docs/PRIVACY.md](docs/PRIVACY.md).

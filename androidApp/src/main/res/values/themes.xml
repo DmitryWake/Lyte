@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Платформенная (до-Compose) тема окна. Весь UI рисует Compose (LyteTheme), поэтому платформенной
+        теме достаточно: нейтральный no-action-bar родитель, DayNight-фон окна (через @color, который сам
+        резолвится по values-night) и прозрачные системные бары — их внешним видом управляет Compose через
+        enableEdgeToEdge(). Раньше здесь стоял @android:style/Theme.Material.Light.NoActionBar — из-за него
+        холодный старт в тёмной теме мигал белым.
+    -->
+    <style name="Theme.Lyte" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/lyte_window_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+</resources>

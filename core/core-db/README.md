@@ -4,7 +4,7 @@ Room KMP: единая локальная база приложения, DAO т�
 
 ## Что внутри
 
-- `LyteDatabase` — `@Database(entities = [...], version = 5, exportSchema = true)`, `@ConstructedBy(LyteDatabaseConstructor::class)`.
+- `LyteDatabase` — `@Database(entities = [...], version = 1, exportSchema = true)`, `@ConstructedBy(LyteDatabaseConstructor::class)`.
 - `LyteDatabaseConstructor` — `expect object : RoomDatabaseConstructor<LyteDatabase>`; `actual`-реализация генерируется Room-компилятором (KSP) отдельно на каждой платформе.
 - Схема тренировок (`db/workout/`, `@Entity`-классы — с суффиксом `*DatabaseEntity`):
   - `WorkoutDatabaseEntity` (`workout`), `ExerciseDatabaseEntity` (`exercise`) — тренировка и упражнение-библиотека (`id: String`, `name`, `name_normalized`, `description?`).
@@ -24,7 +24,7 @@ Room KMP: единая локальная база приложения, DAO т�
 - Состояние приложения (`db/app/`):
   - `AppLaunchStateEntity` (`app_launch_state`) — singleton-строка (`id = AppLaunchStateEntity.SINGLETON_ROW_ID`, всегда `0`), `hasCompletedFirstLaunch: Boolean`. Переживает удаление любых доменных данных (например, если пользователь очистит библиотеку упражнений) — используется как независимый от содержимого других таблиц маркер «первый запуск уже прошёл», а не эвристика вида «таблица X пуста».
   - `AppLaunchStateDao` — `get()` (singleton-строка или `null`, если ещё не создана), `@Upsert upsert(state)`.
-- `applyLyteDefaults()` — расширение `RoomDatabase.Builder<T>`: `BundledSQLiteDriver`, `setQueryCoroutineContext(Dispatchers.IO)` и `fallbackToDestructiveMigration(dropAllTables = true)` (на стадии каркаса миграций нет — при смене схемы БД пересоздаётся, данные теряются).
+- `applyLyteDefaults()` — расширение `RoomDatabase.Builder<T>`: `BundledSQLiteDriver`, `setQueryCoroutineContext(Dispatchers.IO)` и `addMigrations(*LYTE_MIGRATIONS)`. Деструктивного пересоздания БД (`fallbackToDestructiveMigration`) **нет** — оно стирало бы историю тренировок пользователя при бампе схемы.
 - `coreDbModule()` — Koin-модуль: `single<LyteDatabase> { ... }` + `single<WorkoutDao>` + `single<ExerciseDao>` + `single<WorkoutSessionDao>` + `single<AppLaunchStateDao>`.
 - `lyteDatabaseBuilder()` (`internal`, expect/actual) — платформенный билдер: на Android контекст берётся через `Koin.GlobalContext` (`androidDatabaseContext()`), на iOS путь — `NSDocumentDirectory` (`iosDatabaseFilePath()`).
 
@@ -82,8 +82,8 @@ implementation(projects.core.coreDb)
 
 - **KSP-компилятор Room подключается только per-target** (`add("kspAndroid"/"kspIosArm64"/"kspIosSimulatorArm64", ...)`) — общего `ksp(...)` для всех таргетов нет.
 - `expect object LyteDatabaseConstructor` помечен `@Suppress("NO_ACTUAL_FOR_EXPECT")` — `actual` генерируется KSP и не виден IDE до первой сборки; это ожидаемо, не баг.
-- `room { schemaDirectory(...) }` обязателен при `exportSchema = true` — без него KSP-таска падает. Схемы (`core/core-db/schemas/`) коммитятся в репозиторий, при любом изменении `version` или сущностей — новый файл схемы, старые не трогаем/не удаляем.
-- **Миграции на стадии активной разработки не пишем.** Меняешь схему — просто подними `version` в `@Database`; `fallbackToDestructiveMigration(dropAllTables = true)` пересоздаст БД, локальные данные потеряются, а сид библиотеки в `:feature:splash:impl` наполнит её заново (`app_launch_state` сбросится вместе со всем остальным). `Migration`-объекты появятся, когда приложение уедет к пользователям.
+- `room { schemaDirectory(...) }` обязателен при `exportSchema = true` — без него KSP-таска падает. Схемы (`core/core-db/schemas/`) коммитятся в репозиторий.
+- **Схема заморожена на `version = 1`.** До первого релиза история версий была схлопнута (осталась единственная `schemas/.../1.json`). Любое дальнейшее изменение схемы обязано: (1) поднять `version`, (2) добавить `Migration`-объект(ы) в `LYTE_MIGRATIONS` (`RoomBuilderDefaults.kt`), (3) закоммитить новый файл схемы (старые не трогаем), (4) добавить тест миграции по закоммиченным схемам. Деструктивный сброс в релизе запрещён.
 - **Регистр в SQLite работает только для ASCII.** `LIKE`, `lower()` и коллация `NOCASE` не знают ничего про кириллицу: «жим» не найдёт «Жим лёжа», а строчное название уедет в конец `ORDER BY`. Поэтому под поиск/сортировку заводим служебную колонку с заранее нормализованным (`lowercase`) значением — как `exercise.name_normalized`, — а регистр запроса приводим на стороне Kotlin. Строки, которые пользователь вводит и которые попадают в `LIKE`, обязаны экранироваться (`%`, `_`, `\`) — в запросе для этого есть `ESCAPE '\'`.
 - Новые сущности/DAO кладём в `core/core-db/src/commonMain/.../db/<domain>/` рядом с существующими (`workout/`), регистрируем в `@Database(entities = [...])` и добавляем DAO-провайдер в `coreDbModule()`.
 - Драйвер — только `BundledSQLiteDriver` (без нативных SQLite-биндингов), запросы выполняются на `Dispatchers.IO` по умолчанию (`applyLyteDefaults()`) — не переопределяй контекст выполнения запросов на билдере вручную без причины.

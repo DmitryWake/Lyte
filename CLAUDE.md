@@ -11,6 +11,7 @@ Lyte — фитнес-трекер на Kotlin Multiplatform (Android + iOS), UI
 ## Сборка и запуск
 
 - Android (debug APK): `./gradlew :androidApp:assembleDebug`
+- Android (релиз AAB): `./gradlew :androidApp:bundleRelease`. Релиз собирается с R8 + `shrinkResources` (keep-правила — `androidApp/proguard-rules.pro`, обязательны для `@Serializable` route-классов навигации). Подпись — из `keystore.properties` (в `.gitignore`) или env (`LYTE_KEYSTORE_FILE`/`LYTE_KEYSTORE_PASSWORD`/`LYTE_KEY_ALIAS`/`LYTE_KEY_PASSWORD`); без них релиз подписывается debug-ключом. Keystore и пароли в репозиторий не коммитятся.
 - iOS: открыть `iosApp/iosApp.xcodeproj` в Xcode и запустить. iOS подключает статический фреймворк `Shared`, который собирает модуль `:shared` (`iosArm64`, `iosSimulatorArm64`); `MainViewController()` из фреймворка оборачивается в `ContentView.swift` через `UIViewControllerRepresentable`.
 
 ## Тесты
@@ -94,7 +95,7 @@ Lyte — фитнес-трекер на Kotlin Multiplatform (Android + iOS), UI
 ## БД (`:core:core-db`)
 
 - Room KMP. `LyteDatabase` объявлена как `@Database(entities = [...], exportSchema = true)` + `@ConstructedBy(LyteDatabaseConstructor::class)`; `expect object LyteDatabaseConstructor : RoomDatabaseConstructor<LyteDatabase>` — actual генерируется KSP на каждой платформе (`@Suppress("NO_ACTUAL_FOR_EXPECT")` на expect-объекте, т.к. IDE не видит сгенерированный код до сборки).
-- Драйвер — `BundledSQLiteDriver` (androidx.sqlite), `setQueryCoroutineContext(Dispatchers.IO)` — см. `RoomBuilderDefaults.applyLyteDefaults()`.
+- Драйвер — `BundledSQLiteDriver` (androidx.sqlite), `setQueryCoroutineContext(Dispatchers.IO)`, `addMigrations(*LYTE_MIGRATIONS)` — см. `RoomBuilderDefaults.applyLyteDefaults()`. Схема заморожена на `version = 1` (история схлопнута до релиза); деструктивного `fallbackToDestructiveMigration` нет — дальше только `Migration`-объекты (подробности — `core-db/README.md`).
 - Билдер БД — expect/actual (`internal/LyteDatabaseBuilder.kt`): на Android контекст берётся через `Koin.GlobalContext` (`androidDatabaseContext()`), на iOS путь — `NSDocumentDirectory` (`iosDatabaseFilePath()`).
 - KSP-компилятор Room подключается **per-target**, общего `ksp(...)` нет:
   ```kotlin

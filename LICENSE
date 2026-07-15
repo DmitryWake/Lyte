@@ -1,0 +1,16 @@
+Copyright (c) 2026 Dmitrii Nikolaevskii
+
+All rights reserved.
+
+This repository and its source code are proprietary. No permission is granted
+to use, copy, modify, merge, publish, distribute, sublicense, or sell copies of
+the software without the prior written permission of the copyright holder.
+
+Third-party components are licensed separately by their respective authors:
+
+  - Bundled fonts (Space Grotesk, Inter Tight) are licensed under the
+    SIL Open Font License, Version 1.1 — see
+    core/core-design/src/commonMain/composeResources/files/OFL.txt.
+
+  - Other third-party libraries retain their own licenses as declared in
+    gradle/libs.versions.toml and their respective distributions.
