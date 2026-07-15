@@ -1,10 +1,12 @@
 package com.nikolaevskii.lyte.feature.tracker.presentation.viewmodel
 
 import com.nikolaevskii.lyte.core.mvi.BaseViewModel
+import com.nikolaevskii.lyte.core.mvi.toLyteError
 import com.nikolaevskii.lyte.core.navigation.LyteNavigator
 import com.nikolaevskii.lyte.feature.tracker.WorkoutPreviewRoute
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.WorkoutPickerIntent
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.WorkoutPickerUiState
+import com.nikolaevskii.lyte.feature.tracker.presentation.model.toProgramUiModel
 import com.nikolaevskii.lyte.feature.workout.WorkoutTabGraph
 import com.nikolaevskii.lyte.core.workout.domain.repository.WorkoutRepository
 import kotlinx.coroutines.launch
@@ -28,7 +30,11 @@ class WorkoutPickerViewModel(
         }
     }
 
-    override fun getInitialState(): WorkoutPickerUiState = WorkoutPickerUiState()
+    override fun getInitialState(): WorkoutPickerUiState = WorkoutPickerUiState.Loading
+
+    override fun handleError(error: Throwable) {
+        updateState { WorkoutPickerUiState.Error(error.toLyteError()) }
+    }
 
     /**
      * Сначала снимаем экран выбора со стека вкладки, и только потом переключаемся: `switchTab`
@@ -40,10 +46,12 @@ class WorkoutPickerViewModel(
         lyteNavigator.switchTab(WorkoutTabGraph)
     }
 
+    // Ошибка загрузки уходит в handleError (воронка BaseViewModel) → WorkoutPickerUiState.Error.
     private suspend fun loadPrograms() {
-        updateState { copy(isLoading = true, errorMessage = null) }
-        runCatching { workoutRepository.getWorkouts() }
-            .onSuccess { programs -> updateState { copy(isLoading = false, programs = programs) } }
-            .onFailure { error -> updateState { copy(isLoading = false, errorMessage = error.message) } }
+        updateState { WorkoutPickerUiState.Loading }
+        val programs = workoutRepository.getWorkouts().map { it.toProgramUiModel() }
+        updateState {
+            if (programs.isEmpty()) WorkoutPickerUiState.Empty else WorkoutPickerUiState.Content(programs)
+        }
     }
 }

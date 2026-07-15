@@ -31,6 +31,7 @@ import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBarSize
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.Res
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_picker_empty_hint
+import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_picker_error
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_picker_empty_message
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_picker_exercise_count
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_picker_new_program
@@ -38,7 +39,7 @@ import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_picker_
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.WorkoutPickerIntent
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.WorkoutPickerUiState
 import com.nikolaevskii.lyte.feature.tracker.presentation.viewmodel.WorkoutPickerViewModel
-import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutItemEntity
+import com.nikolaevskii.lyte.feature.tracker.presentation.model.WorkoutProgramUiModel
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -73,21 +74,23 @@ fun WorkoutPickerContent(
             )
         },
     ) { paddingValues ->
-        val errorMessage = state.errorMessage
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
         ) {
             Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
-                when {
-                    errorMessage != null && state.programs.isEmpty() ->
-                        Text(text = errorMessage, modifier = Modifier.align(Alignment.Center))
-
-                    state.isLoading && state.programs.isEmpty() ->
+                when (state) {
+                    WorkoutPickerUiState.Loading ->
                         CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 
-                    state.programs.isEmpty() ->
+                    is WorkoutPickerUiState.Error ->
+                        Text(
+                            text = stringResource(Res.string.workout_picker_error),
+                            modifier = Modifier.align(Alignment.Center),
+                        )
+
+                    WorkoutPickerUiState.Empty ->
                         LyteEmptyState(
                             icon = LyteIcons.ClipboardList,
                             message = stringResource(Res.string.workout_picker_empty_message),
@@ -95,13 +98,14 @@ fun WorkoutPickerContent(
                             modifier = Modifier.align(Alignment.Center),
                         )
 
-                    else -> WorkoutPickerProgramList(programs = state.programs, onIntent = onIntent)
+                    is WorkoutPickerUiState.Content ->
+                        WorkoutPickerProgramList(programs = state.programs, onIntent = onIntent)
                 }
             }
 
             // «Новая программа» прибита к низу только в пустом состоянии — в списке создавать нечего:
             // сюда приходят выбрать уже существующую программу.
-            if (state.programs.isEmpty() && !state.isLoading && errorMessage == null) {
+            if (state is WorkoutPickerUiState.Empty) {
                 WorkoutPickerBottomCta(onIntent = onIntent)
             }
         }
@@ -110,7 +114,7 @@ fun WorkoutPickerContent(
 
 @Composable
 private fun WorkoutPickerProgramList(
-    programs: List<WorkoutItemEntity>,
+    programs: List<WorkoutProgramUiModel>,
     onIntent: (WorkoutPickerIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -169,11 +173,11 @@ private fun WorkoutPickerBottomCta(
 private fun WorkoutPickerContentPreview() {
     LyteTheme {
         WorkoutPickerContent(
-            state = WorkoutPickerUiState(
+            state = WorkoutPickerUiState.Content(
                 programs = listOf(
-                    WorkoutItemEntity(id = "1", name = "Push Day", description = null, exerciseCount = 5),
-                    WorkoutItemEntity(id = "2", name = "Pull Day", description = null, exerciseCount = 4),
-                    WorkoutItemEntity(id = "3", name = "Leg Day", description = null, exerciseCount = 3),
+                    WorkoutProgramUiModel(id = "1", name = "Push Day", exerciseCount = 5),
+                    WorkoutProgramUiModel(id = "2", name = "Pull Day", exerciseCount = 4),
+                    WorkoutProgramUiModel(id = "3", name = "Leg Day", exerciseCount = 3),
                 ),
             ),
             onIntent = {},
@@ -186,7 +190,7 @@ private fun WorkoutPickerContentPreview() {
 private fun WorkoutPickerContentEmptyPreview() {
     LyteTheme {
         WorkoutPickerContent(
-            state = WorkoutPickerUiState(),
+            state = WorkoutPickerUiState.Empty,
             onIntent = {},
         )
     }

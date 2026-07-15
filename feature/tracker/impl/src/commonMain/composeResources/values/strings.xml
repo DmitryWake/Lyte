@@ -8,6 +8,7 @@
     <string name="tracker_landing_pick_workout">Выбрать тренировку</string>
 
     <string name="workout_picker_title">Выбрать тренировку</string>
+    <string name="workout_picker_error">Не удалось загрузить программы</string>
     <string name="workout_picker_empty_message">Пока нет ни одной программы</string>
     <string name="workout_picker_empty_hint">Создайте программу — и она появится здесь</string>
     <string name="workout_picker_new_program">Новая программа</string>

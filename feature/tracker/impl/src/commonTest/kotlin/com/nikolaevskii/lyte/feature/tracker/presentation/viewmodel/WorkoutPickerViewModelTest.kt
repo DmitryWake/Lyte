@@ -5,6 +5,8 @@ import com.nikolaevskii.lyte.feature.tracker.WorkoutPreviewRoute
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.WorkoutPickerIntent
 import com.nikolaevskii.lyte.feature.workout.WorkoutTabGraph
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutItemEntity
+import com.nikolaevskii.lyte.feature.tracker.presentation.model.WorkoutProgramUiModel
+import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.WorkoutPickerUiState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -16,8 +18,6 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -42,9 +42,12 @@ class WorkoutPickerViewModelTest {
 
         runCurrent()
 
-        assertFalse(viewModel.uiState.value.isLoading)
-        assertNull(viewModel.uiState.value.errorMessage)
-        assertEquals(programs, viewModel.uiState.value.programs)
+        assertEquals(
+            WorkoutPickerUiState.Content(
+                listOf(WorkoutProgramUiModel(id = "w1", name = "Push Day", exerciseCount = 5)),
+            ),
+            viewModel.uiState.value,
+        )
     }
 
     @Test
@@ -53,8 +56,7 @@ class WorkoutPickerViewModelTest {
 
         runCurrent()
 
-        assertFalse(viewModel.uiState.value.isLoading)
-        assertTrue(viewModel.uiState.value.programs.isEmpty())
+        assertEquals(WorkoutPickerUiState.Empty, viewModel.uiState.value)
     }
 
     @Test
@@ -64,9 +66,7 @@ class WorkoutPickerViewModelTest {
 
         runCurrent()
 
-        assertFalse(viewModel.uiState.value.isLoading)
-        assertEquals("boom", viewModel.uiState.value.errorMessage)
-        assertTrue(viewModel.uiState.value.programs.isEmpty())
+        assertTrue(viewModel.uiState.value is WorkoutPickerUiState.Error)
     }
 
     @Test
