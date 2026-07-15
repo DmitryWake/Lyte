@@ -8,6 +8,8 @@ import com.nikolaevskii.lyte.core.db.session.SessionWithExercises
 import com.nikolaevskii.lyte.core.db.session.WorkoutSessionDao
 import com.nikolaevskii.lyte.core.db.session.WorkoutSessionDatabaseEntity
 import com.nikolaevskii.lyte.core.db.workout.ExerciseDatabaseEntity
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
 /**
  * In-memory реализация [WorkoutSessionDao] для тестов репозитория. `insertSessionGraph`/`finishSession`
@@ -53,6 +55,8 @@ internal class FakeWorkoutSessionDao : WorkoutSessionDao() {
                     },
                 )
             }
+
+    override fun observeFinishedItems(): Flow<List<SessionItemWithSetCounts>> = flow { emit(getFinishedItems()) }
 
     override suspend fun insertSession(session: WorkoutSessionDatabaseEntity) {
         sessions[session.id] = session

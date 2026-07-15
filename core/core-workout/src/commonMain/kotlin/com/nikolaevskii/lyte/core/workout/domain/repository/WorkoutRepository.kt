@@ -2,10 +2,14 @@ package com.nikolaevskii.lyte.core.workout.domain.repository
 
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutItemEntity
+import kotlinx.coroutines.flow.Flow
 
 interface WorkoutRepository {
 
     suspend fun getWorkouts(): List<WorkoutItemEntity>
+
+    /** Реактивный список программ (SSOT — БД): эмитит при создании/правке/удалении. */
+    fun observeWorkouts(): Flow<List<WorkoutItemEntity>>
 
     suspend fun getWorkout(id: String): WorkoutEntity?
 

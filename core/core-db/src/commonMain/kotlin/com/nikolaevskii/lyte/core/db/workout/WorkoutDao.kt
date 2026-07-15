@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 abstract class WorkoutDao {
@@ -20,6 +21,19 @@ abstract class WorkoutDao {
         """,
     )
     abstract suspend fun getItems(): List<WorkoutItemWithExerciseCount>
+
+    /** Реактивная версия [getItems]: эмитит при любом изменении задетых таблиц. */
+    @Query(
+        """
+        SELECT workout.id AS id, workout.name AS name, workout.description AS description,
+               COUNT(workout_exercise.id) AS exerciseCount
+        FROM workout
+        LEFT JOIN workout_exercise ON workout_exercise.workout_id = workout.id
+        WHERE workout.is_archived = 0
+        GROUP BY workout.id
+        """,
+    )
+    abstract fun observeItems(): Flow<List<WorkoutItemWithExerciseCount>>
 
     @Transaction
     @Query("SELECT * FROM workout WHERE id = :id LIMIT 1")

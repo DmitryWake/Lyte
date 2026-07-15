@@ -7,6 +7,8 @@ import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionEntity
 import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionItemEntity
 import com.nikolaevskii.lyte.core.session.domain.repository.WorkoutSessionRepository
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlin.time.Instant
 
 /**
@@ -45,6 +47,8 @@ internal class FakeWorkoutSessionRepository(
     }
 
     override suspend fun getFinishedSessions(): List<WorkoutSessionItemEntity> = emptyList()
+
+    override fun observeFinishedSessions(): Flow<List<WorkoutSessionItemEntity>> = flow { emit(getFinishedSessions()) }
 
     override suspend fun startSession(workout: WorkoutEntity): String {
         startSessionError?.let { error -> throw error }

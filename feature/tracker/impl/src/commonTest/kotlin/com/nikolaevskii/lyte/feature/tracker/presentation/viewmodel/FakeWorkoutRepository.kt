@@ -3,6 +3,8 @@ package com.nikolaevskii.lyte.feature.tracker.presentation.viewmodel
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutItemEntity
 import com.nikolaevskii.lyte.core.workout.domain.repository.WorkoutRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
 internal class FakeWorkoutRepository(
     initialItems: List<WorkoutItemEntity> = emptyList(),
@@ -18,6 +20,8 @@ internal class FakeWorkoutRepository(
         getWorkoutsError?.let { throw it }
         return items
     }
+
+    override fun observeWorkouts(): Flow<List<WorkoutItemEntity>> = flow { emit(getWorkouts()) }
 
     override suspend fun getWorkout(id: String): WorkoutEntity? {
         getWorkoutError?.let { throw it }

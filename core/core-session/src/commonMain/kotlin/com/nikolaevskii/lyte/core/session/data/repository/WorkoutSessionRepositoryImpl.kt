@@ -9,6 +9,8 @@ import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionEntity
 import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionItemEntity
 import com.nikolaevskii.lyte.core.session.domain.repository.WorkoutSessionRepository
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -27,6 +29,9 @@ internal class WorkoutSessionRepositoryImpl(
 
     override suspend fun getFinishedSessions(): List<WorkoutSessionItemEntity> =
         workoutSessionDao.getFinishedItems().map { it.toItemEntity() }
+
+    override fun observeFinishedSessions(): Flow<List<WorkoutSessionItemEntity>> =
+        workoutSessionDao.observeFinishedItems().map { items -> items.map { item -> item.toItemEntity() } }
 
     override suspend fun startSession(workout: WorkoutEntity): String {
         val rows = workout.toSessionRows(sessionId = Uuid.random().toString(), startedAt = clock.now())

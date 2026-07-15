@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 abstract class WorkoutSessionDao {
@@ -39,6 +40,27 @@ abstract class WorkoutSessionDao {
         """,
     )
     abstract suspend fun getFinishedItems(): List<SessionItemWithSetCounts>
+
+    // Реактивная версия getFinishedItems: тот же запрос, эмитит при изменении сессий/подходов.
+    // Литерал 'COMPLETED' дублируется намеренно — Room не подставляет const в @Query.
+    @Query(
+        """
+        SELECT workout_session.id AS id,
+               workout_session.program_id AS programId,
+               workout_session.program_name AS programName,
+               workout_session.started_at AS startedAt,
+               workout_session.finished_at AS finishedAt,
+               COUNT(session_set.id) AS totalSetCount,
+               COUNT(CASE WHEN session_set.result_status = 'COMPLETED' THEN 1 END) AS completedSetCount
+        FROM workout_session
+        LEFT JOIN session_exercise ON session_exercise.session_id = workout_session.id
+        LEFT JOIN session_set ON session_set.session_exercise_id = session_exercise.id
+        WHERE workout_session.finished_at IS NOT NULL
+        GROUP BY workout_session.id
+        ORDER BY workout_session.finished_at DESC
+        """,
+    )
+    abstract fun observeFinishedItems(): Flow<List<SessionItemWithSetCounts>>
 
     @Insert
     abstract suspend fun insertSession(session: WorkoutSessionDatabaseEntity)

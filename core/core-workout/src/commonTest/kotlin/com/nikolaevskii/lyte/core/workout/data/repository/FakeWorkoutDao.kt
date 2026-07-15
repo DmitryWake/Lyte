@@ -8,6 +8,8 @@ import com.nikolaevskii.lyte.core.db.workout.WorkoutExerciseWithSets
 import com.nikolaevskii.lyte.core.db.workout.WorkoutItemWithExerciseCount
 import com.nikolaevskii.lyte.core.db.workout.WorkoutSetDatabaseEntity
 import com.nikolaevskii.lyte.core.db.workout.WorkoutWithExercises
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
 /**
  * In-memory реализация [WorkoutDao] для тестов репозитория. `saveWorkoutGraph`
@@ -35,6 +37,8 @@ internal class FakeWorkoutDao : WorkoutDao() {
                     exerciseCount = crossRefs.count { it.workoutId == workout.id },
                 )
             }
+
+    override fun observeItems(): Flow<List<WorkoutItemWithExerciseCount>> = flow { emit(getItems()) }
 
     override suspend fun getWithExercises(id: String): WorkoutWithExercises? {
         val workout = workouts[id] ?: return null

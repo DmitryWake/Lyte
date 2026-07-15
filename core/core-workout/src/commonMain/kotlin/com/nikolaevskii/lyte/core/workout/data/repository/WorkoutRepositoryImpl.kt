@@ -7,6 +7,8 @@ import com.nikolaevskii.lyte.core.workout.data.mapper.toRows
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutItemEntity
 import com.nikolaevskii.lyte.core.workout.domain.repository.WorkoutRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 internal class WorkoutRepositoryImpl(
     private val workoutDao: WorkoutDao,
@@ -14,6 +16,9 @@ internal class WorkoutRepositoryImpl(
 
     override suspend fun getWorkouts(): List<WorkoutItemEntity> =
         workoutDao.getItems().map { workout -> workout.toItemEntity() }
+
+    override fun observeWorkouts(): Flow<List<WorkoutItemEntity>> =
+        workoutDao.observeItems().map { items -> items.map { item -> item.toItemEntity() } }
 
     override suspend fun getWorkout(id: String): WorkoutEntity? =
         workoutDao.getWithExercises(id)?.toDomainEntity()

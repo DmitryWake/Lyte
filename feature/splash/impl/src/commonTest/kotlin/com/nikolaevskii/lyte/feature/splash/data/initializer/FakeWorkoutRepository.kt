@@ -3,6 +3,8 @@ package com.nikolaevskii.lyte.feature.splash.data.initializer
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutItemEntity
 import com.nikolaevskii.lyte.core.workout.domain.repository.WorkoutRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
 internal class FakeWorkoutRepository : WorkoutRepository {
 
@@ -17,6 +19,8 @@ internal class FakeWorkoutRepository : WorkoutRepository {
                 exerciseCount = workout.exercises.size,
             )
         }
+
+    override fun observeWorkouts(): Flow<List<WorkoutItemEntity>> = flow { emit(getWorkouts()) }
 
     override suspend fun getWorkout(id: String): WorkoutEntity? = workouts[id]
 
