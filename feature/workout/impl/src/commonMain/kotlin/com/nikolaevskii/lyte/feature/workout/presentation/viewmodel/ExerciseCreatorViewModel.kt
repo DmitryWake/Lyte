@@ -3,10 +3,12 @@
 package com.nikolaevskii.lyte.feature.workout.presentation.viewmodel
 
 import com.nikolaevskii.lyte.core.mvi.BaseViewModel
+import com.nikolaevskii.lyte.core.mvi.toLyteError
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import com.nikolaevskii.lyte.core.workout.domain.repository.WorkoutExerciseRepository
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExerciseCreatorIntent
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExerciseCreatorUiState
+import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExerciseCreatorUiState.ExerciseCreatorContent
 import kotlinx.coroutines.launch
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -25,7 +27,7 @@ class ExerciseCreatorViewModel(
     override fun onIntent(intent: ExerciseCreatorIntent) {
         when (intent) {
             is ExerciseCreatorIntent.OnNameChanged ->
-                updateState { copy(exercise = exercise.copy(name = intent.name)).withSubmitEnabled() }
+                updateState { editing(exercise.copy(name = intent.name)) }
 
             is ExerciseCreatorIntent.OnDescriptionChanged ->
                 updateState { copy(exercise = exercise.copy(description = intent.description)) }
@@ -35,41 +37,40 @@ class ExerciseCreatorViewModel(
     }
 
     override fun getInitialState(): ExerciseCreatorUiState =
-        ExerciseCreatorUiState(
-            exercise = WorkoutExerciseEntity(id = Uuid.random().toString(), name = initialName),
-        ).withSubmitEnabled()
+        ExerciseCreatorUiState(exercise = WorkoutExerciseEntity(id = Uuid.random().toString(), name = initialName))
+            .let { it.editing(it.exercise) }
 
     private fun submit() {
-        if (!uiStateValue.isSubmitEnabled) {
+        val editing = uiStateValue.content as? ExerciseCreatorContent.Editing ?: return
+        if (!editing.isSubmitEnabled) {
             return
         }
         // Нормализованное упражнение кладём в состояние: наружу должно уйти ровно то, что записано.
         val exercise = uiStateValue.exercise.normalized()
-        // isSaving поднимаем до launch, иначе второй тап успел бы пройти guard до старта корутины.
-        updateState {
-            copy(
-                exercise = exercise,
-                isSaving = true,
-                errorMessage = null
-            ).withSubmitEnabled()
-        }
+        // Saving поднимаем до launch, иначе второй тап успел бы пройти guard до старта корутины.
+        updateState { copy(exercise = exercise, content = ExerciseCreatorContent.Saving) }
         launch {
             runCatching { workoutExerciseRepository.createExercise(exercise) }
-                .onSuccess { updateState { copy(isSaving = false, isCreated = true) } }
+                .onSuccess { updateState { copy(content = ExerciseCreatorContent.Created) } }
                 .onFailure { error ->
                     updateState {
                         copy(
-                            isSaving = false,
-                            errorMessage = error.message
-                        ).withSubmitEnabled()
+                            content = ExerciseCreatorContent.Editing(
+                                isSubmitEnabled = exercise.name.isNotBlank(),
+                                error = error.toLyteError(),
+                            ),
+                        )
                     }
                 }
         }
     }
 
-    /** Безымянное упражнение создать нельзя; во время записи повторный сабмит запрещён. */
-    private fun ExerciseCreatorUiState.withSubmitEnabled(): ExerciseCreatorUiState =
-        copy(isSubmitEnabled = exercise.name.isNotBlank() && !isSaving)
+    /** Обновляет форму: новое упражнение + пересчёт «Создать» (безымянное создать нельзя). */
+    private fun ExerciseCreatorUiState.editing(newExercise: WorkoutExerciseEntity): ExerciseCreatorUiState =
+        copy(
+            exercise = newExercise,
+            content = ExerciseCreatorContent.Editing(isSubmitEnabled = newExercise.name.isNotBlank()),
+        )
 
     private fun WorkoutExerciseEntity.normalized(): WorkoutExerciseEntity =
         copy(name = name.trim(), description = description?.trim()?.ifBlank { null })

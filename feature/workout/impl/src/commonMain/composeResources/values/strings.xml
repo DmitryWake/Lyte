@@ -30,6 +30,8 @@
     <string name="workout_details_picker_create">Создать новое упражнение</string>
     <string name="workout_details_picker_not_found_title">Ничего не найдено</string>
     <string name="workout_details_picker_not_found_hint">Проверьте название или создайте новое упражнение</string>
+    <string name="workout_details_picker_error">Не удалось загрузить упражнения</string>
+    <string name="workout_details_exercise_create_error">Не удалось сохранить упражнение</string>
     <string name="workout_details_picker_empty_message">Библиотека упражнений пуста</string>
     <string name="workout_details_picker_empty_hint">Создайте первое упражнение</string>
     <string name="workout_details_exercise_create_title">Новое упражнение</string>

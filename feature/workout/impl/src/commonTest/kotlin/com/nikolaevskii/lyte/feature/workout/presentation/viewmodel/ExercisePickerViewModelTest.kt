@@ -3,6 +3,8 @@ package com.nikolaevskii.lyte.feature.workout.presentation.viewmodel
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import com.nikolaevskii.lyte.feature.workout.presentation.model.ExercisePickerResult
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExercisePickerIntent
+import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExercisePickerUiState
+import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExercisePickerUiState.ExercisePickerContent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -41,15 +43,15 @@ class ExercisePickerViewModelTest {
         val repository = FakeWorkoutExerciseRepository(initialExercises = library)
         val viewModel = ExercisePickerViewModel(initialQuery = "", workoutExerciseRepository = repository)
 
-        assertTrue(viewModel.uiState.value.isLoading)
+        assertTrue(viewModel.uiState.value.content is ExercisePickerContent.Loading)
 
         // Начальный запрос не ждёт паузы в наборе — иначе шторка открывалась бы со спиннером.
         runCurrent()
 
         val state = viewModel.uiState.value
-        assertFalse(state.isLoading)
-        assertEquals(listOf("Жим лёжа", "Жим стоя", "Приседания со штангой"), state.exercises.map { it.name })
-        assertNull(state.errorMessage)
+        assertFalse(state.content is ExercisePickerContent.Loading)
+        assertEquals(listOf("Жим лёжа", "Жим стоя", "Приседания со штангой"), state.exercisesOrEmpty().map { it.name })
+        assertFalse(state.content is ExercisePickerContent.Error)
         assertNull(state.result)
         assertEquals(listOf(""), repository.queries)
     }
@@ -62,8 +64,8 @@ class ExercisePickerViewModelTest {
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
-        assertFalse(state.isLoading)
-        assertEquals("no library", state.errorMessage)
+        assertFalse(state.content is ExercisePickerContent.Loading)
+        assertTrue(state.content is ExercisePickerContent.Error)
     }
 
     @Test
@@ -75,7 +77,7 @@ class ExercisePickerViewModelTest {
 
         val state = viewModel.uiState.value
         assertEquals("жим", state.query)
-        assertEquals(listOf("Жим лёжа", "Жим стоя"), state.exercises.map { it.name })
+        assertEquals(listOf("Жим лёжа", "Жим стоя"), state.exercisesOrEmpty().map { it.name })
         assertEquals(listOf("жим"), repository.queries)
     }
 
@@ -96,7 +98,7 @@ class ExercisePickerViewModelTest {
         runCurrent()
 
         assertEquals(listOf("", "жим"), repository.queries)
-        assertEquals(listOf("Жим лёжа", "Жим стоя"), viewModel.uiState.value.exercises.map { it.name })
+        assertEquals(listOf("Жим лёжа", "Жим стоя"), viewModel.uiState.value.exercisesOrEmpty().map { it.name })
     }
 
     @Test
@@ -137,7 +139,7 @@ class ExercisePickerViewModelTest {
         viewModel.onIntent(ExercisePickerIntent.OnQueryChanged("Жим Арнольда"))
         advanceUntilIdle()
 
-        assertTrue(viewModel.uiState.value.exercises.isEmpty())
+        assertTrue(viewModel.uiState.value.exercisesOrEmpty().isEmpty())
     }
 
     @Test
@@ -149,7 +151,7 @@ class ExercisePickerViewModelTest {
         viewModel.onIntent(ExercisePickerIntent.OnQueryChanged(""))
         advanceUntilIdle()
 
-        assertEquals(library.size, viewModel.uiState.value.exercises.size)
+        assertEquals(library.size, viewModel.uiState.value.exercisesOrEmpty().size)
     }
 
     @Test
@@ -164,8 +166,8 @@ class ExercisePickerViewModelTest {
 
         val state = viewModel.uiState.value
         assertEquals("приседания", state.query)
-        assertEquals(listOf("Приседания со штангой"), state.exercises.map { it.name })
-        assertNull(state.errorMessage)
+        assertEquals(listOf("Приседания со штангой"), state.exercisesOrEmpty().map { it.name })
+        assertFalse(state.content is ExercisePickerContent.Error)
     }
 
     @Test
@@ -183,13 +185,13 @@ class ExercisePickerViewModelTest {
 
         // Запрос «жим» отменён. runCatching ловит и CancellationException, поэтому без явной
         // проверки активности отмена доехала бы до UI как ошибка загрузки.
-        assertNull(viewModel.uiState.value.errorMessage)
+        assertFalse(viewModel.uiState.value.content is ExercisePickerContent.Error)
 
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
-        assertNull(state.errorMessage)
-        assertEquals(listOf("Приседания со штангой"), state.exercises.map { it.name })
+        assertFalse(state.content is ExercisePickerContent.Error)
+        assertEquals(listOf("Приседания со штангой"), state.exercisesOrEmpty().map { it.name })
     }
 
     @Test
@@ -228,6 +230,9 @@ class ExercisePickerViewModelTest {
         runCurrent()
         return viewModel
     }
+
+    private fun ExercisePickerUiState.exercisesOrEmpty(): List<WorkoutExerciseEntity> =
+        (content as? ExercisePickerContent.Exercises)?.exercises.orEmpty()
 
     private companion object {
         const val SEARCH_DEBOUNCE_MILLIS = 300L

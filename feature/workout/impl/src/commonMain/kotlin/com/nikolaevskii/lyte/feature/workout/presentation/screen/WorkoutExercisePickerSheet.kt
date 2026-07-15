@@ -32,6 +32,7 @@ import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import com.nikolaevskii.lyte.feature.workout.generated.resources.Res
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_picker_create
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_picker_empty_hint
+import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_picker_error
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_picker_empty_message
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_picker_not_found_hint
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_picker_not_found_title
@@ -40,6 +41,7 @@ import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details
 import com.nikolaevskii.lyte.feature.workout.presentation.model.ExercisePickerResult
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExercisePickerIntent
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExercisePickerUiState
+import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExercisePickerUiState.ExercisePickerContent
 import com.nikolaevskii.lyte.feature.workout.presentation.viewmodel.ExercisePickerViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -144,21 +146,19 @@ fun WorkoutExercisePickerSheetContent(
         },
         modifier = modifier,
     ) {
-        when {
-            state.isLoading -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        when (val content = state.content) {
+            ExercisePickerContent.Loading -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
 
-            state.errorMessage != null -> Text(
-                text = state.errorMessage,
+            is ExercisePickerContent.Error -> Text(
+                text = stringResource(Res.string.workout_details_picker_error),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(horizontal = LyteTheme.spacing.s5, vertical = LyteTheme.spacing.s3),
             )
 
-            // Пустой список читается по запросу: без запроса это пустая библиотека, с запросом —
-            // «ничего не найдено».
-            state.exercises.isEmpty() && state.query.isBlank() ->
+            ExercisePickerContent.EmptyLibrary ->
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     LyteEmptyState(
                         icon = LyteIcons.Dumbbell,
@@ -167,13 +167,13 @@ fun WorkoutExercisePickerSheetContent(
                     )
                 }
 
-            state.exercises.isEmpty() -> ExercisePickerNotFound()
+            ExercisePickerContent.NotFound -> ExercisePickerNotFound()
 
-            else -> LazyColumn(
+            is ExercisePickerContent.Exercises -> LazyColumn(
                 contentPadding = PaddingValues(horizontal = LyteTheme.spacing.s5, vertical = LyteTheme.spacing.s2),
                 modifier = Modifier.fillMaxSize(),
             ) {
-                items(items = state.exercises, key = { exercise -> exercise.id }) { exercise ->
+                items(items = content.exercises, key = { exercise -> exercise.id }) { exercise ->
                     LyteListRow(
                         title = exercise.name,
                         subtitle = exercise.description,
@@ -217,7 +217,7 @@ private fun ExercisePickerNotFound(modifier: Modifier = Modifier) {
 private fun WorkoutExercisePickerSheetContentPreview() {
     LyteTheme {
         WorkoutExercisePickerSheetContent(
-            state = ExercisePickerUiState(exercises = previewLibrary, isLoading = false),
+            state = ExercisePickerUiState(content = ExercisePickerContent.Exercises(previewLibrary)),
             onIntent = {},
             onDismissRequest = {},
         )
@@ -229,7 +229,7 @@ private fun WorkoutExercisePickerSheetContentPreview() {
 private fun WorkoutExercisePickerSheetContentNotFoundPreview() {
     LyteTheme {
         WorkoutExercisePickerSheetContent(
-            state = ExercisePickerUiState(query = "Жим Арнольда", isLoading = false),
+            state = ExercisePickerUiState(query = "Жим Арнольда", content = ExercisePickerContent.NotFound),
             onIntent = {},
             onDismissRequest = {},
         )
@@ -241,7 +241,7 @@ private fun WorkoutExercisePickerSheetContentNotFoundPreview() {
 private fun WorkoutExercisePickerSheetContentEmptyLibraryPreview() {
     LyteTheme {
         WorkoutExercisePickerSheetContent(
-            state = ExercisePickerUiState(isLoading = false),
+            state = ExercisePickerUiState(content = ExercisePickerContent.EmptyLibrary),
             onIntent = {},
             onDismissRequest = {},
         )

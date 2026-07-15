@@ -23,11 +23,14 @@ import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import com.nikolaevskii.lyte.feature.workout.generated.resources.Res
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_exercise_create_description_label
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_exercise_create_description_placeholder
+import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_exercise_create_error
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_exercise_create_name_label
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_exercise_create_submit
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_exercise_create_title
+import com.nikolaevskii.lyte.core.mvi.LyteError
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExerciseCreatorIntent
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExerciseCreatorUiState
+import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExerciseCreatorUiState.ExerciseCreatorContent
 import com.nikolaevskii.lyte.feature.workout.presentation.viewmodel.ExerciseCreatorViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -59,8 +62,8 @@ fun WorkoutExerciseCreateSheet(
         val viewModel: ExerciseCreatorViewModel = koinViewModel { parametersOf(initialName) }
         val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-        LaunchedEffect(state.isCreated) {
-            if (state.isCreated) {
+        LaunchedEffect(state.content) {
+            if (state.content is ExerciseCreatorContent.Created) {
                 onExerciseCreated(state.exercise)
             }
         }
@@ -89,7 +92,7 @@ fun WorkoutExerciseCreateSheetContent(
             LyteButton(
                 text = stringResource(Res.string.workout_details_exercise_create_submit),
                 onClick = { onIntent(ExerciseCreatorIntent.OnCreateClicked) },
-                enabled = state.isSubmitEnabled,
+                enabled = (state.content as? ExerciseCreatorContent.Editing)?.isSubmitEnabled == true,
                 fullWidth = true,
                 modifier = Modifier.padding(
                     start = LyteTheme.spacing.s5,
@@ -122,9 +125,9 @@ fun WorkoutExerciseCreateSheetContent(
                 multiline = true,
                 modifier = Modifier.fillMaxWidth().padding(top = CreateSheetFieldSpacing),
             )
-            state.errorMessage?.let { message ->
+            (state.content as? ExerciseCreatorContent.Editing)?.error?.let {
                 Text(
-                    text = message,
+                    text = stringResource(Res.string.workout_details_exercise_create_error),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(top = LyteTheme.spacing.s3),
@@ -141,7 +144,7 @@ private fun WorkoutExerciseCreateSheetContentPreview() {
         WorkoutExerciseCreateSheetContent(
             state = ExerciseCreatorUiState(
                 exercise = previewExercise(name = "Жим гантелей на наклонной"),
-                isSubmitEnabled = true,
+                content = ExerciseCreatorContent.Editing(isSubmitEnabled = true),
             ),
             onIntent = {},
             onDismissRequest = {},
@@ -168,8 +171,7 @@ private fun WorkoutExerciseCreateSheetContentErrorPreview() {
         WorkoutExerciseCreateSheetContent(
             state = ExerciseCreatorUiState(
                 exercise = previewExercise(name = "Жим стоя"),
-                isSubmitEnabled = true,
-                errorMessage = "Не удалось сохранить упражнение",
+                content = ExerciseCreatorContent.Editing(isSubmitEnabled = true, error = LyteError.Storage),
             ),
             onIntent = {},
             onDismissRequest = {},

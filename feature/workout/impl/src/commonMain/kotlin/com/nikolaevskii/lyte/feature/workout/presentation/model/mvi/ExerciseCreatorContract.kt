@@ -1,23 +1,37 @@
 package com.nikolaevskii.lyte.feature.workout.presentation.model.mvi
 
+import com.nikolaevskii.lyte.core.mvi.LyteError
 import com.nikolaevskii.lyte.core.mvi.UiIntent
 import com.nikolaevskii.lyte.core.mvi.UiState
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 
 /**
- * Состояние формы создания упражнения библиотеки. Форма редактирует само [exercise]: его `id`
- * генерируется сразу при открытии, поэтому по [isCreated] владельцу отдаётся ровно та модель,
- * которая записана в библиотеку.
+ * Состояние формы создания упражнения библиотеки.
  *
- * [isSubmitEnabled] — решение ViewModel, а не UI: можно ли сейчас нажать «Создать».
+ * [exercise] — сквозное поле: редактируемая модель формы, присутствует во всех состояниях, и по
+ * [ExerciseCreatorContent.Created] владельцу отдаётся ровно она (`id` выдан при открытии). [content] —
+ * фаза формы: редактирование / запись / готово.
  */
 data class ExerciseCreatorUiState(
     val exercise: WorkoutExerciseEntity,
-    val isSubmitEnabled: Boolean = false,
-    val isSaving: Boolean = false,
-    val isCreated: Boolean = false,
-    val errorMessage: String? = null,
-) : UiState
+    val content: ExerciseCreatorContent = ExerciseCreatorContent.Editing(),
+) : UiState {
+
+    sealed interface ExerciseCreatorContent {
+
+        /** [isSubmitEnabled] — решение ViewModel: можно ли нажать «Создать». */
+        data class Editing(
+            val isSubmitEnabled: Boolean = false,
+            val error: LyteError? = null,
+        ) : ExerciseCreatorContent
+
+        /** Идёт запись: сабмит по построению недоступен. */
+        data object Saving : ExerciseCreatorContent
+
+        /** Терминальное: упражнение в библиотеке, шторку закрывает владелец. */
+        data object Created : ExerciseCreatorContent
+    }
+}
 
 /** События формы создания; решение принимает `ExerciseCreatorViewModel`. */
 sealed interface ExerciseCreatorIntent : UiIntent {

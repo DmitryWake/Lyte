@@ -1,6 +1,8 @@
 package com.nikolaevskii.lyte.feature.workout.presentation.viewmodel
 
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExerciseCreatorIntent
+import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExerciseCreatorUiState
+import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExerciseCreatorUiState.ExerciseCreatorContent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -127,7 +129,7 @@ class ExerciseCreatorViewModelTest {
         runCurrent()
 
         val state = viewModel.uiState.value
-        assertEquals("write failed", state.errorMessage)
+        assertTrue(state.isError)
         assertFalse(state.isSaving)
         assertFalse(state.isCreated)
         assertTrue(state.isSubmitEnabled)
@@ -147,7 +149,7 @@ class ExerciseCreatorViewModelTest {
 
         val state = viewModel.uiState.value
         assertTrue(state.isCreated)
-        assertNull(state.errorMessage)
+        assertFalse(state.isError)
         assertEquals(state.exercise, repository.createdExercises.single())
     }
 
@@ -159,3 +161,15 @@ class ExerciseCreatorViewModelTest {
         workoutExerciseRepository = workoutExerciseRepository,
     )
 }
+
+private val ExerciseCreatorUiState.isSubmitEnabled: Boolean
+    get() = (content as? ExerciseCreatorContent.Editing)?.isSubmitEnabled == true
+
+private val ExerciseCreatorUiState.isSaving: Boolean
+    get() = content is ExerciseCreatorContent.Saving
+
+private val ExerciseCreatorUiState.isCreated: Boolean
+    get() = content is ExerciseCreatorContent.Created
+
+private val ExerciseCreatorUiState.isError: Boolean
+    get() = (content as? ExerciseCreatorContent.Editing)?.error != null

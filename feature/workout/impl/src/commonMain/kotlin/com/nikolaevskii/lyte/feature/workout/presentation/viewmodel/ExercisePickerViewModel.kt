@@ -1,10 +1,12 @@
 package com.nikolaevskii.lyte.feature.workout.presentation.viewmodel
 
 import com.nikolaevskii.lyte.core.mvi.BaseViewModel
+import com.nikolaevskii.lyte.core.mvi.toLyteError
 import com.nikolaevskii.lyte.core.workout.domain.repository.WorkoutExerciseRepository
 import com.nikolaevskii.lyte.feature.workout.presentation.model.ExercisePickerResult
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExercisePickerIntent
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExercisePickerUiState
+import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExercisePickerUiState.ExercisePickerContent
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -72,27 +74,27 @@ class ExercisePickerViewModel(
         // ViewModel (он всё ещё активен), а не отменённой корутины запроса.
         currentCoroutineContext().ensureActive()
         exercises
-            .onSuccess {
-                updateState {
-                    copy(
-                        exercises = it,
-                        isLoading = false,
-                        errorMessage = null
-                    )
+            .onSuccess { list ->
+                // VM решает Empty vs NotFound по запросу, с которым искал — не композиция.
+                val content = when {
+                    list.isEmpty() && query.isBlank() -> ExercisePickerContent.EmptyLibrary
+                    list.isEmpty() -> ExercisePickerContent.NotFound
+                    else -> ExercisePickerContent.Exercises(list)
                 }
+                updateState { copy(content = content) }
             }
             .onFailure { error ->
+                // Провал поиска не гасит уже показанный список — Error только если показывать нечего.
                 updateState {
-                    copy(
-                        isLoading = false,
-                        errorMessage = error.message
-                    )
+                    if (content is ExercisePickerContent.Exercises) this
+                    else copy(content = ExercisePickerContent.Error(error.toLyteError()))
                 }
             }
     }
 
     private fun pickExercise(exerciseId: String) {
-        val exercise = uiStateValue.exercises.firstOrNull { it.id == exerciseId } ?: return
+        val exercises = (uiStateValue.content as? ExercisePickerContent.Exercises)?.exercises ?: return
+        val exercise = exercises.firstOrNull { it.id == exerciseId } ?: return
         updateState { copy(result = ExercisePickerResult.Picked(exercise)) }
     }
 

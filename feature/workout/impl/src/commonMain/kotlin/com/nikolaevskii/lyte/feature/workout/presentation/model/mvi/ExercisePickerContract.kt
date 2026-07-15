@@ -1,5 +1,6 @@
 package com.nikolaevskii.lyte.feature.workout.presentation.model.mvi
 
+import com.nikolaevskii.lyte.core.mvi.LyteError
 import com.nikolaevskii.lyte.core.mvi.UiIntent
 import com.nikolaevskii.lyte.core.mvi.UiState
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
@@ -8,20 +9,36 @@ import com.nikolaevskii.lyte.feature.workout.presentation.model.ExercisePickerRe
 /**
  * Состояние шторки выбора упражнения из библиотеки.
  *
- * [exercises] — результат запроса к библиотеке по [query]; фильтрует и сортирует БД, поэтому второго
- * списка «всё, что есть» здесь нет. Пустой [exercises] читается по [query]: при пустом запросе это
- * «библиотека пуста», при непустом — «ничего не найдено».
+ * [query] — сквозное поле: строка поиска отрисована в topContent во всех состояниях (включая Loading/Error)
+ * и является ИСТОЧНИКОМ запросов (`observeQuery` читает `uiState.query`).
  *
- * [result] — терминальное состояние шторки: она своё дело сделала и должна быть закрыта владельцем.
- * Отдельного канала one-shot-событий у MVI-каркаса нет, поэтому результат живёт в состоянии.
+ * [result] — сквозной терминальный one-shot: шторка сделала своё дело и должна быть закрыта владельцем.
+ * Отдельного канала one-shot-событий у MVI-каркаса нет, поэтому результат живёт в состоянии; армом его
+ * сделать нельзя — [content] должно продолжать рисоваться в кадре между результатом и закрытием.
+ *
+ * [content] — что показывает шторка прямо сейчас: исчерпывающий `when` без комбинаций флагов.
  */
 data class ExercisePickerUiState(
     val query: String = "",
-    val exercises: List<WorkoutExerciseEntity> = emptyList(),
-    val isLoading: Boolean = true,
-    val errorMessage: String? = null,
+    val content: ExercisePickerContent = ExercisePickerContent.Loading,
     val result: ExercisePickerResult? = null,
-) : UiState
+) : UiState {
+
+    sealed interface ExercisePickerContent {
+
+        data object Loading : ExercisePickerContent
+
+        data class Error(val error: LyteError) : ExercisePickerContent
+
+        /** Пустой запрос и пустая выдача — библиотека пуста. */
+        data object EmptyLibrary : ExercisePickerContent
+
+        /** Непустой запрос и пустая выдача — ничего не найдено. */
+        data object NotFound : ExercisePickerContent
+
+        data class Exercises(val exercises: List<WorkoutExerciseEntity>) : ExercisePickerContent
+    }
+}
 
 /** События шторки выбора; решение принимает `ExercisePickerViewModel`. */
 sealed interface ExercisePickerIntent : UiIntent {
