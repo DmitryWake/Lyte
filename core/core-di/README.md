@@ -20,10 +20,13 @@ fun initKoinShared(
         appDeclaration()
         modules(
             coreDbModule(),
+            coreWorkoutModule(),
+            coreSessionModule(),
             coreNavigationModule,
             featureTrackerModule,
             featureWorkoutModule,
             featureHistoryModule,
+            featureSplashModule,
         )
     }
 ```

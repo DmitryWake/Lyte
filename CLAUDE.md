@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Lyte — фитнес-трекер на Kotlin Multiplatform (Android + iOS), UI шарится через Compose Multiplatform. Корневой пакет: `com.nikolaevskii.lyte`. Имя корневого Gradle-проекта: `Lyte`.
 
-Текущая стадия — **каркас**: выстроен пустой, но полностью «прошитый» по архитектуре скелет (модули, MVI, DI, навигация, БД), плюс готовая дизайн-система (`core-design`). Цель — чтобы новая фича добавлялась без правок инфраструктуры.
+Стадия — **функциональный MVP**: реализованы splash + сид библиотеки, трекер (лендинг / выбор программы / превью / активная сессия), редактор программ, история (список + детали сессии); полностью «прошитая» инфраструктура (модули, MVI, DI, навигация, БД) и дизайн-система (`core-design`). Не реализованы: сеть, авторизация, UI-тесты, deep links. Цель — чтобы новая фича добавлялась без правок инфраструктуры.
 
 ## Сборка и запуск
 
@@ -16,10 +16,12 @@ Lyte — фитнес-трекер на Kotlin Multiplatform (Android + iOS), UI
 
 ## Тесты
 
-- Android (host/unit): `./gradlew :core:core-mvi:testAndroidHostTest`, `./gradlew :core:core-db:testAndroidHostTest`, `./gradlew :shared:testAndroidHostTest`.
-- iOS симулятор: `./gradlew :shared:iosSimulatorArm64Test`.
-- Common-тесты — в `commonTest` каждого модуля, платформенные — в `androidHostTest` / `iosTest`. Запуск одного теста: добавь `--tests "fully.qualified.ClassName.method"` к нужной Gradle-задаче.
-- Стратегия: **Unit** — для сложной бизнес-логики (ViewModel-переходы, репозитории, мапперы), **UI-тесты** — для критичных экранов.
+- Тесты живут в модулях, где есть логика: `:core:core-mvi`, `:core:core-workout`, `:core:core-session`, `:feature:{tracker,workout,history,splash}:impl`. Гейт (гонять перед коммитом/релизом, macOS):
+  - Host/JVM: `./gradlew :core:core-mvi:testAndroidHostTest :core:core-workout:testAndroidHostTest :core:core-session:testAndroidHostTest :feature:tracker:impl:testAndroidHostTest :feature:workout:impl:testAndroidHostTest :feature:history:impl:testAndroidHostTest :feature:splash:impl:testAndroidHostTest`
+  - iOS-симулятор (ловит Kotlin/Native-only поломки): те же модули с `:iosSimulatorArm64Test`.
+  - Сборки: `./gradlew :androidApp:assembleDebug` и `:shared:linkDebugFrameworkIosSimulatorArm64`.
+- Common-тесты — в `commonTest` каждого модуля. Запуск одного теста: добавь `--tests "fully.qualified.ClassName.method"` к нужной Gradle-задаче.
+- Стратегия: **Unit** — для сложной бизнес-логики (ViewModel-переходы, репозитории, мапперы) — сделано; **UI-тесты для критичных экранов** — ещё не написаны.
 
 ## Модули
 
@@ -31,10 +33,13 @@ Lyte — фитнес-трекер на Kotlin Multiplatform (Android + iOS), UI
 - `:core:core-navigation` — KMP + Compose, общие нав-хелперы (`popUpToRoute<R>()`, `singleTop()`, `restorable()`), `LyteNavigator`/`LyteNavigatorImpl`, `TopLevelDestination`, собственный Koin-модуль `coreNavigationModule`. Namespace `com.nikolaevskii.lyte.core.navigation`.
 - `:core:core-di` — KMP, только инициализация Koin (`initKoin`). Общих синглтонов (Navigator, DispatcherProvider и т.п.) здесь нет — каждый core/feature-модуль владеет своим Koin-модулем и подключает его сам. Namespace `com.nikolaevskii.lyte.core.di`.
 - `:core:core-design` — дизайн-система: `LyteTheme` (M3 `colorScheme`/`typography`/`shapes` + расширенные токены — spacing, elevation, числовая типографика, доп. формы) и компонент-кит (`Lyte*`) поверх M3-примитивов. Иконки — `LyteIcons` поверх `com.composables:icons-lucide-cmp`. Namespace `com.nikolaevskii.lyte.core.design`. Подробности и полный список компонентов — в `core/core-design/README.md`.
-- `:core:core-db` — Room KMP: `LyteDatabase` (`@ConstructedBy` + `expect object LyteDatabaseConstructor`), `WorkoutEntity`/`WorkoutDao`, expect/actual билдер БД (`androidMain`/`iosMain`), `coreDbModule()`. Namespace `com.nikolaevskii.lyte.core.db`.
-- `:feature:tracker:{api,impl}` — главная вкладка (фитнес-трекер, дашборд).
-- `:feature:workout:{api,impl}` — тренировки (список + детали). Эталонная фича — демонстрирует полный стек `domain/data/presentation` с Room-репозиторием.
-- `:feature:history:{api,impl}` — история (пока экран-заглушка).
+- `:core:core-db` — Room KMP: `LyteDatabase` (`@ConstructedBy` + `expect object LyteDatabaseConstructor`), 8 сущностей `*DatabaseEntity` в трёх доменах (`db/workout/`, `db/session/`, `db/app/`) + 4 DAO, `version = 1`, `is_archived` (soft-delete) и `name_normalized` (ASCII-коллация для поиска), expect/actual билдер БД (`androidMain`/`iosMain`), `coreDbModule()`. Namespace `com.nikolaevskii.lyte.core.db`. Подробности — `core/core-db/README.md`.
+- `:core:core-workout` — data-слой библиотеки упражнений и программ: доменные модели (`WorkoutEntity` и т.д.), интерфейсы `WorkoutRepository`/`WorkoutExerciseRepository` + impl, `coreWorkoutModule()`. Общие данные приложения (пишет workout, читают tracker/splash), поэтому в core, а не в фиче. Namespace `com.nikolaevskii.lyte.core.workout`.
+- `:core:core-session` — data-слой сессий тренировки: `Session*`-модели, `SessionHistoryRepository` (read для истории) / `WorkoutSessionRepository` (write для трекера, ISP-сплит), доменные правила `SessionProgression`/`SessionSetOutcomeUtils`, `coreSessionModule()`. Namespace `com.nikolaevskii.lyte.core.session`.
+- `:feature:splash:{api,impl}` — стартовый экран (`SplashRoute` — корень `NavHost`): анимация вордмарка + гейт первого запуска. `:impl` — `AppInitializer`/`AppInitializationManager` и `WorkoutLibraryInitializer` (одноразовый сид `DefaultExerciseLibrary`/`DefaultWorkoutPrograms`), гейт — флаг `app_launch_state`, а не пустота таблиц.
+- `:feature:tracker:{api,impl}` — вкладка «Трекер»: лендинг (гейт активной сессии), выбор программы, превью, активная сессия. Данные сессий берёт из `:core:core-session`.
+- `:feature:workout:{api,impl}` — вкладка «Тренировки»: список программ, редактор программы, библиотека упражнений (шторки выбора/создания). Данные из `:core:core-workout`.
+- `:feature:history:{api,impl}` — история завершённых сессий: список с группировкой по месяцам + экран деталей сессии. Читает `SessionHistoryRepository` из `:core:core-session`; единственный потребитель `kotlinx-datetime`.
 
 Новый модуль регистрируется в `settings.gradle.kts` через `include(":path:to:module")`, подключается типобезопасным акцессором (`implementation(projects.core.coreNavigation)` и т.п.).
 
@@ -49,7 +54,7 @@ Lyte — фитнес-трекер на Kotlin Multiplatform (Android + iOS), UI
 ### Целевая структура
 
 - **Multi-Module по фичам, api/impl-split**: каждая фича — **два** Gradle-модуля по схеме `feature/<name>/api` и `feature/<name>/impl`.
-  - **`:api`** — pure KMP (Android + iOS, **без Compose** и Android-специфики). Содержит `@Serializable` route-классы и доменные контракты (UseCase / Repository интерфейсы, модели). Видим другим фичам — они тянут только `:api`, чтобы навигироваться сюда типобезопасно.
+  - **`:api`** — pure KMP (Android + iOS, **без Compose** и Android-специфики). Содержит `@Serializable` route-классы — их видят другие фичи, чтобы навигироваться сюда типобезопасно. **Общие данные (модели + Repository-интерфейсы) живут не в `:feature:*:api`, а в core-модулях данных** (`:core:core-workout`, `:core:core-session`): фича-модуль не должен быть data-контрактом для других фич. **UseCase-слоя нет намеренно**: ViewModel обращается к репозиторию напрямую (репозитории тонкие, один источник — Room); сложные правила выносятся в чистые доменные функции/сервисы (`SessionProgression`, `SessionSetOutcomeUtils`), а не в pass-through UseCase.
   - **`:impl`** — KMP + Compose. Экраны (`*Screen` + `*Content`), `ViewModel`-и, `NavGraphBuilder.<feature>Graph(...)` extension, реализации контрактов из `:api`. Слои **`domain` / `data` / `presentation`** разбиты **пакетами** внутри `:impl`. `:impl` экспонирует `:api` через `api(projects.feature.<name>.api)`, чтобы агрегатор `:shared` видел routes без отдельной зависимости.
     - **Разбиение пакета `presentation` (обязательно):**
       - `presentation/screen` — экраны: `*Screen` (stateful, `koinViewModel()`) + `*Content` (stateless, превьюшный).
@@ -65,7 +70,9 @@ Lyte — фитнес-трекер на Kotlin Multiplatform (Android + iOS), UI
 ## MVI-каркас (`:core:core-mvi`)
 
 - `UiState` и `UiIntent` — пустые маркер-интерфейсы. **Без `Effect`** — навигация и прочие эффекты идут через `LyteNavigator`/явное состояние, а не через отдельный канал one-shot событий.
-- ViewModel-ы экранов наследуются от `BaseViewModel<State : UiState, Intent : UiIntent>`. База предоставляет `uiState: StateFlow<State>`, реализует `CoroutineScope` поверх `viewModelScope + SupervisorJob()`, требует `getInitialState()` и `onIntent(intent)`.
+- ViewModel-ы экранов наследуются от `BaseViewModel<State : UiState, Intent : UiIntent>`. База предоставляет `uiState: StateFlow<State>`, реализует `CoroutineScope` поверх `viewModelScope.coroutineContext + CoroutineExceptionHandler` — **без** дополнительного `+ SupervisorJob()`: тот заменил бы `Job`, привязанный к `onCleared()`, и корутины пережили бы очистку VM (см. комментарий в `BaseViewModel.kt`). У `CoroutineExceptionHandler` иной `Key`, поэтому он `Job` не заменяет. Требует `getInitialState()` и `onIntent(intent)`.
+- **UiState экрана — sealed-иерархия взаимоисключающих состояний** (`Loading`/`Error`/`Empty`/`Content` и т.п.), а не `data class` с флагами `isLoading`/`isError`; рендер экрана — исчерпывающий `when` без невозможных комбинаций. Сквозные поля (`id` редактора, `query`/`result` шторки) выносятся из армов наружу только с обоснованием. Эталон — `HistoryUiState`, `WorkoutDetailsUiState`.
+- **Ошибки** — типизированный `LyteError` (`:core:core-mvi`), а не сырой `Throwable.message`. Непойманный сбой корутины VM приходит в `protected open fun handleError(error)` (наследник переводит в свой `Error`-арм); `CancellationException` туда не попадает. Экран мапит `LyteError` в `stringResource`. Служебный `Job`-хэндл как guard от повторного запуска (напр. `SplashViewModel.initializationJob`) — допустимое исключение из правила «не храни поля во VM».
 - Изменение стейта — только через защищённый `updateState { copy(...) }`; текущее значение — `uiStateValue`. `_uiState` инициализируется лениво из `getInitialState()`.
 - База построена на `androidx.lifecycle.ViewModel` из мультиплатформенного `org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose`, поэтому работает на обеих платформах без `expect`/`actual`.
 - **Не храни поля во `ViewModel`**: всё нужное живёт в `UiState` либо читается из него. Значения, нужные только при инициализации (например, id из аргументов роута), передавай через конструктор в `getInitialState()`.
@@ -80,7 +87,8 @@ Lyte — фитнес-трекер на Kotlin Multiplatform (Android + iOS), UI
 - Аргументы роутов — минимальные (id, enum), не доменные модели. Экран загружает данные сам через ViewModel + Repository.
 - Стек-шейпинг — из VM через декларативные `LyteNavOptions` (`lyteNavigator.navigate(route, LyteNavOptions(popUpTo = …, popUpToInclusive = …))`) либо DSL-хелперы из `:core:core-navigation` (`popUpToRoute<R>()`, `singleTop()`, `restorable()`) в шелле.
 - Плагин `org.jetbrains.kotlin.plugin.serialization` применяется в каждом модуле, где используется типобезопасное API навигации: `:api`, `:impl`, `:shared`.
-- **Bottom navigation**: 3 вкладки (`TrackerTabGraph`, `WorkoutTabGraph`, `HistoryTabGraph`) под общим `BottomNavGraph` в `:shared`. Переключение — `navController.navigateToTopLevel(tab)` с `saveState`/`restoreState`/`launchSingleTop`, что сохраняет back stack каждой вкладки при переключении.
+- **Корень `NavHost` — `SplashRoute`** (`splashGraph()`), не `BottomNavGraph`: приложение стартует со сплэша, и после инициализации VM сплэша делает `navigate(TrackerLandingRoute, LyteNavOptions(popUpTo = SplashRoute, popUpToInclusive = true))`.
+- **Bottom navigation**: 3 вкладки (`TrackerTabGraph`, `WorkoutTabGraph`, `HistoryTabGraph`) под общим `BottomNavGraph` в `:shared` (входится после сплэша). Переключение — `navController.navigateToTopLevel(tab)` с `saveState`/`restoreState`/`launchSingleTop`, что сохраняет back stack каждой вкладки при переключении. Плавающий док рисуется overlay вне `Scaffold.bottomBar` (см. `App.kt`); корни вкладок сами резервируют место через `LyteBottomNavigationBarHeight`.
 - Пока **не реализованы**: deep links, per-screen `Effect` для не-навигационных one-shot (toast/snackbar), адаптивный шелл.
 - При проектировании навигации, аргументов, стек-шейпинга и deep-links — skill `kotlin-navigation-compose-multiplatform`.
 
@@ -145,18 +153,19 @@ Lyte — фитнес-трекер на Kotlin Multiplatform (Android + iOS), UI
 
 ## Git Flow
 
-- `main` — релизные изменения.
-- `development` — текущая разработка.
-- `feature/<task>` — отведена от `development` под конкретную задачу; по завершении — один коммит (squash), rebase перед PR.
+- Один trunk — `master` (remote пока нет). Разработка идёт прямо в `master`, релизы помечаются тегами.
+- Одна задача — один осмысленный (при необходимости squash) коммит.
 
 ## Tech stack
 
 Уже в проекте: Kotlin Multiplatform, Compose Multiplatform, Coroutines/Flow, MVI (`core-mvi`), Jetpack Navigation с типобезопасными `@Serializable` роутами, Koin (DI), Room (локальная БД), дизайн-система (`core-design`, см. раздел выше).
 
+Уже в проекте также: `LyteError` + воронка `handleError` (типизированные ошибки), реактивный SSOT (Room `Flow`), unit-тесты бизнес-логики.
+
 Запланировано (следующие этапы):
 - **Сеть**: Ktor Client + единый слой API-контрактов — модуль `core-network` пока не создан.
 - **Secure storage**: абстракция над `Keychain` (iOS) / `Keystore` (Android) — для будущих токенов авторизации.
-- **Тесты**: Unit — для сложной бизнес-логики; UI — для критичных экранов.
+- **UI-тесты** для критичных экранов (`runComposeUiTest` над stateless `*Content`) — ещё не написаны.
 
 ## Offline-first паттерн доступа к данным
 
@@ -168,7 +177,7 @@ Lyte — фитнес-трекер на Kotlin Multiplatform (Android + iOS), UI
 
 - Все версии — в `gradle/libs.versions.toml`; добавляешь зависимость — туда, не инлайнить. Алиасы плагинов (`libs.plugins.*`) применяются на уровне модулей; в корневом `build.gradle.kts` декларируются с `apply false`.
 - **Kotlin 2.3.21** (запинен < 2.4: для Kotlin 2.4.0 нет релиза KSP — [google/ksp#2965](https://github.com/google/ksp/issues/2965) — а Room требует KSP; связка kotlin 2.3.21 + ksp 2.3.7 + room 2.8.4 проверена). Обновить Kotlin можно будет, когда выйдет совместимый KSP.
-- Compose Multiplatform 1.11.1, AGP 9.0.1, Material3 1.11.0-alpha07, AndroidX Lifecycle 2.11.0-beta01, AndroidX Navigation 2.9.2, Koin 4.2.1, Room 2.8.4.
+- Compose Multiplatform 1.11.1, AGP 9.0.1, Material3 1.11.0-alpha07, AndroidX Lifecycle 2.11.0-beta01, AndroidX Navigation 2.9.2, Koin 4.2.2, Room 2.8.4, kotlinx-datetime 0.7.1 (время — инъектируемый `kotlin.time.Clock`, `Clock.System` только в Koin-модуле).
 - JVM target — 11 (и для `:shared`/core/feature Android, и для `:androidApp`). `compileSdk = 36`, `minSdk = 24`, `targetSdk = 36`.
 
 ## Платформенный код
