@@ -6,12 +6,12 @@ import com.nikolaevskii.lyte.feature.history.HistorySessionDetailsRoute
 import com.nikolaevskii.lyte.feature.history.presentation.model.mvi.HistoryIntent
 import com.nikolaevskii.lyte.feature.history.presentation.model.mvi.HistoryUiState
 import com.nikolaevskii.lyte.feature.history.presentation.model.toMonthGroups
-import com.nikolaevskii.lyte.feature.tracker.domain.repository.WorkoutSessionRepository
+import com.nikolaevskii.lyte.core.session.domain.repository.SessionHistoryRepository
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 
 class HistoryViewModel(
-    private val workoutSessionRepository: WorkoutSessionRepository,
+    private val sessionHistoryRepository: SessionHistoryRepository,
     private val lyteNavigator: LyteNavigator,
 ) : BaseViewModel<HistoryUiState, HistoryIntent>() {
 
@@ -34,7 +34,7 @@ class HistoryViewModel(
         if (uiStateValue !is HistoryUiState.Content) {
             updateState { HistoryUiState.Loading }
         }
-        runCatching { workoutSessionRepository.getFinishedSessions() }
+        runCatching { sessionHistoryRepository.getFinishedSessions() }
             .onSuccess { sessions ->
                 // Зону берём в точке использования, а не фиксируем при создании VM: перечитывание
                 // списка подхватит смену системной таймзоны.

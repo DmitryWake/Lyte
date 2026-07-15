@@ -28,7 +28,7 @@ import com.nikolaevskii.lyte.core.design.component.navigation.LyteBottomNavigati
 import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBar
 import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBarSize
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutItemEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutItemEntity
 import com.nikolaevskii.lyte.feature.workout.generated.resources.Res
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_list_delete_a11y
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_list_delete_dialog_description

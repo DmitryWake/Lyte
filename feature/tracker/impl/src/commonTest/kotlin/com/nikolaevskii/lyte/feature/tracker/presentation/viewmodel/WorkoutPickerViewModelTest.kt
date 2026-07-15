@@ -4,7 +4,7 @@ import com.nikolaevskii.lyte.core.navigation.model.NavCommand
 import com.nikolaevskii.lyte.feature.tracker.WorkoutPreviewRoute
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.WorkoutPickerIntent
 import com.nikolaevskii.lyte.feature.workout.WorkoutTabGraph
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutItemEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutItemEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher

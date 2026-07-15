@@ -6,7 +6,7 @@ import com.nikolaevskii.lyte.feature.history.completed
 import com.nikolaevskii.lyte.feature.history.finishedSessionEntity
 import com.nikolaevskii.lyte.feature.history.sessionExercise
 import com.nikolaevskii.lyte.feature.history.sessionSet
-import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionSetResultEntity
+import com.nikolaevskii.lyte.core.session.domain.model.SessionSetResultEntity
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.Month
 import kotlin.test.Test

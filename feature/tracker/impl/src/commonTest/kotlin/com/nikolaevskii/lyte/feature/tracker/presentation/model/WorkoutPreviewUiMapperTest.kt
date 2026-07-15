@@ -1,9 +1,9 @@
 package com.nikolaevskii.lyte.feature.tracker.presentation.model
 
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutEntity
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseEntity
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseWithRepsEntity
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutRepEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseWithRepsEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutRepEntity
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

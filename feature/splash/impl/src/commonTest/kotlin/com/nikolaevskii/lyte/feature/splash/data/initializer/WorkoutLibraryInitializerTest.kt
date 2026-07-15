@@ -2,7 +2,7 @@ package com.nikolaevskii.lyte.feature.splash.data.initializer
 
 import com.nikolaevskii.lyte.feature.splash.data.seed.DefaultExerciseLibrary
 import com.nikolaevskii.lyte.feature.splash.data.seed.DefaultWorkoutPrograms
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals

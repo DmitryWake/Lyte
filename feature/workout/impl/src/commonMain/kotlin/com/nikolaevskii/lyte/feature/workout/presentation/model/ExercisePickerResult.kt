@@ -1,6 +1,6 @@
 package com.nikolaevskii.lyte.feature.workout.presentation.model
 
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 
 /**
  * Чем закончилась шторка выбора упражнения. Обрабатывает владелец — экран редактора программы:

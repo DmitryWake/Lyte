@@ -1,7 +1,7 @@
 package com.nikolaevskii.lyte.feature.splash.data.initializer
 
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseEntity
-import com.nikolaevskii.lyte.feature.workout.domain.repository.WorkoutExerciseRepository
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
+import com.nikolaevskii.lyte.core.workout.domain.repository.WorkoutExerciseRepository
 
 internal class FakeWorkoutExerciseRepository : WorkoutExerciseRepository {
 

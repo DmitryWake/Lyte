@@ -1,13 +1,12 @@
 package com.nikolaevskii.lyte.feature.tracker.presentation.viewmodel
 
-import com.nikolaevskii.lyte.feature.tracker.domain.model.LastSessionDateEntity
-import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionSetEntity
-import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionSetResultEntity
-import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionSetValueEntity
-import com.nikolaevskii.lyte.feature.tracker.domain.model.WorkoutSessionEntity
-import com.nikolaevskii.lyte.feature.tracker.domain.model.WorkoutSessionItemEntity
-import com.nikolaevskii.lyte.feature.tracker.domain.repository.WorkoutSessionRepository
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutEntity
+import com.nikolaevskii.lyte.core.session.domain.model.SessionSetEntity
+import com.nikolaevskii.lyte.core.session.domain.model.SessionSetResultEntity
+import com.nikolaevskii.lyte.core.session.domain.model.SessionSetValueEntity
+import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionEntity
+import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionItemEntity
+import com.nikolaevskii.lyte.core.session.domain.repository.WorkoutSessionRepository
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
 import kotlin.time.Instant
 
 /**
@@ -46,8 +45,6 @@ internal class FakeWorkoutSessionRepository(
     }
 
     override suspend fun getFinishedSessions(): List<WorkoutSessionItemEntity> = emptyList()
-
-    override suspend fun getLastSessionDates(): List<LastSessionDateEntity> = emptyList()
 
     override suspend fun startSession(workout: WorkoutEntity): String {
         startSessionError?.let { error -> throw error }

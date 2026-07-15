@@ -1,6 +1,6 @@
 package com.nikolaevskii.lyte.feature.workout.presentation.viewmodel
 
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import com.nikolaevskii.lyte.feature.workout.presentation.model.ExercisePickerResult
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExercisePickerIntent
 import kotlinx.coroutines.Dispatchers

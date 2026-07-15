@@ -1,6 +1,6 @@
 package com.nikolaevskii.lyte.feature.splash.data.seed
 
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 
 /** Стартовая библиотека упражнений — сеется в БД при первом запуске, см. [com.nikolaevskii.lyte.feature.splash.data.initializer.ExerciseLibraryInitializer]. */
 internal object DefaultExerciseLibrary {

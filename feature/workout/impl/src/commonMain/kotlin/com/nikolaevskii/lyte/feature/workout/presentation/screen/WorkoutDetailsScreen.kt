@@ -40,9 +40,9 @@ import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBar
 import com.nikolaevskii.lyte.core.design.component.overline.LyteOverline
 import com.nikolaevskii.lyte.core.design.component.textfield.LyteTextField
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseEntity
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseWithRepsEntity
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutRepEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseWithRepsEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutRepEntity
 import com.nikolaevskii.lyte.feature.workout.generated.resources.Res
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_add_exercise
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_exercises_title

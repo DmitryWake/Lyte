@@ -1,7 +1,7 @@
 package com.nikolaevskii.lyte.feature.tracker.presentation.model
 
 import com.nikolaevskii.lyte.feature.tracker.completed
-import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionSetResultEntity
+import com.nikolaevskii.lyte.core.session.domain.model.SessionSetResultEntity
 import com.nikolaevskii.lyte.feature.tracker.sessionExercise
 import com.nikolaevskii.lyte.feature.tracker.sessionSet
 import com.nikolaevskii.lyte.feature.tracker.workoutSession

@@ -5,13 +5,13 @@ import com.nikolaevskii.lyte.core.navigation.LyteNavigator
 import com.nikolaevskii.lyte.feature.history.presentation.model.mvi.HistorySessionDetailsIntent
 import com.nikolaevskii.lyte.feature.history.presentation.model.mvi.HistorySessionDetailsUiState
 import com.nikolaevskii.lyte.feature.history.presentation.model.toDetailsUiModel
-import com.nikolaevskii.lyte.feature.tracker.domain.repository.WorkoutSessionRepository
+import com.nikolaevskii.lyte.core.session.domain.repository.SessionHistoryRepository
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 
 class HistorySessionDetailsViewModel(
     private val sessionId: String,
-    private val workoutSessionRepository: WorkoutSessionRepository,
+    private val sessionHistoryRepository: SessionHistoryRepository,
     private val lyteNavigator: LyteNavigator,
 ) : BaseViewModel<HistorySessionDetailsUiState, HistorySessionDetailsIntent>() {
 
@@ -29,7 +29,7 @@ class HistorySessionDetailsViewModel(
 
     private suspend fun load() {
         updateState { HistorySessionDetailsUiState.Loading }
-        runCatching { workoutSessionRepository.getSession(sessionId) }
+        runCatching { sessionHistoryRepository.getSession(sessionId) }
             .onSuccess { session ->
                 // Зону берём в точке использования, а не фиксируем при создании VM.
                 val details = session?.toDetailsUiModel(TimeZone.currentSystemDefault())

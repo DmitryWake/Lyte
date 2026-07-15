@@ -2,7 +2,7 @@ package com.nikolaevskii.lyte.feature.workout.presentation.viewmodel
 
 import com.nikolaevskii.lyte.core.navigation.model.LyteNavOptions
 import com.nikolaevskii.lyte.feature.workout.WorkoutDetailsRoute
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutItemEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutItemEntity
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutListIntent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

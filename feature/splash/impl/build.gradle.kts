@@ -32,7 +32,7 @@ kotlin {
         }
         commonMain.dependencies {
             api(projects.feature.splash.api)
-            implementation(projects.feature.workout.api)
+            implementation(projects.core.coreWorkout)
             implementation(projects.feature.tracker.api)
             implementation(projects.core.coreMvi)
             implementation(projects.core.coreNavigation)

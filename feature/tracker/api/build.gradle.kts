@@ -22,7 +22,6 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            api(projects.feature.workout.api)
             implementation(libs.kotlinx.serialization.core)
         }
     }

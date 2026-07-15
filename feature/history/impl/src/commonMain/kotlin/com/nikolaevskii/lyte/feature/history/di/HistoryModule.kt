@@ -6,13 +6,13 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
+// SessionHistoryRepository (read-контракт) приходит из coreSessionModule().
 val featureHistoryModule = module {
-    // WorkoutSessionRepository приходит из featureTrackerModule (история зависит от :feature:tracker:api).
     viewModelOf(::HistoryViewModel)
     viewModel { (sessionId: String) ->
         HistorySessionDetailsViewModel(
             sessionId = sessionId,
-            workoutSessionRepository = get(),
+            sessionHistoryRepository = get(),
             lyteNavigator = get(),
         )
     }

@@ -1,6 +1,6 @@
 package com.nikolaevskii.lyte.feature.workout.presentation.model
 
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseWithRepsEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseWithRepsEntity
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 

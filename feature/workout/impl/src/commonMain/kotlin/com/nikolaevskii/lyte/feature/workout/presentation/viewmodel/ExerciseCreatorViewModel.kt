@@ -3,8 +3,8 @@
 package com.nikolaevskii.lyte.feature.workout.presentation.viewmodel
 
 import com.nikolaevskii.lyte.core.mvi.BaseViewModel
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseEntity
-import com.nikolaevskii.lyte.feature.workout.domain.repository.WorkoutExerciseRepository
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
+import com.nikolaevskii.lyte.core.workout.domain.repository.WorkoutExerciseRepository
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExerciseCreatorIntent
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExerciseCreatorUiState
 import kotlinx.coroutines.launch

@@ -19,7 +19,7 @@ import com.nikolaevskii.lyte.core.design.component.button.LyteButton
 import com.nikolaevskii.lyte.core.design.component.overlay.LyteBottomSheet
 import com.nikolaevskii.lyte.core.design.component.overlay.LyteBottomSheetHeight
 import com.nikolaevskii.lyte.core.design.component.textfield.LyteTextField
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import com.nikolaevskii.lyte.feature.workout.generated.resources.Res
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_exercise_create_description_label
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_exercise_create_description_placeholder

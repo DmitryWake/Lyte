@@ -4,11 +4,11 @@ package com.nikolaevskii.lyte.feature.workout.presentation.viewmodel
 
 import com.nikolaevskii.lyte.core.mvi.BaseViewModel
 import com.nikolaevskii.lyte.core.navigation.LyteNavigator
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutEntity
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseEntity
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseWithRepsEntity
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutRepEntity
-import com.nikolaevskii.lyte.feature.workout.domain.repository.WorkoutRepository
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseWithRepsEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutRepEntity
+import com.nikolaevskii.lyte.core.workout.domain.repository.WorkoutRepository
 import com.nikolaevskii.lyte.feature.workout.presentation.model.WorkoutExerciseSheet
 import com.nikolaevskii.lyte.feature.workout.presentation.model.WorkoutExerciseUiModel
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutDetailsIntent

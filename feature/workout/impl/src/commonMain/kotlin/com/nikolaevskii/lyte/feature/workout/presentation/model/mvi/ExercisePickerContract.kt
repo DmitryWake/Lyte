@@ -2,7 +2,7 @@ package com.nikolaevskii.lyte.feature.workout.presentation.model.mvi
 
 import com.nikolaevskii.lyte.core.mvi.UiIntent
 import com.nikolaevskii.lyte.core.mvi.UiState
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import com.nikolaevskii.lyte.feature.workout.presentation.model.ExercisePickerResult
 
 /**

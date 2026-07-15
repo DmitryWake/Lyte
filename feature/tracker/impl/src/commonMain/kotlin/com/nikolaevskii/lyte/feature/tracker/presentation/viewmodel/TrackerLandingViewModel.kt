@@ -6,7 +6,7 @@ import com.nikolaevskii.lyte.core.navigation.model.LyteNavOptions
 import com.nikolaevskii.lyte.feature.tracker.ActiveSessionRoute
 import com.nikolaevskii.lyte.feature.tracker.TrackerLandingRoute
 import com.nikolaevskii.lyte.feature.tracker.WorkoutPickerRoute
-import com.nikolaevskii.lyte.feature.tracker.domain.repository.WorkoutSessionRepository
+import com.nikolaevskii.lyte.core.session.domain.repository.WorkoutSessionRepository
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.TrackerLandingIntent
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.TrackerLandingUiState
 import kotlinx.coroutines.CancellationException

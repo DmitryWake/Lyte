@@ -2,7 +2,7 @@ package com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi
 
 import com.nikolaevskii.lyte.core.mvi.UiIntent
 import com.nikolaevskii.lyte.core.mvi.UiState
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutItemEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutItemEntity
 
 data class WorkoutPickerUiState(
     val isLoading: Boolean = false,

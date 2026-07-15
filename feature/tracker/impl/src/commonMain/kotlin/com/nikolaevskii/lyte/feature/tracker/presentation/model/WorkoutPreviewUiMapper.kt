@@ -1,8 +1,8 @@
 package com.nikolaevskii.lyte.feature.tracker.presentation.model
 
 import com.nikolaevskii.lyte.feature.tracker.presentation.util.formatWeight
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutEntity
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutRepEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutRepEntity
 
 /**
  * Маппит доменную программу в готовую к отрисовке [WorkoutPreviewUiModel]: нумерация упражнений,

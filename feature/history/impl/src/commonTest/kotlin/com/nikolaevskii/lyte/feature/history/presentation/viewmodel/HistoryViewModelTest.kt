@@ -41,7 +41,7 @@ class HistoryViewModelTest {
     // где зона задаётся явно.
     @Test
     fun loadsSessionsGroupedByMonthOnInit() = runTest(testDispatcher) {
-        val repository = FakeWorkoutSessionRepository(
+        val repository = FakeSessionHistoryRepository(
             finishedSessions = listOf(
                 finishedSession("1", "Push Day", LocalDateTime(2026, Month.JULY, 15, 12, 0), durationMinutes = 52, completedSetCount = 15, totalSetCount = 16),
                 finishedSession("2", "Pull Day", LocalDateTime(2026, Month.JUNE, 15, 12, 0), durationMinutes = 58, completedSetCount = 17, totalSetCount = 17),
@@ -57,7 +57,7 @@ class HistoryViewModelTest {
 
     @Test
     fun emptyRepositoryProducesEmptyState() = runTest(testDispatcher) {
-        val viewModel = viewModel(FakeWorkoutSessionRepository())
+        val viewModel = viewModel(FakeSessionHistoryRepository())
 
         runCurrent()
 
@@ -66,7 +66,7 @@ class HistoryViewModelTest {
 
     @Test
     fun screenShownReloadsSessions() = runTest(testDispatcher) {
-        val repository = FakeWorkoutSessionRepository(finishedSessions = emptyList())
+        val repository = FakeSessionHistoryRepository(finishedSessions = emptyList())
         val viewModel = viewModel(repository)
         runCurrent()
         assertEquals(HistoryUiState.Empty, viewModel.uiState.value)
@@ -83,7 +83,7 @@ class HistoryViewModelTest {
 
     @Test
     fun failedLoadSurfacesError() = runTest(testDispatcher) {
-        val repository = FakeWorkoutSessionRepository().apply { getFinishedSessionsError = IllegalStateException("boom") }
+        val repository = FakeSessionHistoryRepository().apply { getFinishedSessionsError = IllegalStateException("boom") }
         val viewModel = viewModel(repository)
 
         runCurrent()
@@ -94,7 +94,7 @@ class HistoryViewModelTest {
 
     @Test
     fun refreshFailureKeepsExistingContent() = runTest(testDispatcher) {
-        val repository = FakeWorkoutSessionRepository(
+        val repository = FakeSessionHistoryRepository(
             finishedSessions = listOf(
                 finishedSession("1", "Push Day", LocalDateTime(2026, Month.JULY, 2, 12, 0), durationMinutes = 52, completedSetCount = 15, totalSetCount = 16),
             ),
@@ -113,7 +113,7 @@ class HistoryViewModelTest {
 
     @Test
     fun sessionClickNavigatesToDetailsWithoutChangingState() = runTest(testDispatcher) {
-        val repository = FakeWorkoutSessionRepository(
+        val repository = FakeSessionHistoryRepository(
             finishedSessions = listOf(
                 finishedSession("s1", "Push Day", LocalDateTime(2026, Month.JULY, 2, 12, 0), durationMinutes = 52, completedSetCount = 15, totalSetCount = 16),
             ),
@@ -130,10 +130,10 @@ class HistoryViewModelTest {
     }
 
     private fun viewModel(
-        repository: FakeWorkoutSessionRepository,
+        repository: FakeSessionHistoryRepository,
         navigator: FakeLyteNavigator = FakeLyteNavigator(),
     ): HistoryViewModel = HistoryViewModel(
-        workoutSessionRepository = repository,
+        sessionHistoryRepository = repository,
         lyteNavigator = navigator,
     )
 }

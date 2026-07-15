@@ -1,8 +1,8 @@
 package com.nikolaevskii.lyte.feature.splash.data.seed
 
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutEntity
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseWithRepsEntity
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutRepEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseWithRepsEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutRepEntity
 
 /** Стартовые программы тренировок — сеются в БД при первом запуске, см. [com.nikolaevskii.lyte.feature.splash.data.initializer.WorkoutLibraryInitializer]. */
 internal object DefaultWorkoutPrograms {

@@ -1,15 +1,15 @@
 package com.nikolaevskii.lyte.feature.tracker.presentation.model
 
-import com.nikolaevskii.lyte.feature.tracker.domain.currentSet
-import com.nikolaevskii.lyte.feature.tracker.domain.effectiveCurrentExercise
-import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionExerciseEntity
-import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionSetEntity
-import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionSetOutcomeEntity
-import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionSetResultEntity
-import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionSetValueEntity
-import com.nikolaevskii.lyte.feature.tracker.domain.model.WorkoutSessionEntity
-import com.nikolaevskii.lyte.feature.tracker.domain.util.hasWeight
-import com.nikolaevskii.lyte.feature.tracker.domain.util.outcome
+import com.nikolaevskii.lyte.core.session.domain.currentSet
+import com.nikolaevskii.lyte.core.session.domain.effectiveCurrentExercise
+import com.nikolaevskii.lyte.core.session.domain.model.SessionExerciseEntity
+import com.nikolaevskii.lyte.core.session.domain.model.SessionSetEntity
+import com.nikolaevskii.lyte.core.session.domain.model.SessionSetOutcomeEntity
+import com.nikolaevskii.lyte.core.session.domain.model.SessionSetResultEntity
+import com.nikolaevskii.lyte.core.session.domain.model.SessionSetValueEntity
+import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionEntity
+import com.nikolaevskii.lyte.core.session.domain.util.hasWeight
+import com.nikolaevskii.lyte.core.session.domain.util.outcome
 import com.nikolaevskii.lyte.feature.tracker.presentation.util.formatWeight
 
 /**

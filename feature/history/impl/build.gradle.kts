@@ -32,7 +32,7 @@ kotlin {
         }
         commonMain.dependencies {
             api(projects.feature.history.api)
-            implementation(projects.feature.tracker.api)
+            implementation(projects.core.coreSession)
             implementation(projects.core.coreMvi)
             implementation(projects.core.coreNavigation)
             implementation(projects.core.coreDi)

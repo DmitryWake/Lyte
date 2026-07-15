@@ -40,16 +40,6 @@ abstract class WorkoutSessionDao {
     )
     abstract suspend fun getFinishedItems(): List<SessionItemWithSetCounts>
 
-    @Query(
-        """
-        SELECT program_id AS programId, MAX(finished_at) AS finishedAt
-        FROM workout_session
-        WHERE finished_at IS NOT NULL
-        GROUP BY program_id
-        """,
-    )
-    abstract suspend fun getLastSessionDates(): List<ProgramLastSessionRow>
-
     @Insert
     abstract suspend fun insertSession(session: WorkoutSessionDatabaseEntity)
 

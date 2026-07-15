@@ -1,12 +1,12 @@
 package com.nikolaevskii.lyte.feature.tracker
 
-import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionExerciseEntity
-import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionProgramEntity
-import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionSetEntity
-import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionSetResultEntity
-import com.nikolaevskii.lyte.feature.tracker.domain.model.SessionSetValueEntity
-import com.nikolaevskii.lyte.feature.tracker.domain.model.WorkoutSessionEntity
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseEntity
+import com.nikolaevskii.lyte.core.session.domain.model.SessionExerciseEntity
+import com.nikolaevskii.lyte.core.session.domain.model.SessionProgramEntity
+import com.nikolaevskii.lyte.core.session.domain.model.SessionSetEntity
+import com.nikolaevskii.lyte.core.session.domain.model.SessionSetResultEntity
+import com.nikolaevskii.lyte.core.session.domain.model.SessionSetValueEntity
+import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import kotlin.time.Instant
 
 /** Краткие билдеры доменных моделей сессии для тестов маппера/прогрессии/VM. */

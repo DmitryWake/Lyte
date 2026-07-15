@@ -7,8 +7,8 @@ import com.nikolaevskii.lyte.feature.history.HistorySessionDetailsRoute
 import com.nikolaevskii.lyte.feature.history.HistoryTabGraph
 import com.nikolaevskii.lyte.feature.tracker.ActiveSessionRoute
 import com.nikolaevskii.lyte.feature.tracker.TrackerLandingRoute
-import com.nikolaevskii.lyte.feature.tracker.domain.model.WorkoutSessionEntity
-import com.nikolaevskii.lyte.feature.tracker.domain.repository.WorkoutSessionRepository
+import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionEntity
+import com.nikolaevskii.lyte.core.session.domain.repository.WorkoutSessionRepository
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionOverlayUiModel
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionIntent
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionUiState

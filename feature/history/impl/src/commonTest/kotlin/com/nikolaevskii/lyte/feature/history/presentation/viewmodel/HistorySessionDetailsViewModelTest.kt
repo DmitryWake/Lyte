@@ -44,7 +44,7 @@ class HistorySessionDetailsViewModelTest {
                 sessionExercise("e1", "Жим лёжа", listOf(sessionSet("s1", 8, 80.0, completed(8, 80.0)))),
             ),
         )
-        val viewModel = viewModel(FakeWorkoutSessionRepository(session = session))
+        val viewModel = viewModel(FakeSessionHistoryRepository(session = session))
 
         runCurrent()
 
@@ -55,7 +55,7 @@ class HistorySessionDetailsViewModelTest {
 
     @Test
     fun missingSessionProducesError() = runTest(testDispatcher) {
-        val viewModel = viewModel(FakeWorkoutSessionRepository(session = null))
+        val viewModel = viewModel(FakeSessionHistoryRepository(session = null))
 
         runCurrent()
 
@@ -64,7 +64,7 @@ class HistorySessionDetailsViewModelTest {
 
     @Test
     fun failedLoadSurfacesError() = runTest(testDispatcher) {
-        val repository = FakeWorkoutSessionRepository().apply { getSessionError = IllegalStateException("boom") }
+        val repository = FakeSessionHistoryRepository().apply { getSessionError = IllegalStateException("boom") }
         val viewModel = viewModel(repository)
 
         runCurrent()
@@ -76,7 +76,7 @@ class HistorySessionDetailsViewModelTest {
     @Test
     fun backClickNavigatesBack() = runTest(testDispatcher) {
         val navigator = FakeLyteNavigator()
-        val viewModel = viewModel(FakeWorkoutSessionRepository(session = null), navigator)
+        val viewModel = viewModel(FakeSessionHistoryRepository(session = null), navigator)
         runCurrent()
 
         viewModel.onIntent(HistorySessionDetailsIntent.OnBackClicked)
@@ -85,11 +85,11 @@ class HistorySessionDetailsViewModelTest {
     }
 
     private fun viewModel(
-        repository: FakeWorkoutSessionRepository,
+        repository: FakeSessionHistoryRepository,
         navigator: FakeLyteNavigator = FakeLyteNavigator(),
     ): HistorySessionDetailsViewModel = HistorySessionDetailsViewModel(
         sessionId = SESSION_ID,
-        workoutSessionRepository = repository,
+        sessionHistoryRepository = repository,
         lyteNavigator = navigator,
     )
 

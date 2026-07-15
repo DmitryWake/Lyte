@@ -28,9 +28,9 @@ import com.nikolaevskii.lyte.core.design.component.button.LyteButtonVariant
 import com.nikolaevskii.lyte.core.design.component.overlay.LyteBottomSheet
 import com.nikolaevskii.lyte.core.design.component.stepper.LyteSetEditRow
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseEntity
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutExerciseWithRepsEntity
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutRepEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseWithRepsEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutRepEntity
 import com.nikolaevskii.lyte.feature.workout.generated.resources.Res
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_set_number
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_sets_add

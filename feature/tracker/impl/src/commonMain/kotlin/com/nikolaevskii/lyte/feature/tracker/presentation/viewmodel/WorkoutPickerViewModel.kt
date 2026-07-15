@@ -6,7 +6,7 @@ import com.nikolaevskii.lyte.feature.tracker.WorkoutPreviewRoute
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.WorkoutPickerIntent
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.WorkoutPickerUiState
 import com.nikolaevskii.lyte.feature.workout.WorkoutTabGraph
-import com.nikolaevskii.lyte.feature.workout.domain.repository.WorkoutRepository
+import com.nikolaevskii.lyte.core.workout.domain.repository.WorkoutRepository
 import kotlinx.coroutines.launch
 
 class WorkoutPickerViewModel(

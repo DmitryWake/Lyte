@@ -32,13 +32,14 @@ kotlin {
         }
         commonMain.dependencies {
             api(projects.feature.tracker.api)
+            implementation(projects.core.coreSession)
+            implementation(projects.core.coreWorkout)
             implementation(projects.feature.workout.api)
             implementation(projects.feature.history.api)
             implementation(projects.core.coreMvi)
             implementation(projects.core.coreNavigation)
             implementation(projects.core.coreDi)
             implementation(projects.core.coreDesign)
-            implementation(projects.core.coreDb)
             implementation(libs.androidx.navigation.compose)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)

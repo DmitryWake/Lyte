@@ -3,6 +3,8 @@ package com.nikolaevskii.lyte.di
 import com.nikolaevskii.lyte.core.db.di.coreDbModule
 import com.nikolaevskii.lyte.core.di.initKoin
 import com.nikolaevskii.lyte.core.navigation.di.coreNavigationModule
+import com.nikolaevskii.lyte.core.session.di.coreSessionModule
+import com.nikolaevskii.lyte.core.workout.di.coreWorkoutModule
 import com.nikolaevskii.lyte.feature.history.di.featureHistoryModule
 import com.nikolaevskii.lyte.feature.splash.di.featureSplashModule
 import com.nikolaevskii.lyte.feature.tracker.di.featureTrackerModule
@@ -17,6 +19,8 @@ fun initKoinShared(
         appDeclaration()
         modules(
             coreDbModule(),
+            coreWorkoutModule(),
+            coreSessionModule(),
             coreNavigationModule,
             featureTrackerModule,
             featureWorkoutModule,

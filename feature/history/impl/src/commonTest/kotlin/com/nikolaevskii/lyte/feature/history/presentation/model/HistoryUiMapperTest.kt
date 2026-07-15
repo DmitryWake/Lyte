@@ -2,7 +2,7 @@ package com.nikolaevskii.lyte.feature.history.presentation.model
 
 import com.nikolaevskii.lyte.feature.history.TEST_TIME_ZONE
 import com.nikolaevskii.lyte.feature.history.finishedSession
-import com.nikolaevskii.lyte.feature.tracker.domain.model.WorkoutSessionItemEntity
+import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionItemEntity
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.Month
 import kotlin.time.Duration.Companion.minutes

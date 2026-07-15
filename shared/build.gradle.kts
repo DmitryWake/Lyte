@@ -44,6 +44,8 @@ kotlin {
             implementation(projects.core.coreNavigation)
             implementation(projects.core.coreDesign)
             implementation(projects.core.coreDb)
+            implementation(projects.core.coreWorkout)
+            implementation(projects.core.coreSession)
             implementation(projects.feature.tracker.api)
             implementation(projects.feature.tracker.impl)
             implementation(projects.feature.workout.api)

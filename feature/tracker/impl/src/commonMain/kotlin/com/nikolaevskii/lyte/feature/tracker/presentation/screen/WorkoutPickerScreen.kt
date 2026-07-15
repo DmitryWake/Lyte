@@ -38,7 +38,7 @@ import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_picker_
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.WorkoutPickerIntent
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.WorkoutPickerUiState
 import com.nikolaevskii.lyte.feature.tracker.presentation.viewmodel.WorkoutPickerViewModel
-import com.nikolaevskii.lyte.feature.workout.domain.model.WorkoutItemEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutItemEntity
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
