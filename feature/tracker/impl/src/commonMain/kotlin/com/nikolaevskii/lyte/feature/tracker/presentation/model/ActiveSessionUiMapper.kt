@@ -10,7 +10,7 @@ import com.nikolaevskii.lyte.core.session.domain.model.SessionSetValueEntity
 import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionEntity
 import com.nikolaevskii.lyte.core.session.domain.util.hasWeight
 import com.nikolaevskii.lyte.core.session.domain.util.outcome
-import com.nikolaevskii.lyte.feature.tracker.presentation.util.formatWeight
+import com.nikolaevskii.lyte.core.design.format.formatWeight
 
 /**
  * Маппит доменную сессию в готовую к отрисовке [ActiveSessionUiModel]: эффективное текущее

@@ -1,6 +1,6 @@
 package com.nikolaevskii.lyte.feature.tracker.presentation.model
 
-import com.nikolaevskii.lyte.feature.tracker.presentation.util.formatWeight
+import com.nikolaevskii.lyte.core.design.format.formatWeight
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutRepEntity
 

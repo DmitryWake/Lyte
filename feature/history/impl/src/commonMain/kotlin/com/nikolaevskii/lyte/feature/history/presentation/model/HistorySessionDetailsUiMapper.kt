@@ -1,5 +1,6 @@
 package com.nikolaevskii.lyte.feature.history.presentation.model
 
+import com.nikolaevskii.lyte.core.design.format.formatWeight
 import com.nikolaevskii.lyte.core.design.component.feedback.LyteDiffTone
 import com.nikolaevskii.lyte.core.session.domain.model.SessionExerciseEntity
 import com.nikolaevskii.lyte.core.session.domain.model.SessionSetEntity
@@ -69,9 +70,3 @@ private fun SessionSetValueEntity.toSetValueUiModel(): HistorySetValueUiModel =
     } else {
         HistorySetValueUiModel.Bodyweight(reps = count)
     }
-
-/** Целочисленный вес — без дробной части («80», а не «80.0»), дробный — как есть («82.5»). */
-private fun formatWeight(weight: Double): String {
-    val asLong = weight.toLong()
-    return if (weight == asLong.toDouble()) asLong.toString() else weight.toString()
-}

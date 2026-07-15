@@ -30,6 +30,6 @@ sealed interface HistoryIntent : UiIntent {
     /** Экран показан — перечитываем список, чтобы подхватить сессии, завершённые в трекере. */
     data object OnScreenShown : HistoryIntent
 
-    /** Тап по завершённой сессии [id]. Зарезервировано под детали сессии (5.2); сейчас no-op. */
+    /** Тап по завершённой сессии [id] — открыть её детали (5.2). */
     data class OnSessionClicked(val id: String) : HistoryIntent
 }

@@ -30,6 +30,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.nikolaevskii.lyte.core.design.format.formatWeight
 import com.nikolaevskii.lyte.core.design.LyteTheme
 import com.nikolaevskii.lyte.core.design.component.button.LyteButton
 import com.nikolaevskii.lyte.core.design.component.button.LyteButtonSize
@@ -304,11 +305,6 @@ private fun formatSetLabel(rep: WorkoutRepEntity): String {
     }
 }
 
-/** Целочисленный вес рендерится без дробной части («60», а не «60.0»), дробный — как есть («62.5»). */
-private fun formatWeight(weight: Double): String {
-    val rounded = weight.toLong()
-    return if (weight == rounded.toDouble()) rounded.toString() else weight.toString()
-}
 
 @Composable
 @Preview
