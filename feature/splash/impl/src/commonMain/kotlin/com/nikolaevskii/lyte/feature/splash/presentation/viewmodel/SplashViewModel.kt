@@ -7,7 +7,6 @@ import com.nikolaevskii.lyte.feature.splash.SplashRoute
 import com.nikolaevskii.lyte.feature.splash.presentation.constant.SplashConstant.SPLASH_MIN_LOADING_DURATION_MS
 import com.nikolaevskii.lyte.feature.splash.presentation.constant.SplashConstant.SPLASH_REVEAL_DURATION_MS
 import com.nikolaevskii.lyte.feature.splash.domain.initializer.AppInitializationManager
-import com.nikolaevskii.lyte.feature.splash.presentation.model.SplashPhaseUiModel
 import com.nikolaevskii.lyte.feature.splash.presentation.model.mvi.SplashIntent
 import com.nikolaevskii.lyte.feature.splash.presentation.model.mvi.SplashUiState
 import com.nikolaevskii.lyte.feature.tracker.TrackerLandingRoute
@@ -36,7 +35,7 @@ class SplashViewModel(
         }
     }
 
-    override fun getInitialState(): SplashUiState = SplashUiState()
+    override fun getInitialState(): SplashUiState = SplashUiState.Blinking
 
     // Отменяем предыдущую попытку перед стартом новой — иначе повторный Retry (например, двойной тап)
     // до завершения текущего запуска породил бы второй параллельный launch{} и мог бы вызвать
@@ -44,7 +43,7 @@ class SplashViewModel(
     private fun runInitialization() {
         initializationJob?.cancel()
         initializationJob = launch {
-            updateState { copy(phase = SplashPhaseUiModel.Blinking, isError = false) }
+            updateState { SplashUiState.Blinking }
 
             // runCatching не умеет отличать CancellationException от обычной ошибки (ловит любой
             // Throwable) — поэтому ниже явно перебрасываем её, иначе отмена ViewModel-скоупа была бы
@@ -62,7 +61,7 @@ class SplashViewModel(
 
             outcome
                 .onSuccess {
-                    updateState { copy(phase = SplashPhaseUiModel.Revealing) }
+                    updateState { SplashUiState.Revealing }
                     delay(SPLASH_REVEAL_DURATION_MS.milliseconds)
                     lyteNavigator.navigate(
                         route = TrackerLandingRoute,
@@ -70,7 +69,7 @@ class SplashViewModel(
                     )
                 }
                 .onFailure {
-                    updateState { copy(phase = SplashPhaseUiModel.Blinking, isError = true) }
+                    updateState { SplashUiState.Error }
                 }
         }
     }

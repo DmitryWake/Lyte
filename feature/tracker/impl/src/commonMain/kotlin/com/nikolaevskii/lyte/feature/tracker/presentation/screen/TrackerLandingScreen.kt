@@ -85,7 +85,7 @@ fun TrackerLandingContent(
         ) {
             // Пока гейт проверяет активную сессию, экран пуст: найдётся сессия — уйдём на её маршрут
             // без вспышки «Нет активной сессии»; локальный запрос быстрый, спиннер бы только мигал.
-            if (!state.isCheckingSession) {
+            if (state is TrackerLandingUiState.NoActiveSession) {
                 TrackerWordmark(
                     modifier = Modifier
                         .align(Alignment.TopStart)
@@ -184,7 +184,7 @@ private fun NoActiveSessionContent(
 private fun TrackerLandingContentPreview() {
     LyteTheme {
         TrackerLandingContent(
-            state = TrackerLandingUiState(isCheckingSession = false),
+            state = TrackerLandingUiState.NoActiveSession,
             onIntent = {},
         )
     }

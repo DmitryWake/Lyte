@@ -33,7 +33,7 @@ class TrackerLandingViewModel(
         }
     }
 
-    override fun getInitialState(): TrackerLandingUiState = TrackerLandingUiState()
+    override fun getInitialState(): TrackerLandingUiState = TrackerLandingUiState.CheckingSession
 
     private suspend fun checkActiveSession() {
         val activeSession = try {
@@ -50,7 +50,7 @@ class TrackerLandingViewModel(
                 options = LyteNavOptions(popUpTo = TrackerLandingRoute, popUpToInclusive = true),
             )
         } else {
-            updateState { copy(isCheckingSession = false) }
+            updateState { TrackerLandingUiState.NoActiveSession }
         }
     }
 }

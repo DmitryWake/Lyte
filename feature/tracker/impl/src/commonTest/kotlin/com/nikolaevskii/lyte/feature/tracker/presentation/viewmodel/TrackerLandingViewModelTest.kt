@@ -6,6 +6,7 @@ import com.nikolaevskii.lyte.feature.tracker.ActiveSessionRoute
 import com.nikolaevskii.lyte.feature.tracker.TrackerLandingRoute
 import com.nikolaevskii.lyte.feature.tracker.WorkoutPickerRoute
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.TrackerLandingIntent
+import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.TrackerLandingUiState
 import com.nikolaevskii.lyte.feature.tracker.sessionExercise
 import com.nikolaevskii.lyte.feature.tracker.sessionSet
 import com.nikolaevskii.lyte.feature.tracker.workoutSession
@@ -20,7 +21,6 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -43,7 +43,7 @@ class TrackerLandingViewModelTest {
         val viewModel = viewModel(sessionRepository = FakeWorkoutSessionRepository())
 
         // До прогона диспетчера гейт ещё проверяет сессию.
-        assertTrue(viewModel.uiState.value.isCheckingSession)
+        assertTrue(viewModel.uiState.value is TrackerLandingUiState.CheckingSession)
     }
 
     @Test
@@ -53,7 +53,7 @@ class TrackerLandingViewModelTest {
 
         runCurrent()
 
-        assertFalse(viewModel.uiState.value.isCheckingSession)
+        assertTrue(viewModel.uiState.value is TrackerLandingUiState.NoActiveSession)
         assertTrue(navigator.commandLog.isEmpty())
     }
 
@@ -66,7 +66,7 @@ class TrackerLandingViewModelTest {
         runCurrent()
 
         // Гейт нашёл активную сессию — уводит на её экран, заменяя лендинг в стеке.
-        assertTrue(viewModel.uiState.value.isCheckingSession)
+        assertTrue(viewModel.uiState.value is TrackerLandingUiState.CheckingSession)
         assertEquals(
             listOf<NavCommand>(
                 NavCommand.Forward(
@@ -89,7 +89,7 @@ class TrackerLandingViewModelTest {
         runCurrent()
 
         // Не смогли проверить — вкладку не блокируем, показываем обычный лендинг.
-        assertFalse(viewModel.uiState.value.isCheckingSession)
+        assertTrue(viewModel.uiState.value is TrackerLandingUiState.NoActiveSession)
         assertTrue(navigator.commandLog.isEmpty())
     }
 

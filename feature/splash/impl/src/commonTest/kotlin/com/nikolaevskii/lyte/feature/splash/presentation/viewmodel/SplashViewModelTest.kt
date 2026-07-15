@@ -6,7 +6,7 @@ import com.nikolaevskii.lyte.feature.splash.presentation.constant.SplashConstant
 import com.nikolaevskii.lyte.feature.splash.presentation.constant.SplashConstant.SPLASH_REVEAL_DURATION_MS
 import com.nikolaevskii.lyte.feature.splash.domain.initializer.AppInitializationManager
 import com.nikolaevskii.lyte.feature.splash.domain.initializer.AppInitializer
-import com.nikolaevskii.lyte.feature.splash.presentation.model.SplashPhaseUiModel
+import com.nikolaevskii.lyte.feature.splash.presentation.model.mvi.SplashUiState
 import com.nikolaevskii.lyte.feature.splash.presentation.model.mvi.SplashIntent
 import com.nikolaevskii.lyte.feature.tracker.TrackerLandingRoute
 import kotlinx.coroutines.CancellationException
@@ -50,7 +50,7 @@ class SplashViewModelTest {
                 SplashViewModel(appInitializationManager = manager, lyteNavigator = navigator)
 
             runCurrent()
-            assertEquals(SplashPhaseUiModel.Blinking, viewModel.uiState.value.phase)
+            assertEquals(SplashUiState.Blinking, viewModel.uiState.value)
             assertTrue(
                 navigator.navigateCalls.isEmpty(),
                 "must not navigate before minimum splash duration elapses"
@@ -58,12 +58,12 @@ class SplashViewModelTest {
 
             advanceTimeBy((SPLASH_MIN_LOADING_DURATION_MS - 1).milliseconds)
             runCurrent()
-            assertEquals(SplashPhaseUiModel.Blinking, viewModel.uiState.value.phase)
+            assertEquals(SplashUiState.Blinking, viewModel.uiState.value)
             assertTrue(navigator.navigateCalls.isEmpty())
 
             advanceTimeBy(1.milliseconds)
             runCurrent()
-            assertEquals(SplashPhaseUiModel.Revealing, viewModel.uiState.value.phase)
+            assertEquals(SplashUiState.Revealing, viewModel.uiState.value)
             assertTrue(
                 navigator.navigateCalls.isEmpty(),
                 "must not navigate before the reveal animation finishes"
@@ -74,7 +74,7 @@ class SplashViewModelTest {
             val (route, options) = navigator.navigateCalls.single()
             assertEquals(TrackerLandingRoute, route)
             assertEquals(LyteNavOptions(popUpTo = SplashRoute, popUpToInclusive = true), options)
-            assertFalse(viewModel.uiState.value.isError)
+            assertFalse(viewModel.uiState.value is SplashUiState.Error)
         }
 
     @Test
@@ -88,8 +88,7 @@ class SplashViewModelTest {
             advanceTimeBy(SPLASH_MIN_LOADING_DURATION_MS.milliseconds)
             runCurrent()
 
-            assertTrue(viewModel.uiState.value.isError)
-            assertEquals(SplashPhaseUiModel.Blinking, viewModel.uiState.value.phase)
+            assertEquals(SplashUiState.Error, viewModel.uiState.value)
             assertTrue(navigator.navigateCalls.isEmpty())
         }
 
@@ -108,7 +107,7 @@ class SplashViewModelTest {
         )
         advanceTimeBy(SPLASH_MIN_LOADING_DURATION_MS.milliseconds)
         runCurrent()
-        assertTrue(viewModel.uiState.value.isError)
+        assertEquals(SplashUiState.Error, viewModel.uiState.value)
 
         shouldFail = false
         viewModel.onIntent(SplashIntent.Retry)
@@ -116,7 +115,7 @@ class SplashViewModelTest {
         runCurrent()
 
         assertEquals(1, navigator.navigateCalls.size)
-        assertFalse(viewModel.uiState.value.isError)
+        assertFalse(viewModel.uiState.value is SplashUiState.Error)
     }
 
     @Test
@@ -155,7 +154,7 @@ class SplashViewModelTest {
         advanceTimeBy(SPLASH_MIN_LOADING_DURATION_MS.milliseconds)
         runCurrent()
 
-        assertFalse(viewModel.uiState.value.isError)
+        assertFalse(viewModel.uiState.value is SplashUiState.Error)
         assertTrue(navigator.navigateCalls.isEmpty())
     }
 

@@ -43,7 +43,6 @@ import com.nikolaevskii.lyte.feature.splash.generated.resources.splash_error_mes
 import com.nikolaevskii.lyte.feature.splash.generated.resources.splash_retry
 import com.nikolaevskii.lyte.feature.splash.generated.resources.splash_wordmark
 import com.nikolaevskii.lyte.feature.splash.generated.resources.splash_wordmark_accent
-import com.nikolaevskii.lyte.feature.splash.presentation.model.SplashPhaseUiModel
 import com.nikolaevskii.lyte.feature.splash.presentation.model.mvi.SplashIntent
 import com.nikolaevskii.lyte.feature.splash.presentation.model.mvi.SplashUiState
 import com.nikolaevskii.lyte.feature.splash.presentation.viewmodel.SplashViewModel
@@ -90,10 +89,13 @@ fun SplashContent(
                 .padding(horizontal = LyteTheme.spacing.s8),
             contentAlignment = Alignment.Center,
         ) {
-            if (state.isError) {
+            // Единая точка вызова SplashRevealContent (а не ветка when с двумя вызовами): иначе
+            // updateTransition пересоздаётся при смене состояния уже с targetState = Revealing,
+            // initialState == targetState, и анимация reveal молча не запускается.
+            if (state is SplashUiState.Error) {
                 SplashErrorContent(onIntent = onIntent)
             } else {
-                SplashRevealContent(phase = state.phase)
+                SplashRevealContent(isRevealing = state is SplashUiState.Revealing)
             }
         }
     }
@@ -101,19 +103,19 @@ fun SplashContent(
 
 /** Точка пульсирует, пока идут стартовые процессы, затем уменьшается и рядом выезжает текст «Lyte». */
 @Composable
-private fun SplashRevealContent(phase: SplashPhaseUiModel) {
-    val transition = updateTransition(targetState = phase, label = SplashRevealTransitionLabel)
+private fun SplashRevealContent(isRevealing: Boolean) {
+    val transition = updateTransition(targetState = isRevealing, label = SplashRevealTransitionLabel)
     val revealAnimationSpec = tween<Dp>(SPLASH_REVEAL_DURATION_MS.toInt())
     val dotSize by transition.animateDp(
         transitionSpec = { revealAnimationSpec },
         label = DotSizeAnimationLabel,
-    ) { animatedPhase -> if (animatedPhase == SplashPhaseUiModel.Blinking) BlinkingDotSize else RevealedDotSize }
+    ) { revealing -> if (revealing) RevealedDotSize else BlinkingDotSize }
     val textAlpha by transition.animateFloat(
         transitionSpec = { tween(SPLASH_REVEAL_DURATION_MS.toInt()) },
         label = TextAlphaAnimationLabel,
-    ) { animatedPhase -> if (animatedPhase == SplashPhaseUiModel.Blinking) HiddenAlpha else FullyOpaqueAlpha }
+    ) { revealing -> if (revealing) FullyOpaqueAlpha else HiddenAlpha }
 
-    val dotAlpha = if (phase == SplashPhaseUiModel.Blinking) {
+    val dotAlpha = if (!isRevealing) {
         val infiniteTransition = rememberInfiniteTransition(label = DotBlinkTransitionLabel)
         val blinkAlpha by infiniteTransition.animateFloat(
             initialValue = MinBlinkAlpha,
@@ -133,7 +135,7 @@ private fun SplashRevealContent(phase: SplashPhaseUiModel) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.animateContentSize(animationSpec = tween(SPLASH_REVEAL_DURATION_MS.toInt())),
     ) {
-        if (phase == SplashPhaseUiModel.Revealing) {
+        if (isRevealing) {
             Text(
                 text = stringResource(Res.string.splash_wordmark),
                 modifier = Modifier.alpha(textAlpha),
@@ -201,7 +203,7 @@ private fun SplashErrorContent(onIntent: (SplashIntent) -> Unit) {
 private fun SplashContentBlinkingPreview() {
     LyteTheme {
         SplashContent(
-            state = SplashUiState(phase = SplashPhaseUiModel.Blinking),
+            state = SplashUiState.Blinking,
             onIntent = {},
         )
     }
@@ -212,7 +214,7 @@ private fun SplashContentBlinkingPreview() {
 private fun SplashContentRevealingPreview() {
     LyteTheme {
         SplashContent(
-            state = SplashUiState(phase = SplashPhaseUiModel.Revealing),
+            state = SplashUiState.Revealing,
             onIntent = {},
         )
     }
@@ -223,7 +225,7 @@ private fun SplashContentRevealingPreview() {
 private fun SplashContentErrorPreview() {
     LyteTheme {
         SplashContent(
-            state = SplashUiState(isError = true),
+            state = SplashUiState.Error,
             onIntent = {},
         )
     }
