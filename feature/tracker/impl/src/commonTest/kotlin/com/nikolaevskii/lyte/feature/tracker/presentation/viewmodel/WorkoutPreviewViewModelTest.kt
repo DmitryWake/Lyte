@@ -5,6 +5,7 @@ import com.nikolaevskii.lyte.core.navigation.model.NavCommand
 import com.nikolaevskii.lyte.feature.tracker.ActiveSessionRoute
 import com.nikolaevskii.lyte.feature.tracker.TrackerLandingRoute
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.WorkoutPreviewIntent
+import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.WorkoutPreviewUiState
 import com.nikolaevskii.lyte.feature.tracker.sessionExercise
 import com.nikolaevskii.lyte.feature.tracker.sessionSet
 import com.nikolaevskii.lyte.feature.tracker.workoutSession
@@ -49,10 +50,7 @@ class WorkoutPreviewViewModelTest {
 
         runCurrent()
 
-        val state = viewModel.uiState.value
-        assertFalse(state.isLoading)
-        assertNull(state.errorMessage)
-        val program = assertNotNull(state.program)
+        val program = (viewModel.uiState.value as WorkoutPreviewUiState.Content).program
         assertEquals("Push Day", program.programName)
         assertEquals(2, program.exerciseCount)
         assertEquals(3, program.setCount)
@@ -67,10 +65,7 @@ class WorkoutPreviewViewModelTest {
 
         runCurrent()
 
-        val state = viewModel.uiState.value
-        assertFalse(state.isLoading)
-        assertNotNull(state.errorMessage)
-        assertNull(state.program)
+        assertTrue(viewModel.uiState.value is WorkoutPreviewUiState.Error)
     }
 
     @Test
@@ -80,9 +75,7 @@ class WorkoutPreviewViewModelTest {
 
         runCurrent()
 
-        val state = viewModel.uiState.value
-        assertFalse(state.isLoading)
-        assertEquals("boom", state.errorMessage)
+        assertTrue(viewModel.uiState.value is WorkoutPreviewUiState.Error)
     }
 
     @Test
@@ -188,9 +181,9 @@ class WorkoutPreviewViewModelTest {
         viewModel.onIntent(WorkoutPreviewIntent.OnStartClicked)
         runCurrent()
 
-        val state = viewModel.uiState.value
-        assertEquals("boom", state.errorMessage)
-        assertFalse(state.isStarting)
+        val content = viewModel.uiState.value as WorkoutPreviewUiState.Content
+        assertNotNull(content.startError)
+        assertFalse(content.isStarting)
         assertTrue(navigator.commandLog.isEmpty())
     }
 

@@ -1,6 +1,8 @@
 package com.nikolaevskii.lyte.feature.tracker.presentation.viewmodel
 
 import com.nikolaevskii.lyte.core.mvi.BaseViewModel
+import com.nikolaevskii.lyte.core.mvi.LyteNotFoundException
+import com.nikolaevskii.lyte.core.mvi.toLyteError
 import com.nikolaevskii.lyte.core.navigation.LyteNavigator
 import com.nikolaevskii.lyte.core.navigation.model.LyteNavOptions
 import com.nikolaevskii.lyte.feature.tracker.ActiveSessionRoute
@@ -32,31 +34,36 @@ class WorkoutPreviewViewModel(
         }
     }
 
-    override fun getInitialState(): WorkoutPreviewUiState = WorkoutPreviewUiState()
+    override fun getInitialState(): WorkoutPreviewUiState = WorkoutPreviewUiState.Loading
+
+    // Провал загрузки уходит в воронку handleError → Error (показывать нечего).
+    override fun handleError(error: Throwable) {
+        updateState { WorkoutPreviewUiState.Error(error.toLyteError()) }
+    }
 
     private suspend fun loadProgram() {
-        updateState { copy(isLoading = true, errorMessage = null) }
-        runCatching {
-            val workout = checkNotNull(workoutRepository.getWorkout(programId)) { "Workout $programId not found" }
-            workout.toPreviewUiModel()
-        }
-            .onSuccess { program -> updateState { copy(isLoading = false, program = program) } }
-            .onFailure { error -> updateState { copy(isLoading = false, errorMessage = error.message) } }
+        updateState { WorkoutPreviewUiState.Loading }
+        val workout = workoutRepository.getWorkout(programId)
+            ?: throw LyteNotFoundException("Workout $programId not found")
+        updateState { WorkoutPreviewUiState.Content(program = workout.toPreviewUiModel()) }
     }
 
     /**
      * Старт: снапшот программы в БД → замена стека вкладки экраном сессии (назад в превью/пикер после
      * старта не возвращаемся). Если активная сессия уже есть (инвариант БД «не больше одной» кинул
-     * [IllegalStateException] или гонка гейта) — открываем её вместо ошибки.
+     * исключение или гонка гейта) — открываем её вместо ошибки. Неудачный старт не подменяет экран:
+     * состав остаётся, показывается баннер [WorkoutPreviewUiState.Content.startError].
      */
     private fun startSession() {
-        if (uiStateValue.isStarting) {
+        val content = uiStateValue as? WorkoutPreviewUiState.Content ?: return
+        if (content.isStarting) {
             return
         }
-        updateState { copy(isStarting = true) }
+        updateState { (this as? WorkoutPreviewUiState.Content)?.copy(isStarting = true) ?: this }
         launch {
             runCatching {
-                val workout = checkNotNull(workoutRepository.getWorkout(programId)) { "Workout $programId not found" }
+                val workout = workoutRepository.getWorkout(programId)
+                    ?: throw LyteNotFoundException("Workout $programId not found")
                 workoutSessionRepository.startSession(workout)
             }
                 .onSuccess { sessionId -> navigateToSession(sessionId) }
@@ -66,7 +73,10 @@ class WorkoutPreviewViewModel(
                     if (activeSession != null) {
                         navigateToSession(activeSession.id)
                     } else {
-                        updateState { copy(isStarting = false, errorMessage = error.message) }
+                        updateState {
+                            (this as? WorkoutPreviewUiState.Content)
+                                ?.copy(isStarting = false, startError = error.toLyteError()) ?: this
+                        }
                     }
                 }
         }

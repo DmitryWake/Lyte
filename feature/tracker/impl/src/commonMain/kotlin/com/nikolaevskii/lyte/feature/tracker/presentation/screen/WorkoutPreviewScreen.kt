@@ -31,6 +31,7 @@ import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBarSize
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.Res
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_error
+import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_start_error
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_exercise_count
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_set_bodyweight
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_set_count
@@ -72,7 +73,8 @@ fun WorkoutPreviewContent(
     state: WorkoutPreviewUiState,
     onIntent: (WorkoutPreviewIntent) -> Unit,
 ) {
-    val program = state.program
+    val content = state as? WorkoutPreviewUiState.Content
+    val program = content?.program
     Scaffold(
         topBar = {
             LyteTopBar(
@@ -83,9 +85,9 @@ fun WorkoutPreviewContent(
             )
         },
         bottomBar = {
-            if (program != null) {
+            if (content != null) {
                 WorkoutPreviewStartBar(
-                    enabled = !state.isStarting,
+                    enabled = !content.isStarting,
                     onStart = { onIntent(WorkoutPreviewIntent.OnStartClicked) },
                 )
             }
@@ -97,20 +99,32 @@ fun WorkoutPreviewContent(
                 .fillMaxSize()
                 .padding(paddingValues),
         ) {
-            when {
-                state.errorMessage != null -> Text(
+            when (state) {
+                WorkoutPreviewUiState.Loading -> CircularProgressIndicator()
+
+                is WorkoutPreviewUiState.Error -> Text(
                     text = stringResource(Res.string.workout_preview_error),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(horizontal = LyteTheme.spacing.s5),
                 )
 
-                program != null -> WorkoutPreviewExerciseList(
-                    exercises = program.exercises,
-                    modifier = Modifier.fillMaxSize(),
-                )
-
-                else -> CircularProgressIndicator()
+                is WorkoutPreviewUiState.Content -> {
+                    WorkoutPreviewExerciseList(
+                        exercises = state.program.exercises,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                    if (state.startError != null) {
+                        Text(
+                            text = stringResource(Res.string.workout_preview_start_error),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .padding(LyteTheme.spacing.s3),
+                        )
+                    }
+                }
             }
         }
     }
@@ -185,8 +199,7 @@ private fun WorkoutPreviewContentPreview() {
     LyteTheme {
         Box(modifier = Modifier.size(width = PreviewDeviceWidth, height = PreviewDeviceHeight)) {
             WorkoutPreviewContent(
-                state = WorkoutPreviewUiState(
-                    isLoading = false,
+                state = WorkoutPreviewUiState.Content(
                     program = WorkoutPreviewUiModel(
                         programName = "Push Day",
                         exerciseCount = 3,
@@ -222,7 +235,7 @@ private fun WorkoutPreviewContentLoadingPreview() {
     LyteTheme {
         Box(modifier = Modifier.size(width = PreviewDeviceWidth, height = PreviewDeviceHeight)) {
             WorkoutPreviewContent(
-                state = WorkoutPreviewUiState(isLoading = true),
+                state = WorkoutPreviewUiState.Loading,
                 onIntent = {},
             )
         }

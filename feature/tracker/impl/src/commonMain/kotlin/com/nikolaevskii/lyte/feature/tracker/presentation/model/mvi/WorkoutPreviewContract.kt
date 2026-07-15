@@ -1,23 +1,28 @@
 package com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi
 
+import com.nikolaevskii.lyte.core.mvi.LyteError
 import com.nikolaevskii.lyte.core.mvi.UiIntent
 import com.nikolaevskii.lyte.core.mvi.UiState
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.WorkoutPreviewUiModel
 
 /**
- * Превью программы перед стартом (спека 4.2). Экран read-only: держит уже готовую к отрисовке модель
- * [program] (домен смаппен во ViewModel), из которой рендерится состав и план подходов.
- *
- * Стартуем сразу в [isLoading] = true: экран всегда открывается с загрузки по id, поэтому пустого кадра
- * «нет данных» до первого запроса быть не должно. [program] `null`, пока идёт загрузка или произошла
- * ошибка. [isStarting] — идёт создание сессии: guard от дабл-тапа по «Начать тренировку».
+ * Превью программы перед стартом (спека 4.2). Экран всегда открывается с загрузки по id.
  */
-data class WorkoutPreviewUiState(
-    val isLoading: Boolean = true,
-    val errorMessage: String? = null,
-    val program: WorkoutPreviewUiModel? = null,
-    val isStarting: Boolean = false,
-) : UiState
+sealed interface WorkoutPreviewUiState : UiState {
+
+    data object Loading : WorkoutPreviewUiState
+
+    /** Программу не удалось прочитать: ни состава, ни кнопки старта. */
+    data class Error(val error: LyteError) : WorkoutPreviewUiState
+
+    data class Content(
+        val program: WorkoutPreviewUiModel,
+        /** В арме: стартовать можно только загруженную программу (guard от дабл-тапа). */
+        val isStarting: Boolean = false,
+        /** В арме: неудачный старт — баннер над сохранённым составом, а не подмена экрана. */
+        val startError: LyteError? = null,
+    ) : WorkoutPreviewUiState
+}
 
 sealed interface WorkoutPreviewIntent : UiIntent {
 
