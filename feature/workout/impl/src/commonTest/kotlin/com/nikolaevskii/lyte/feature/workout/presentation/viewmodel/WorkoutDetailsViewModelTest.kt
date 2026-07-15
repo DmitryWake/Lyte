@@ -4,7 +4,10 @@ import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseWithRepsEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutRepEntity
-import com.nikolaevskii.lyte.feature.workout.presentation.model.WorkoutExerciseSheet
+import com.nikolaevskii.lyte.feature.workout.presentation.model.WorkoutDetailsEditor
+import com.nikolaevskii.lyte.feature.workout.presentation.model.WorkoutExerciseUiModel
+import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutDetailsUiState
+import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutDetailsUiState.WorkoutDetailsContent
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutDetailsIntent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -80,9 +83,7 @@ class WorkoutDetailsViewModelTest {
 
         runCurrent()
 
-        val state = viewModel.uiState.value
-        assertFalse(state.isLoading)
-        assertNotNull(state.errorMessage)
+        assertTrue(viewModel.uiState.value.content is WorkoutDetailsContent.Error)
     }
 
     @Test
@@ -92,8 +93,7 @@ class WorkoutDetailsViewModelTest {
 
         runCurrent()
 
-        assertEquals("boom", viewModel.uiState.value.errorMessage)
-        assertFalse(viewModel.uiState.value.isLoading)
+        assertTrue(viewModel.uiState.value.content is WorkoutDetailsContent.Error)
     }
 
     @Test
@@ -158,7 +158,7 @@ class WorkoutDetailsViewModelTest {
 
         viewModel.onIntent(WorkoutDetailsIntent.OnAddExerciseClicked)
 
-        assertEquals(WorkoutExerciseSheet.Picker(), viewModel.uiState.value.exerciseSheet)
+        assertEquals(WorkoutDetailsEditor.ExercisePicker(), viewModel.uiState.value.editor)
     }
 
     @Test
@@ -169,7 +169,7 @@ class WorkoutDetailsViewModelTest {
 
         viewModel.onIntent(WorkoutDetailsIntent.OnExerciseSheetDismissed)
 
-        assertNull(viewModel.uiState.value.exerciseSheet)
+        assertNull(viewModel.uiState.value.editor)
     }
 
     @Test
@@ -180,7 +180,7 @@ class WorkoutDetailsViewModelTest {
 
         viewModel.onIntent(WorkoutDetailsIntent.OnCreateExerciseClicked(query = "Жим Арнольда"))
 
-        assertEquals(WorkoutExerciseSheet.Creator(initialName = "Жим Арнольда"), viewModel.uiState.value.exerciseSheet)
+        assertEquals(WorkoutDetailsEditor.ExerciseCreator(initialName = "Жим Арнольда"), viewModel.uiState.value.editor)
     }
 
     @Test
@@ -191,7 +191,7 @@ class WorkoutDetailsViewModelTest {
 
         viewModel.onIntent(WorkoutDetailsIntent.OnExerciseSheetDismissed)
 
-        assertEquals(WorkoutExerciseSheet.Picker(query = "Жим Арнольда"), viewModel.uiState.value.exerciseSheet)
+        assertEquals(WorkoutDetailsEditor.ExercisePicker(query = "Жим Арнольда"), viewModel.uiState.value.editor)
     }
 
     @Test
@@ -206,9 +206,9 @@ class WorkoutDetailsViewModelTest {
         viewModel.onIntent(WorkoutDetailsIntent.OnExerciseSelected(WorkoutExerciseEntity(id = "l2", name = "Жим лёжа")))
 
         val state = viewModel.uiState.value
-        assertNull(state.exerciseSheet)
         assertEquals(listOf("Squat", "Жим лёжа"), state.exercises.map { it.exercise.exercise.name })
         assertTrue(state.exercises.last().exercise.reps.isEmpty())
+        // Выбор закрывает шторку выбора и сразу открывает редактор подходов нового упражнения.
         assertEquals(state.exercises.lastIndex, state.editingExerciseIndex)
     }
 
@@ -381,7 +381,7 @@ class WorkoutDetailsViewModelTest {
         viewModel.onIntent(WorkoutDetailsIntent.OnSaveClicked)
         runCurrent()
 
-        assertEquals("save failed", viewModel.uiState.value.errorMessage)
+        assertNotNull(viewModel.uiState.value.saveError)
         assertFalse(viewModel.uiState.value.isSaving)
         assertEquals("New Program", viewModel.uiState.value.name)
         assertEquals(0, navigator.backCallCount)
@@ -424,3 +424,15 @@ class WorkoutDetailsViewModelTest {
             reps = plan.map { (count, weight) -> WorkoutRepEntity(count = count, weight = weight) },
         )
 }
+
+private val WorkoutDetailsUiState.editingArm: WorkoutDetailsContent.Editing?
+    get() = content as? WorkoutDetailsContent.Editing
+private val WorkoutDetailsUiState.name: String? get() = editingArm?.name
+private val WorkoutDetailsUiState.description: String? get() = editingArm?.description
+private val WorkoutDetailsUiState.exercises: List<WorkoutExerciseUiModel> get() = editingArm?.exercises.orEmpty()
+private val WorkoutDetailsUiState.editor: WorkoutDetailsEditor? get() = editingArm?.editor
+private val WorkoutDetailsUiState.isSaving: Boolean get() = editingArm?.isSaving == true
+private val WorkoutDetailsUiState.isLoading: Boolean get() = content is WorkoutDetailsContent.Loading
+private val WorkoutDetailsUiState.saveError get() = editingArm?.saveError
+private val WorkoutDetailsUiState.editingExerciseIndex: Int?
+    get() = (editingArm?.editor as? WorkoutDetailsEditor.SetsEditor)?.exerciseIndex

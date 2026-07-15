@@ -1,22 +1,42 @@
 package com.nikolaevskii.lyte.feature.workout.presentation.model.mvi
 
+import com.nikolaevskii.lyte.core.mvi.LyteError
 import com.nikolaevskii.lyte.core.mvi.UiIntent
 import com.nikolaevskii.lyte.core.mvi.UiState
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
-import com.nikolaevskii.lyte.feature.workout.presentation.model.WorkoutExerciseSheet
+import com.nikolaevskii.lyte.feature.workout.presentation.model.WorkoutDetailsEditor
 import com.nikolaevskii.lyte.feature.workout.presentation.model.WorkoutExerciseUiModel
 
+/**
+ * Редактор программы. Экран — редактор программы [id] в любом состоянии (для новой программы id
+ * генерируется при открытии и должен пережить любые интенты), поэтому [id] сквозной. Что рисуется —
+ * решает sealed [content].
+ */
 data class WorkoutDetailsUiState(
     val id: String,
-    val name: String = "",
-    val description: String? = null,
-    val exercises: List<WorkoutExerciseUiModel> = emptyList(),
-    val editingExerciseIndex: Int? = null,
-    val exerciseSheet: WorkoutExerciseSheet? = null,
-    val isLoading: Boolean = false,
-    val isSaving: Boolean = false,
-    val errorMessage: String? = null,
-) : UiState
+    val content: WorkoutDetailsContent,
+) : UiState {
+
+    sealed interface WorkoutDetailsContent {
+
+        /** Загрузка существующей программы по id. */
+        data object Loading : WorkoutDetailsContent
+
+        /** Программу не удалось прочитать: формы и кнопки «Сохранить» нет — перезаписывать нечем. */
+        data class Error(val error: LyteError) : WorkoutDetailsContent
+
+        data class Editing(
+            val name: String,
+            val description: String?,
+            val exercises: List<WorkoutExerciseUiModel>,
+            /** Один взаимоисключающий оверлей вместо пары независимых nullable-полей. */
+            val editor: WorkoutDetailsEditor? = null,
+            val isSaving: Boolean = false,
+            /** Ошибка записи — баннер над формой; форму не стирает. */
+            val saveError: LyteError? = null,
+        ) : WorkoutDetailsContent
+    }
+}
 
 /**
  * События экрана редактора программы: что пользователь сделал, а не что должно произойти.

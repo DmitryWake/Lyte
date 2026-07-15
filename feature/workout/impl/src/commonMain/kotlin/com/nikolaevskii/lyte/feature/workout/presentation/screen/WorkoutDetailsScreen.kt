@@ -45,13 +45,16 @@ import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseWithRepsEn
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutRepEntity
 import com.nikolaevskii.lyte.feature.workout.generated.resources.Res
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_add_exercise
+import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_error
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_exercises_title
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_name_label
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_save
+import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_save_error
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_set_bodyweight
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_set_weight
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_title
-import com.nikolaevskii.lyte.feature.workout.presentation.model.WorkoutExerciseSheet
+import com.nikolaevskii.lyte.feature.workout.presentation.model.WorkoutDetailsEditor
+import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutDetailsUiState.WorkoutDetailsContent
 import com.nikolaevskii.lyte.feature.workout.presentation.model.WorkoutExerciseUiModel
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutDetailsIntent
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutDetailsUiState
@@ -90,9 +93,10 @@ fun WorkoutDetailsContent(
             )
         },
         bottomBar = {
-            if (!state.isLoading) {
+            val editing = state.content as? WorkoutDetailsContent.Editing
+            if (editing != null) {
                 WorkoutDetailsSaveBar(
-                    isSaving = state.isSaving,
+                    isSaving = editing.isSaving,
                     onSave = { onIntent(WorkoutDetailsIntent.OnSaveClicked) },
                 )
             }
@@ -103,48 +107,63 @@ fun WorkoutDetailsContent(
                 .fillMaxSize()
                 .padding(paddingValues),
         ) {
-            if (state.isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            } else {
-                state.errorMessage?.let { message ->
+            when (val content = state.content) {
+                WorkoutDetailsContent.Loading ->
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+
+                is WorkoutDetailsContent.Error ->
                     Text(
-                        text = message,
+                        text = stringResource(Res.string.workout_details_error),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.error,
                         modifier = Modifier.padding(horizontal = LyteTheme.spacing.s5, vertical = LyteTheme.spacing.s3),
                     )
+
+                is WorkoutDetailsContent.Editing -> {
+                    // Ошибка записи — баннер НАД формой; форму (введённые данные) не стирает.
+                    if (content.saveError != null) {
+                        Text(
+                            text = stringResource(Res.string.workout_details_save_error),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(horizontal = LyteTheme.spacing.s5, vertical = LyteTheme.spacing.s3),
+                        )
+                    }
+                    WorkoutDetailsForm(
+                        editing = content,
+                        onIntent = onIntent,
+                        modifier = Modifier.weight(1f),
+                    )
                 }
-                WorkoutDetailsForm(
-                    state = state,
-                    onIntent = onIntent,
-                    modifier = Modifier.weight(1f),
-                )
             }
         }
 
-        // Шторки добавления упражнения ведут свои ViewModel и отдают наверх только события.
-        when (val exerciseSheet = state.exerciseSheet) {
-            is WorkoutExerciseSheet.Picker -> WorkoutExercisePickerSheet(
+        // Оверлеи (шторки/редактор подходов) ведут свои ViewModel и отдают наверх только события.
+        when (val editor = (state.content as? WorkoutDetailsContent.Editing)?.editor) {
+            is WorkoutDetailsEditor.ExercisePicker -> WorkoutExercisePickerSheet(
                 onExercisePicked = { exercise -> onIntent(WorkoutDetailsIntent.OnExerciseSelected(exercise)) },
                 onCreateExerciseRequested = { query -> onIntent(WorkoutDetailsIntent.OnCreateExerciseClicked(query)) },
                 onDismissRequest = { onIntent(WorkoutDetailsIntent.OnExerciseSheetDismissed) },
-                initialQuery = exerciseSheet.query,
+                initialQuery = editor.query,
             )
 
-            is WorkoutExerciseSheet.Creator -> WorkoutExerciseCreateSheet(
-                initialName = exerciseSheet.initialName,
+            is WorkoutDetailsEditor.ExerciseCreator -> WorkoutExerciseCreateSheet(
+                initialName = editor.initialName,
                 onExerciseCreated = { exercise -> onIntent(WorkoutDetailsIntent.OnExerciseSelected(exercise)) },
                 onDismissRequest = { onIntent(WorkoutDetailsIntent.OnExerciseSheetDismissed) },
             )
 
-            null -> Unit
-        }
+            is WorkoutDetailsEditor.SetsEditor -> {
+                val exercise = (state.content as? WorkoutDetailsContent.Editing)?.exercises
+                    ?.getOrNull(editor.exerciseIndex)?.exercise
+                if (exercise != null) {
+                    WorkoutSetsEditorSheet(exercise = exercise, onIntent = onIntent)
+                }
+            }
 
-        val editingExercise = state.editingExerciseIndex?.let { index -> state.exercises.getOrNull(index)?.exercise }
-        if (editingExercise != null) {
-            WorkoutSetsEditorSheet(exercise = editingExercise, onIntent = onIntent)
+            null -> Unit
         }
     }
 }
@@ -181,12 +200,12 @@ private fun WorkoutDetailsSaveBar(
  */
 @Composable
 private fun WorkoutDetailsForm(
-    state: WorkoutDetailsUiState,
+    editing: WorkoutDetailsContent.Editing,
     onIntent: (WorkoutDetailsIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
-    val currentExercises by rememberUpdatedState(state.exercises)
+    val currentExercises by rememberUpdatedState(editing.exercises)
     val currentOnIntent by rememberUpdatedState(onIntent)
     var draggingKey by remember { mutableStateOf<String?>(null) }
     var dragOffset by remember { mutableFloatStateOf(0f) }
@@ -199,7 +218,7 @@ private fun WorkoutDetailsForm(
     ) {
         item(key = NAME_FIELD_KEY) {
             LyteTextField(
-                value = state.name,
+                value = editing.name,
                 onValueChange = { name -> onIntent(WorkoutDetailsIntent.OnNameChanged(name)) },
                 label = stringResource(Res.string.workout_details_name_label),
                 modifier = Modifier.fillMaxWidth(),
@@ -208,7 +227,7 @@ private fun WorkoutDetailsForm(
         item(key = EXERCISES_OVERLINE_KEY) {
             LyteOverline(text = stringResource(Res.string.workout_details_exercises_title))
         }
-        itemsIndexed(items = state.exercises, key = { _, item -> item.key }) { index, item ->
+        itemsIndexed(items = editing.exercises, key = { _, item -> item.key }) { index, item ->
             val isDragging = item.key == draggingKey
             LyteExerciseCard(
                 title = item.exercise.exercise.name,
@@ -298,11 +317,14 @@ private fun WorkoutDetailsContentPreview() {
         WorkoutDetailsContent(
             state = WorkoutDetailsUiState(
                 id = "1",
-                name = "Push Day",
-                exercises = listOf(
-                    previewExercise(key = "1", name = "Жим лёжа", plan = listOf(8 to 70.0, 8 to 80.0, 6 to 85.0)),
-                    previewExercise(key = "2", name = "Жим гантелей на наклонной", plan = listOf(10 to 24.0, 10 to 26.0, 8 to 26.0)),
-                    previewExercise(key = "3", name = "Отжимания на брусьях", plan = listOf(12 to null, 12 to null, 10 to null)),
+                content = WorkoutDetailsContent.Editing(
+                    name = "Push Day",
+                    description = null,
+                    exercises = listOf(
+                        previewExercise(key = "1", name = "Жим лёжа", plan = listOf(8 to 70.0, 8 to 80.0, 6 to 85.0)),
+                        previewExercise(key = "2", name = "Жим гантелей на наклонной", plan = listOf(10 to 24.0, 10 to 26.0, 8 to 26.0)),
+                        previewExercise(key = "3", name = "Отжимания на брусьях", plan = listOf(12 to null, 12 to null, 10 to null)),
+                    ),
                 ),
             ),
             onIntent = {},
@@ -315,7 +337,7 @@ private fun WorkoutDetailsContentPreview() {
 private fun WorkoutDetailsContentLoadingPreview() {
     LyteTheme {
         WorkoutDetailsContent(
-            state = WorkoutDetailsUiState(id = "1", isLoading = true),
+            state = WorkoutDetailsUiState(id = "1", content = WorkoutDetailsContent.Loading),
             onIntent = {},
         )
     }
