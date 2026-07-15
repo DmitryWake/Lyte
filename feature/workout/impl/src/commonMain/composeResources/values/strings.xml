@@ -2,6 +2,8 @@
 <resources>
     <string name="workout_list_title">Программы</string>
     <string name="workout_list_new_program">Новая программа</string>
+    <string name="workout_list_error">Не удалось загрузить программы</string>
+    <string name="workout_list_delete_error">Не удалось удалить программу</string>
     <string name="workout_list_empty_message">Создайте первую программу</string>
     <string name="workout_list_empty_hint">Программа — шаблон тренировки: упражнения, подходы и веса</string>
     <string name="workout_list_delete_a11y">Удалить программу</string>

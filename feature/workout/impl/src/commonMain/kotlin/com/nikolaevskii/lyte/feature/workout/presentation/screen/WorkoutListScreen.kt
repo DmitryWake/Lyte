@@ -7,11 +7,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,9 +28,10 @@ import com.nikolaevskii.lyte.core.design.component.navigation.LyteBottomNavigati
 import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBar
 import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBarSize
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
-import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutItemEntity
 import com.nikolaevskii.lyte.feature.workout.generated.resources.Res
+import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_list_delete_error
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_list_delete_a11y
+import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_list_error
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_list_delete_dialog_description
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_list_delete_dialog_title
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_list_empty_hint
@@ -38,6 +39,7 @@ import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_list_em
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_list_exercise_count
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_list_new_program
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_list_title
+import com.nikolaevskii.lyte.feature.workout.presentation.model.WorkoutProgramUiModel
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutListIntent
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutListUiState
 import com.nikolaevskii.lyte.feature.workout.presentation.viewmodel.WorkoutListViewModel
@@ -50,13 +52,6 @@ fun WorkoutListScreen(
     viewModel: WorkoutListViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-
-    // Экран пересоздаётся при каждом возврате из редактора программы (NavHost не держит его в
-    // композиции, пока редактор сверху), а ViewModel переживает — без этого список показывал бы
-    // устаревшие данные после создания/переименования/удаления программы.
-    LaunchedEffect(Unit) {
-        viewModel.onIntent(WorkoutListIntent.OnScreenShown)
-    }
 
     WorkoutListContent(
         state = state,
@@ -74,20 +69,22 @@ fun WorkoutListContent(
             LyteTopBar(title = stringResource(Res.string.workout_list_title), size = LyteTopBarSize.Large)
         },
     ) { paddingValues ->
-        val errorMessage = state.errorMessage
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
         ) {
-            when {
-                errorMessage != null && state.programs.isEmpty() ->
-                    Text(text = errorMessage, modifier = Modifier.align(Alignment.Center))
-
-                state.isLoading && state.programs.isEmpty() ->
+            when (state) {
+                WorkoutListUiState.Loading ->
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 
-                state.programs.isEmpty() ->
+                is WorkoutListUiState.Error ->
+                    Text(
+                        text = stringResource(Res.string.workout_list_error),
+                        modifier = Modifier.align(Alignment.Center),
+                    )
+
+                WorkoutListUiState.Empty ->
                     LyteEmptyState(
                         icon = LyteIcons.ClipboardList,
                         message = stringResource(Res.string.workout_list_empty_message),
@@ -97,14 +94,25 @@ fun WorkoutListContent(
                         modifier = Modifier.align(Alignment.Center),
                     )
 
-                else -> WorkoutProgramList(programs = state.programs, onIntent = onIntent)
+                is WorkoutListUiState.Content -> {
+                    if (state.actionError != null) {
+                        Text(
+                            text = stringResource(Res.string.workout_list_delete_error),
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .padding(LyteTheme.spacing.s3),
+                        )
+                    }
+                    WorkoutProgramList(programs = state.programs, onIntent = onIntent)
+                }
             }
         }
 
-        val pendingDeleteName = state.programs.firstOrNull { it.id == state.pendingDeleteId }?.name
-        if (pendingDeleteName != null) {
+        val pendingDelete = (state as? WorkoutListUiState.Content)?.pendingDelete
+        if (pendingDelete != null) {
             LyteDialog(
-                title = stringResource(Res.string.workout_list_delete_dialog_title, pendingDeleteName),
+                title = stringResource(Res.string.workout_list_delete_dialog_title, pendingDelete.name),
                 description = stringResource(Res.string.workout_list_delete_dialog_description),
                 onConfirm = { onIntent(WorkoutListIntent.OnDeleteConfirmed) },
                 onDismissRequest = { onIntent(WorkoutListIntent.OnDeleteDismissed) },
@@ -115,7 +123,7 @@ fun WorkoutListContent(
 
 @Composable
 private fun WorkoutProgramList(
-    programs: List<WorkoutItemEntity>,
+    programs: List<WorkoutProgramUiModel>,
     onIntent: (WorkoutListIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -167,11 +175,11 @@ private fun WorkoutProgramList(
 private fun WorkoutListContentPreview() {
     LyteTheme {
         WorkoutListContent(
-            state = WorkoutListUiState(
+            state = WorkoutListUiState.Content(
                 programs = listOf(
-                    WorkoutItemEntity(id = "1", name = "Push Day", description = null, exerciseCount = 5),
-                    WorkoutItemEntity(id = "2", name = "Pull Day", description = null, exerciseCount = 4),
-                    WorkoutItemEntity(id = "3", name = "Leg Day", description = null, exerciseCount = 3),
+                    WorkoutProgramUiModel(id = "1", name = "Push Day", exerciseCount = 5),
+                    WorkoutProgramUiModel(id = "2", name = "Pull Day", exerciseCount = 4),
+                    WorkoutProgramUiModel(id = "3", name = "Leg Day", exerciseCount = 3),
                 ),
             ),
             onIntent = {},
@@ -184,7 +192,7 @@ private fun WorkoutListContentPreview() {
 private fun WorkoutListContentEmptyPreview() {
     LyteTheme {
         WorkoutListContent(
-            state = WorkoutListUiState(),
+            state = WorkoutListUiState.Empty,
             onIntent = {},
         )
     }
