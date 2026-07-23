@@ -5,7 +5,7 @@ import com.nikolaevskii.lyte.core.navigation.LyteNavigator
 import com.nikolaevskii.lyte.core.navigation.model.LyteNavOptions
 import com.nikolaevskii.lyte.feature.splash.SplashRoute
 import com.nikolaevskii.lyte.feature.splash.presentation.constant.SplashConstant.SPLASH_MIN_LOADING_DURATION_MS
-import com.nikolaevskii.lyte.feature.splash.presentation.constant.SplashConstant.SPLASH_REVEAL_DURATION_MS
+import com.nikolaevskii.lyte.feature.splash.presentation.constant.SplashConstant.SPLASH_EXIT_DURATION_MS
 import com.nikolaevskii.lyte.feature.splash.domain.initializer.AppInitializationManager
 import com.nikolaevskii.lyte.feature.splash.presentation.model.mvi.SplashIntent
 import com.nikolaevskii.lyte.feature.splash.presentation.model.mvi.SplashUiState
@@ -35,7 +35,7 @@ class SplashViewModel(
         }
     }
 
-    override fun getInitialState(): SplashUiState = SplashUiState.Blinking
+    override fun getInitialState(): SplashUiState = SplashUiState.Loading
 
     // Отменяем предыдущую попытку перед стартом новой — иначе повторный Retry (например, двойной тап)
     // до завершения текущего запуска породил бы второй параллельный launch{} и мог бы вызвать
@@ -43,7 +43,7 @@ class SplashViewModel(
     private fun runInitialization() {
         initializationJob?.cancel()
         initializationJob = launch {
-            updateState { SplashUiState.Blinking }
+            updateState { SplashUiState.Loading }
 
             // runCatching не умеет отличать CancellationException от обычной ошибки (ловит любой
             // Throwable) — поэтому ниже явно перебрасываем её, иначе отмена ViewModel-скоупа была бы
@@ -61,8 +61,8 @@ class SplashViewModel(
 
             outcome
                 .onSuccess {
-                    updateState { SplashUiState.Revealing }
-                    delay(SPLASH_REVEAL_DURATION_MS.milliseconds)
+                    updateState { SplashUiState.Exiting }
+                    delay(SPLASH_EXIT_DURATION_MS.milliseconds)
                     lyteNavigator.navigate(
                         route = TrackerLandingRoute,
                         options = LyteNavOptions(popUpTo = SplashRoute, popUpToInclusive = true),

@@ -5,11 +5,11 @@ import com.nikolaevskii.lyte.core.mvi.UiState
 
 sealed interface SplashUiState : UiState {
 
-    /** Идут стартовые процессы — крупная пульсирующая точка. */
-    data object Blinking : SplashUiState
+    /** Идут стартовые процессы: вордмарк «Lyte.» на месте, лаймовая точка мягко «дышит». */
+    data object Loading : SplashUiState
 
-    /** Инициализация прошла: точка сжимается, рядом выезжает вордмарк, затем — навигация. */
-    data object Revealing : SplashUiState
+    /** Инициализация прошла: вордмарк плавно уходит (растворение + лёгкий подъём), затем — навигация. */
+    data object Exiting : SplashUiState
 
     /** Инициализация упала: вордмарк + сообщение + «Повторить». */
     data object Error : SplashUiState
