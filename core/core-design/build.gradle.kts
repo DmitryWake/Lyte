@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    id("lyte.screenshot")
 }
 
 kotlin {
@@ -22,7 +23,9 @@ kotlin {
         androidResources {
             enable = true
         }
-        withHostTest {}
+        withHostTest {
+            isIncludeAndroidResources = true
+        }
     }
 
     sourceSets {

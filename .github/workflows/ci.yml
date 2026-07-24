@@ -49,6 +49,118 @@ jobs:
       - name: Android debug build
         run: ./gradlew :androidApp:assembleDebug
 
+  # ЕДИНСТВЕННОЕ место, где генерируются эталоны скриншотов. Так рендер всегда происходит в одной
+  # среде и расхождений между машинами разработчиков не возникает (на macOS картинки отличаются
+  # субпиксельно). Джоба сама коммитит обновлённые PNG в ветку PR — в «Files changed» GitHub
+  # показывает before/after задетых экранов, без локальной сборки и эмулятора.
+  #
+  # Образ запинен намеренно: на ubuntu-latest смена версии образа может изменить рендер и разом
+  # переписать все эталоны.
+  screenshots:
+    # На push в development/master эталоны уже приехали из PR — перегенерировать нечего.
+    if: github.event_name != 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Для pull_request по умолчанию чекаутится merge-коммит в detached HEAD — из него нельзя
+          # пушить. Берём голову ветки PR.
+          ref: ${{ github.head_ref || github.ref_name }}
+          # PAT (если заведён) нужен, чтобы коммит эталонов запускал CI заново: пуш под встроенным
+          # GITHUB_TOKEN новые раны не триггерит, и при обязательных проверках мерж PR встаёт.
+          # Петли не будет: повторный прогон не найдёт изменений и коммитить не станет.
+          token: ${{ secrets.SCREENSHOT_PAT || secrets.GITHUB_TOKEN }}
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # Чистим эталоны перед рендером, чтобы набор PNG точно соответствовал набору @Preview:
+      # record не удаляет картинки удалённых превью, и они оставались бы в репозитории навсегда.
+      # Если рендер идентичен, git не увидит изменений; если record упадёт — коммита не будет.
+      - name: Drop stale goldens
+        run: rm -rf core/core-design/screenshots feature/*/impl/screenshots
+
+      - name: Record screenshots
+        run: >
+          ./gradlew
+          :core:core-design:recordRoborazziAndroidHostTest
+          :feature:tracker:impl:recordRoborazziAndroidHostTest
+          :feature:workout:impl:recordRoborazziAndroidHostTest
+          :feature:history:impl:recordRoborazziAndroidHostTest
+          :feature:splash:impl:recordRoborazziAndroidHostTest
+
+      - name: Detect screenshot changes
+        id: changes
+        run: |
+          if [ -n "$(git status --porcelain -- '*/screenshots/*')" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            {
+              echo 'files<<EOF'
+              git status --porcelain -- '*/screenshots/*' | sed 's|^...| - |'
+              echo EOF
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # PR из чужого форка получает read-only токен, поэтому коммит только для «своих» веток.
+      # Внешним PR остаются артефакты — картинки всё равно можно посмотреть.
+      - name: Commit updated screenshots
+        id: commit
+        if: >
+          steps.changes.outputs.changed == 'true'
+          && github.event_name == 'pull_request'
+          && github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # -A, чтобы в коммит попали и удаления осиротевших эталонов.
+          git add -A -- '*/screenshots/*'
+          git commit -m 'chore: обновить эталоны скриншотов'
+          # Разработчик мог запушить, пока шёл рендер.
+          for attempt in 1 2 3; do
+            git pull --rebase origin "${{ github.head_ref }}" && \
+              git push origin "HEAD:${{ github.head_ref }}" && exit 0
+            sleep $((attempt * 5))
+          done
+          exit 1
+
+      - name: Comment on PR
+        if: steps.commit.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FILES: ${{ steps.changes.outputs.files }}
+        run: |
+          # Тело через файл, а не heredoc в аргументе: отступы YAML иначе превратили бы
+          # список в markdown-блок кода.
+          {
+            printf '### 📸 Эталоны скриншотов обновлены\n\n'
+            printf 'Изменились рендеры этих экранов — посмотри before/after во вкладке **Files changed**:\n\n'
+            printf '%s\n\n' "$FILES"
+            printf 'Эталоны сгенерированы в CI и закоммичены в ветку PR.\n'
+          } > comment.md
+          gh pr comment "${{ github.event.pull_request.number }}" --body-file comment.md
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: |
+            **/screenshots/**
+            **/build/outputs/roborazzi/**
+          retention-days: 7
+
   # Идёт параллельно с test и ловит Kotlin/Native-only поломки.
   # На публичном репозитории стандартные раннеры, включая macOS, бесплатны.
   ios:

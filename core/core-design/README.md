@@ -219,4 +219,21 @@ implementation(projects.core.coreDesign)
   `stringResource`/`Font` падают в рантайме и в `@Preview` с `MissingResourceException`, потому что
   скомпилированный `.cvr`-бандл и шрифты не попадают в AAR.
 
+## Скриншот-тесты
+
+Все `@Preview` этого модуля автоматически снимаются в PNG (светлая и тёмная тема) — инфраструктура
+в `:core:core-screenshot`, подключается плагином `lyte.screenshot`. Отдельный тест на компонент
+писать не нужно: добавил компонент с превью — он под контролем.
+
+Эталоны перегенерирует **CI** после пуша — руками их коммитить не нужно (см. корневой `CLAUDE.md`).
+Локально команды нужны, только чтобы посмотреть на результат своими глазами:
+
+```bash
+./gradlew :core:core-design:recordRoborazziAndroidHostTest   # отрендерить и посмотреть
+./gradlew :core:core-design:verifyRoborazziAndroidHostTest   # сверить с эталонами
+```
+
+Эталоны — `core/core-design/screenshots/*.png`: в diff'е PR видно, как компонент выглядел до и
+после. После локального `record` откатить PNG перед коммитом: `git checkout -- '*/screenshots/*'`.
+
 > При изменении исходников модуля проверь и при необходимости обнови этот README в том же коммите.

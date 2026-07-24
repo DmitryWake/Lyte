@@ -2,6 +2,7 @@ rootProject.name = "Lyte"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
+    includeBuild("build-logic")
     repositories {
         google {
             mavenContent {
@@ -37,6 +38,7 @@ include(":core:core-design")
 include(":core:core-db")
 include(":core:core-workout")
 include(":core:core-session")
+include(":core:core-screenshot")
 include(":feature:tracker:api")
 include(":feature:tracker:impl")
 include(":feature:workout:api")
