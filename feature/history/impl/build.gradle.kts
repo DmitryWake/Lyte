@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
+    id("lyte.screenshot")
 }
 
 kotlin {
@@ -23,7 +24,9 @@ kotlin {
         androidResources {
             enable = true
         }
-        withHostTest {}
+        withHostTest {
+            isIncludeAndroidResources = true
+        }
     }
 
     sourceSets {

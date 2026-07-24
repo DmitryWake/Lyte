@@ -24,8 +24,38 @@ Lyte — фитнес-трекер на Kotlin Multiplatform (Android + iOS), UI
   - Host/JVM: `./gradlew :core:core-mvi:testAndroidHostTest :core:core-workout:testAndroidHostTest :core:core-session:testAndroidHostTest :feature:tracker:impl:testAndroidHostTest :feature:workout:impl:testAndroidHostTest :feature:history:impl:testAndroidHostTest :feature:splash:impl:testAndroidHostTest`
   - iOS-симулятор (ловит Kotlin/Native-only поломки): те же модули с `:iosSimulatorArm64Test`.
   - Сборки: `./gradlew :androidApp:assembleDebug` и `:shared:linkDebugFrameworkIosSimulatorArm64`.
+  - Скриншоты в гейт не входят: их сверяет и перегенерирует CI (см. «Скриншот-тесты»). На macOS
+    локальный `verifyRoborazzi*` краснеет из-за субпиксельных расхождений — это не поломка.
 - Common-тесты — в `commonTest` каждого модуля. Запуск одного теста: добавь `--tests "fully.qualified.ClassName.method"` к нужной Gradle-задаче.
-- Стратегия: **Unit** — для сложной бизнес-логики (ViewModel-переходы, репозитории, мапперы) — сделано; **UI-тесты для критичных экранов** — ещё не написаны.
+- Стратегия: **Unit** — для сложной бизнес-логики (ViewModel-переходы, репозитории, мапперы) — сделано; **скриншот-тесты UI** — сделано (см. ниже); **интеракционные UI-тесты** (клики, ввод) — ещё не написаны.
+
+### Скриншот-тесты
+
+Источник истины — `@Preview`. Отдельный тест на экран не пишется: модуль объявляет один
+параметризованный класс, и **все** его превью снимаются автоматически в светлой и тёмной теме.
+Инфраструктура — `:core:core-screenshot` + convention-плагин `lyte.screenshot`.
+
+- Покрыты: `core-design` и все четыре `feature/*/impl`.
+- Эталоны — `<module>/screenshots/*.png`, лежат в гите: GitHub показывает before/after в diff'е PR.
+
+**Эталоны генерирует только CI** (джоба `screenshots` в `.github/workflows/ci.yml`, запинённый
+`ubuntu-24.04`). Одна среда рендера — значит нет расхождений между машинами: на macOS картинки
+отличаются субпиксельно. Правишь UI → пушишь **только код** → CI сам перегенерирует эталоны,
+закоммитит их в ветку PR и напишет комментарий со списком задетых экранов.
+
+- **Руками эталоны не коммитим.** `recordRoborazziAndroidHostTest` локально запускать можно и
+  полезно — но только чтобы **посмотреть на результат глазами**. Перед коммитом откатить:
+  `git checkout -- '*/screenshots/*'` (и удалить новые PNG, если появились).
+- `verifyRoborazziAndroidHostTest` — для локальной сверки; на macOS будет ложно краснеть из-за
+  субпиксельных расхождений, это ожидаемо. Дифф-картинки — `compareRoborazziAndroidHostTest`,
+  результат в `build/outputs/roborazzi/` (`*_compare.png` — эталон/факт/дифф).
+- Поскольку CI перезаписывает эталоны, сверка **не блокирует** мерж: визуальная регрессия приезжает
+  в PR как изменившаяся картинка, и поймать её должен ревьюер, посмотрев diff.
+- **Скриншоты покрывают только то, у чего есть `@Preview`.** Добавил новое состояние экрана (новый
+  арм `UiState`) — заведи на него превью, иначе оно выпадет из-под контроля. И помни, что снимается
+  превью с фейковыми данными, а не живое приложение: навигацию, реальные данные и реакцию на клик
+  скриншот не проверяет.
+- Подробности (как решены анимации, темы, порог сравнения) — `core/core-screenshot/README.md`.
 
 ## Модули
 
@@ -39,6 +69,7 @@ Lyte — фитнес-трекер на Kotlin Multiplatform (Android + iOS), UI
 - `:core:core-design` — дизайн-система: `LyteTheme` (M3 `colorScheme`/`typography`/`shapes` + расширенные токены — spacing, elevation, числовая типографика, доп. формы) и компонент-кит (`Lyte*`) поверх M3-примитивов. Иконки — `LyteIcons` поверх `com.composables:icons-lucide-cmp`. Namespace `com.nikolaevskii.lyte.core.design`. Подробности и полный список компонентов — в `core/core-design/README.md`.
 - `:core:core-db` — Room KMP: `LyteDatabase` (`@ConstructedBy` + `expect object LyteDatabaseConstructor`), 8 сущностей `*DatabaseEntity` в трёх доменах (`db/workout/`, `db/session/`, `db/app/`) + 4 DAO, `version = 1`, `is_archived` (soft-delete) и `name_normalized` (ASCII-коллация для поиска), expect/actual билдер БД (`androidMain`/`iosMain`), `coreDbModule()`. Namespace `com.nikolaevskii.lyte.core.db`. Подробности — `core/core-db/README.md`.
 - `:core:core-workout` — data-слой библиотеки упражнений и программ: доменные модели (`WorkoutEntity` и т.д.), интерфейсы `WorkoutRepository`/`WorkoutExerciseRepository` + impl, `coreWorkoutModule()`. Общие данные приложения (пишет workout, читают tracker/splash), поэтому в core, а не в фиче. Namespace `com.nikolaevskii.lyte.core.workout`.
+- `:core:core-screenshot` — тестовая инфраструктура скриншотов: рендер `@Preview` в PNG headless на JVM (Robolectric + Roborazzi), light/dark, остановленные часы композиции. Подключается только к `androidHostTest` через convention-плагин `lyte.screenshot`. Namespace `com.nikolaevskii.lyte.core.screenshot`. Подробности — `core/core-screenshot/README.md`.
 - `:core:core-session` — data-слой сессий тренировки: `Session*`-модели, `SessionHistoryRepository` (read для истории) / `WorkoutSessionRepository` (write для трекера, ISP-сплит), доменные правила `SessionProgression`/`SessionSetOutcomeUtils`, `coreSessionModule()`. Namespace `com.nikolaevskii.lyte.core.session`.
 - `:feature:splash:{api,impl}` — стартовый экран (`SplashRoute` — корень `NavHost`): анимация вордмарка + гейт первого запуска. `:impl` — `AppInitializer`/`AppInitializationManager` и `WorkoutLibraryInitializer` (одноразовый сид `DefaultExerciseLibrary`/`DefaultWorkoutPrograms`), гейт — флаг `app_launch_state`, а не пустота таблиц.
 - `:feature:tracker:{api,impl}` — вкладка «Трекер»: лендинг (гейт активной сессии), выбор программы, превью, активная сессия. Данные сессий берёт из `:core:core-session`.
@@ -152,14 +183,16 @@ Lyte — фитнес-трекер на Kotlin Multiplatform (Android + iOS), UI
 - **`modifier: Modifier = Modifier` — всегда последний параметр** `@Composable`-функции (и любой функции, принимающей `Modifier`). Единственное исключение — обязательная замыкающая content-лямбда без значения по умолчанию (слот содержимого, напр. `content` у `LyteBottomSheet`): она остаётся последней ради синтаксиса вызова с trailing-лямбдой, а `modifier` идёт прямо перед ней (как у M3 `ModalBottomSheet`/`Card`). Опциональные слоты со значением по умолчанию (`trailing = null`, `actions = {}`) — обычные необязательные параметры и идут до `modifier`.
 - **Корень каждого экрана — `Scaffold`**, даже если `TopBar`/`BottomBar` не нужны.
 - Заголовки экранов — `TopAppBar` в слоте `topBar` у `Scaffold`. Кнопка назад — `IconButton` в `navigationIcon`.
-- **`@Preview` обязателен** для всех экранов и публичных `@Composable`-компонентов.
+- **`@Preview` обязателен** для всех экранов и публичных `@Composable`-компонентов, **и на каждое
+  состояние экрана** (каждый арм `UiState`: Loading/Error/Empty/Content). Превью — источник истины
+  для скриншот-тестов: состояние без превью не попадает под визуальный контроль.
 - Любая длительная операция отображает состояние `loading / content / error`.
 
 ## Git Flow
 
 - **`master`** — только релизные срезы. Прямых коммитов нет: в неё приходит merge из `development` в момент релиза, и на этот коммит вешается тег `v<versionName>`. Тег означает «эта версия реально опубликована в сторе», а не «эту версию пробовали залить».
 - **`development`** — интеграционная ветка, дефолтная на GitHub. Всё попадает в неё **только через pull request**; на каждом PR гоняется CI (`.github/workflows/ci.yml`).
-- Фича-ветки ответвляются от `development` и вливаются обратно PR-ом. Одна задача — один осмысленный (при необходимости squash) коммит.
+- Фича-ветки ответвляются от `development` и вливаются обратно PR-ом. **В PR — ровно один коммит**: промежуточные шаги схлопываются перед открытием PR (`git reset --soft origin/development` + один коммит). Единственное исключение — коммиты, которые делает сам CI (например, `chore: обновить эталоны скриншотов` от джобы `screenshots`).
 - **Claude не мержит PR и не пушит напрямую в `master` или `development`.** Работа Claude заканчивается открытым PR-ом с зелёным CI; решение о мерже принимает человек.
 
 ## Версионирование
