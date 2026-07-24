@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Формат ответов
+
+Отвечай кратко, последовательно и понятно. Думай и отвечай на русском языке (если не сказано иначе). Экономь токены.
+
 ## Проект
 
 Lyte — фитнес-трекер на Kotlin Multiplatform (Android + iOS), UI шарится через Compose Multiplatform. Корневой пакет: `com.nikolaevskii.lyte`. Имя корневого Gradle-проекта: `Lyte`.

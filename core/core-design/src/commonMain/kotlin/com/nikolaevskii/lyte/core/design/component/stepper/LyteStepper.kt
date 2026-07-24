@@ -63,6 +63,10 @@ private val StepperWidthSmall = 196.dp
 private val StepperIconSize = 24.dp
 private const val StepperPressScale = 0.94f
 private const val StepperDisabledAlpha = 0.38f
+private const val StepperMaxIntegerDigits = 5
+private const val StepperMaxDecimalDigits = 2
+private val StepperDecimalInputRegex = Regex("\\d{0,$StepperMaxIntegerDigits}([.,]\\d{0,$StepperMaxDecimalDigits})?")
+private val StepperIntegerInputRegex = Regex("\\d{0,$StepperMaxIntegerDigits}")
 
 /**
  * Крупный контрол ± для числового ввода (повторы, вес): значение меняется и кнопками ±, и
@@ -91,6 +95,7 @@ fun LyteStepper(
 
     var editing by remember { mutableStateOf(false) }
     var draft by remember { mutableStateOf(TextFieldValue(formatStepperValue(value))) }
+    var hasFocus by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
 
     fun commit() {
@@ -99,6 +104,7 @@ fun LyteStepper(
             val normalized = if (allowDecimal) roundTo2(parsed) else round(parsed)
             onValueChange(normalized.coerceIn(min, max))
         }
+        hasFocus = false
         editing = false
     }
 
@@ -117,10 +123,20 @@ fun LyteStepper(
             if (editing) {
                 BasicTextField(
                     value = draft,
-                    onValueChange = { draft = it },
+                    onValueChange = { candidate ->
+                        if (candidate.text == draft.text || isStepperInputAccepted(candidate.text, allowDecimal)) {
+                            draft = candidate
+                        }
+                    },
                     modifier = Modifier
                         .focusRequester(focusRequester)
-                        .onFocusChanged { focusState -> if (!focusState.isFocused) commit() },
+                        .onFocusChanged { focusState ->
+                            if (focusState.isFocused) {
+                                hasFocus = true
+                            } else if (hasFocus) {
+                                commit()
+                            }
+                        },
                     textStyle = numericStyle.centeredOn(MaterialTheme.colorScheme.onSurface),
                     singleLine = true,
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
@@ -139,6 +155,7 @@ fun LyteStepper(
                     onClick = {
                         val text = formatStepperValue(value)
                         draft = TextFieldValue(text = text, selection = TextRange(0, text.length))
+                        hasFocus = false
                         editing = true
                     },
                 )
@@ -219,6 +236,19 @@ private fun formatStepperValue(value: Double): String {
     val rounded = roundTo2(value)
     val long = rounded.toLong()
     return if (rounded == long.toDouble()) long.toString() else rounded.toString()
+}
+
+/**
+ * Пропускает промежуточный ручной ввод степпера: пустую строку (очистка поля) и число с
+ * не более чем [StepperMaxIntegerDigits] цифрами целой части и [StepperMaxDecimalDigits]
+ * знаками после запятой (`,`/`.`). В целочисленном режиме дробная часть недоступна.
+ */
+internal fun isStepperInputAccepted(text: String, allowDecimal: Boolean): Boolean {
+    if (text.isEmpty()) {
+        return true
+    }
+    val regex = if (allowDecimal) StepperDecimalInputRegex else StepperIntegerInputRegex
+    return regex.matches(text)
 }
 
 @Preview

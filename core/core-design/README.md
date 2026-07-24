@@ -62,7 +62,7 @@
 | `component.switch` | `LyteSwitch` |
 | `component.textfield` | `LyteTextField` |
 | `component.overline` | `LyteOverline` (микро-заголовок капсом) |
-| `component.stepper` | `LyteStepper` (± контрол + ручной tap-to-edit ввод; `allowDecimal=false` — целочисленный режим для повторов, `fillMaxWidth` — для колонок), `LyteSetEditRow` (строка редактирования одного планового подхода программы: заголовок-параметр `title`, удаление, степперы повторов/веса — планирование, не привязано к состоянию активной сессии в отличие от `LyteTrackSetRow`) |
+| `component.stepper` | `LyteStepper` (± контрол + ручной tap-to-edit ввод; ввод ограничен: ≤5 цифр целой части и ≤2 знаков после запятой, при `allowDecimal=false` — целочисленный режим для повторов без дробной части, `fillMaxWidth` — для колонок), `LyteSetEditRow` (строка редактирования одного планового подхода программы: заголовок-параметр `title`, удаление, степперы повторов/веса — планирование, не привязано к состоянию активной сессии в отличие от `LyteTrackSetRow`) |
 | `component.card` | `LyteProgramCard` (+`trailing`), `LyteExerciseCard` (`setLabels`-пилюли; ведущий элемент и действия задаёт `variant`: `LyteExerciseCardVariant.Editor` — drag-хэндл + edit/remove, `LyteExerciseCardVariant.Preview(index)` — номер упражнения без действий для read-only превью), `LyteSessionCard`, `LyteListRow` |
 | `component.feedback` | `LyteDiffRow` (тона Met/Positive/Negative/Neutral/Skipped), `LyteDialog`, `LyteEmptyState` |
 | `component.navigation` | `LyteTopBar` (size Small/Large), `LyteBottomNavigationBar` (+ `LyteBottomNavigationBarHeight` — резерв под него для контента, см. «Нюансы») |
