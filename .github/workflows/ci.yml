@@ -1,17 +1,57 @@
 name: CI
 
+# Модель ветвления (см. CLAUDE.md → Git Flow):
+#   фича-ветка → PR в development → релизный срез development → master.
+# Прогон на PR — основной сигнал для ревью. Триггера на теги нет намеренно:
+# тег вешается на тот же коммит master, который уже проверен push-прогоном.
 on:
-  push:
-    branches: [master, main]
   pull_request:
+    branches: [development, master]
+  push:
+    branches: [development, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-and-test:
-    # macOS-раннер: iOS-таргеты собираются только на macOS.
+  # Быстрый гейт — отдаёт результат раньше, чем macOS-джоба.
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Host unit tests
+        run: >
+          ./gradlew
+          :core:core-mvi:testAndroidHostTest
+          :core:core-workout:testAndroidHostTest
+          :core:core-session:testAndroidHostTest
+          :feature:tracker:impl:testAndroidHostTest
+          :feature:workout:impl:testAndroidHostTest
+          :feature:history:impl:testAndroidHostTest
+          :feature:splash:impl:testAndroidHostTest
+
+      - name: Android debug build
+        run: ./gradlew :androidApp:assembleDebug
+
+  # Идёт параллельно с test и ловит Kotlin/Native-only поломки.
+  # На публичном репозитории стандартные раннеры, включая macOS, бесплатны.
+  ios:
     runs-on: macos-latest
     timeout-minutes: 60
     steps:
@@ -26,19 +66,6 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      # GATE 1 — unit-тесты на Android/JVM-хосте (быстро).
-      - name: Host unit tests
-        run: >
-          ./gradlew
-          :core:core-mvi:testAndroidHostTest
-          :core:core-workout:testAndroidHostTest
-          :core:core-session:testAndroidHostTest
-          :feature:tracker:impl:testAndroidHostTest
-          :feature:workout:impl:testAndroidHostTest
-          :feature:history:impl:testAndroidHostTest
-          :feature:splash:impl:testAndroidHostTest
-
-      # GATE 2 — те же commonTest на iOS-симуляторе (ловит Kotlin/Native-only поломки).
       - name: iOS simulator tests
         run: >
           ./gradlew
@@ -49,10 +76,6 @@ jobs:
           :feature:workout:impl:iosSimulatorArm64Test
           :feature:history:impl:iosSimulatorArm64Test
           :feature:splash:impl:iosSimulatorArm64Test
-
-      # GATE 3 — обе платформы собираются.
-      - name: Android debug build
-        run: ./gradlew :androidApp:assembleDebug
 
       - name: iOS framework link
         run: ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64

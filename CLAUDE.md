@@ -15,7 +15,7 @@ Lyte — фитнес-трекер на Kotlin Multiplatform (Android + iOS), UI
 ## Сборка и запуск
 
 - Android (debug APK): `./gradlew :androidApp:assembleDebug`
-- Android (релиз AAB): `./gradlew :androidApp:bundleRelease`. Релиз собирается с R8 + `shrinkResources` (keep-правила — `androidApp/proguard-rules.pro`, обязательны для `@Serializable` route-классов навигации). Подпись — из `keystore.properties` (в `.gitignore`) или env (`LYTE_KEYSTORE_FILE`/`LYTE_KEYSTORE_PASSWORD`/`LYTE_KEY_ALIAS`/`LYTE_KEY_PASSWORD`); без них релиз подписывается debug-ключом. Keystore и пароли в репозиторий не коммитятся.
+- Android (релизный APK): `./gradlew :androidApp:assembleRelease` — это формат для RuStore. AAB (`:androidApp:bundleRelease`) нужен для Google Play; RuStore для AAB требует загрузить приватный ключ подписи на свои серверы, поэтому по умолчанию собираем APK. Релиз собирается с R8 + `shrinkResources` (keep-правила — `androidApp/proguard-rules.pro`, обязательны для `@Serializable` route-классов навигации). Подпись — только из `keystore.properties` в корне (в `.gitignore`): ключи `storeFile`/`storePassword`/`keyAlias`/`keyPassword`. Без этого файла релизные задачи падают с внятной ошибкой — молчаливого отката на debug-ключ нет, чтобы неподписанная как надо сборка не уехала в стор. Keystore и пароли в репозиторий не коммитятся.
 - iOS: открыть `iosApp/iosApp.xcodeproj` в Xcode и запустить. iOS подключает статический фреймворк `Shared`, который собирает модуль `:shared` (`iosArm64`, `iosSimulatorArm64`); `MainViewController()` из фреймворка оборачивается в `ContentView.swift` через `UIViewControllerRepresentable`.
 
 ## Тесты
@@ -157,8 +157,21 @@ Lyte — фитнес-трекер на Kotlin Multiplatform (Android + iOS), UI
 
 ## Git Flow
 
-- Один trunk — `master` (remote пока нет). Разработка идёт прямо в `master`, релизы помечаются тегами.
-- Одна задача — один осмысленный (при необходимости squash) коммит.
+- **`master`** — только релизные срезы. Прямых коммитов нет: в неё приходит merge из `development` в момент релиза, и на этот коммит вешается тег `v<versionName>`. Тег означает «эта версия реально опубликована в сторе», а не «эту версию пробовали залить».
+- **`development`** — интеграционная ветка, дефолтная на GitHub. Всё попадает в неё **только через pull request**; на каждом PR гоняется CI (`.github/workflows/ci.yml`).
+- Фича-ветки ответвляются от `development` и вливаются обратно PR-ом. Одна задача — один осмысленный (при необходимости squash) коммит.
+- **Claude не мержит PR и не пушит напрямую в `master` или `development`.** Работа Claude заканчивается открытым PR-ом с зелёным CI; решение о мерже принимает человек.
+
+## Версионирование
+
+Единственный источник версии — `version.properties` в корне; `androidApp/build.gradle.kts` читает его. `lyte.versionName` — semver, его видит пользователь. `lyte.versionCode` — целое, **монотонно растёт**: стор отклонит загрузку с уже использованным или меньшим значением.
+
+**Claude не меняет версию по собственной инициативе — никогда**, ни при каких правках кода. Бамп делается только по явной команде вида «готовим релиз 1.1.0». При бампе:
+
+1. `lyte.versionCode` += 1 — **всегда**, даже если `versionName` не менялся (перезалив после отказа модерации — это новый versionCode).
+2. `lyte.versionName` — по semver.
+3. Синхронизировать iOS: в `iosApp/Configuration/Config.xcconfig` `MARKETING_VERSION` = versionName, `CURRENT_PROJECT_VERSION` = versionCode.
+4. После успешной публикации в сторе — тег `git tag v<versionName>` на релизном коммите `master`.
 
 ## Tech stack
 

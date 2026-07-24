@@ -3,5 +3,7 @@ TEAM_ID=
 PRODUCT_NAME=Lyte
 PRODUCT_BUNDLE_IDENTIFIER=com.nikolaevskii.lyte
 
+// Держать в синхроне с version.properties: MARKETING_VERSION = lyte.versionName,
+// CURRENT_PROJECT_VERSION = lyte.versionCode. Правила бампа — в CLAUDE.md → Версионирование.
 CURRENT_PROJECT_VERSION=1
-MARKETING_VERSION=1.0
+MARKETING_VERSION=0.0.1

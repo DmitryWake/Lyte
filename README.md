@@ -34,15 +34,22 @@ Lyte — фитнес-трекер на **Kotlin Multiplatform** (Android + iOS)
 **Требования:** JDK 11+, Android SDK (`compileSdk 36`), для iOS — macOS + Xcode.
 
 - Android (debug APK): `./gradlew :androidApp:assembleDebug`
-- Android (релиз AAB): `./gradlew :androidApp:bundleRelease` — требует ключа подписи
-  (см. «Подпись релиза»).
+- Android (релизный APK, формат для RuStore): `./gradlew :androidApp:assembleRelease` — требует ключа
+  подписи (см. «Подпись релиза»).
+- Android (релизный AAB, формат для Google Play): `./gradlew :androidApp:bundleRelease`.
 - iOS: открыть `iosApp/iosApp.xcodeproj` в Xcode и запустить.
+
+### Версия
+
+Единственный источник — `version.properties` в корне (`lyte.versionName`, `lyte.versionCode`), оттуда её
+читает `androidApp/build.gradle.kts`. Правила бампа — в [CLAUDE.md](CLAUDE.md#версионирование).
 
 ### Подпись релиза (Android)
 
-Релизная сборка подписывается ключом из `keystore.properties` (в `.gitignore`) или из переменных
-окружения (`LYTE_KEYSTORE_FILE`, `LYTE_KEYSTORE_PASSWORD`, `LYTE_KEY_ALIAS`, `LYTE_KEY_PASSWORD`).
-Без них релиз собирается debug-ключом (годится для проверки, не для публикации). `keystore.properties`:
+Релизная сборка подписывается ключом из `keystore.properties` в корне проекта — файл в `.gitignore`,
+ни он, ни keystore в репозиторий не коммитятся. Без него релизные задачи **падают с ошибкой**:
+молчаливого отката на debug-ключ нет намеренно, чтобы неподходящая для публикации сборка не уехала в
+стор незамеченной.
 
 ```
 storeFile=/absolute/path/to/lyte-release.jks
@@ -57,6 +64,8 @@ Unit-тесты (host/JVM):
 
 ```
 ./gradlew :core:core-mvi:testAndroidHostTest \
+          :core:core-workout:testAndroidHostTest \
+          :core:core-session:testAndroidHostTest \
           :feature:tracker:impl:testAndroidHostTest \
           :feature:workout:impl:testAndroidHostTest \
           :feature:history:impl:testAndroidHostTest \
@@ -64,6 +73,8 @@ Unit-тесты (host/JVM):
 ```
 
 Те же наборы на iOS-симуляторе — `:iosSimulatorArm64Test` у соответствующих модулей.
+
+Оба набора плюс сборки Android и iOS гоняются в CI на каждом pull request (`.github/workflows/ci.yml`).
 
 ## Лицензии
 
@@ -75,3 +86,6 @@ Unit-тесты (host/JVM):
 ## Конфиденциальность
 
 Приложение не собирает и не передаёт данные — [docs/PRIVACY.md](docs/PRIVACY.md).
+
+Опубликованная версия (её адрес указывается в карточке приложения в сторах) поднимается GitHub Pages из
+папки `docs/` ветки `master`.

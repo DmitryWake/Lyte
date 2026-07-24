@@ -7,10 +7,14 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
-// Подпись релиза берётся из keystore.properties (в .gitignore) или из переменных окружения (CI).
-// Ни keystore, ни пароли в репозиторий не коммитятся. Если ни того, ни другого нет — релиз
-// подписывается debug-ключом (чтобы assembleRelease/bundleRelease собирались в dev/CI без секретов;
-// для публикации в стор нужен настоящий ключ).
+// Версия приложения — единственный источник, правила бампа в CLAUDE.md → Версионирование.
+val versionProperties = Properties().apply {
+    rootProject.file("version.properties").inputStream().use { load(it) }
+}
+
+// Подпись релиза — из keystore.properties (в .gitignore). Ни keystore, ни пароли в репозиторий не
+// коммитятся. Без этого файла релизные задачи падают (проверка внизу), чтобы debug-подписанная
+// сборка не уехала в стор незамеченной.
 val keystoreProperties = Properties().apply {
     val file = rootProject.file("keystore.properties")
     if (file.exists()) {
@@ -18,11 +22,19 @@ val keystoreProperties = Properties().apply {
     }
 }
 
-fun secret(propertyKey: String, envKey: String): String? =
-    keystoreProperties.getProperty(propertyKey) ?: System.getenv(envKey)
+val hasReleaseSigning: Boolean = keystoreProperties.isNotEmpty()
 
-fun releaseStoreFile(): File? =
-    secret("storeFile", "LYTE_KEYSTORE_FILE")?.let { rootProject.file(it) }
+val lyteVersionName: String = requireNotNull(versionProperties.getProperty("lyte.versionName")) {
+    "version.properties: не задан lyte.versionName"
+}
+
+val lyteVersionCode: Int = requireNotNull(versionProperties.getProperty("lyte.versionCode")) {
+    "version.properties: не задан lyte.versionCode"
+}.toInt()
+
+fun keystoreSecret(key: String): String = requireNotNull(keystoreProperties.getProperty(key)) {
+    "keystore.properties: не задан ключ $key"
+}
 
 kotlin {
     compilerOptions {
@@ -47,17 +59,16 @@ android {
         applicationId = "com.nikolaevskii.lyte"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = lyteVersionCode
+        versionName = lyteVersionName
     }
     signingConfigs {
-        create("release") {
-            val store = releaseStoreFile()
-            if (store != null) {
-                storeFile = store
-                storePassword = secret("storePassword", "LYTE_KEYSTORE_PASSWORD")
-                keyAlias = secret("keyAlias", "LYTE_KEY_ALIAS")
-                keyPassword = secret("keyPassword", "LYTE_KEY_PASSWORD")
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = rootProject.file(keystoreSecret("storeFile"))
+                storePassword = keystoreSecret("storePassword")
+                keyAlias = keystoreSecret("keyAlias")
+                keyPassword = keystoreSecret("keyPassword")
             }
         }
     }
@@ -74,15 +85,29 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            signingConfig = if (releaseStoreFile() != null) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
-            }
+            signingConfig = signingConfigs.findByName("release")
         }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+}
+
+// Fail-fast: без keystore.properties подписать релиз нечем. Проверка висит на задаче, а не на
+// конфигурации, иначе сломался бы и assembleDebug.
+//
+// Флаг копируется в локальную переменную намеренно: top-level `val` в .gradle.kts — это поле объекта
+// build-скрипта, и лямбда doFirst захватила бы ссылку на сам скрипт, которую configuration cache
+// сериализовать не умеет. Локальная копия делает захват обычным Boolean.
+run {
+    val signingConfigured = hasReleaseSigning
+    tasks.matching { it.name == "assembleRelease" || it.name == "bundleRelease" }.configureEach {
+        doFirst {
+            check(signingConfigured) {
+                "keystore.properties не найден в корне проекта — релиз подписать нечем. " +
+                    "См. README → «Подпись релиза»."
+            }
+        }
     }
 }
