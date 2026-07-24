@@ -2,6 +2,7 @@ package com.nikolaevskii.lyte.core.design.component.feedback
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -35,6 +36,8 @@ private val DiffRowPaddingVertical = 12.dp
 private val DiffRowGap = 12.dp
 private val DiffValueGap = 8.dp
 private val DiffIndexWidth = 20.dp
+private val DiffNoteGap = 4.dp
+private val DiffNoteIndent = DiffIndexWidth + DiffRowGap
 private val DiffNumberTracking = (-0.2).sp
 private const val DiffIndexAlpha = 0.7f
 private const val DiffArrowAlpha = 0.55f
@@ -50,6 +53,8 @@ private const val DiffMutedSeparatorAlpha = 0.35f
  * [tone]: met (попал точно) · positive (превысил) · negative (недобрал) · neutral · skipped.
  * [target]/[actual] в нотации «10×60» рендерятся с явными единицами (повт/кг), чтобы числа
  * не путались; при [LyteDiffTone.Skipped] вместо них показывается «пропущено».
+ * [note] (если задан) выводится отдельной строкой под значениями: так длинная заметка не сжимает
+ * блок «план→факт» и число с единицами не схлопывается в вертикальную колонку.
  */
 @Composable
 fun LyteDiffRow(
@@ -67,33 +72,37 @@ fun LyteDiffRow(
         color = background,
         contentColor = foreground,
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(DiffRowGap),
+        Column(
+            verticalArrangement = Arrangement.spacedBy(DiffNoteGap),
             modifier = Modifier.padding(horizontal = DiffRowPaddingHorizontal, vertical = DiffRowPaddingVertical),
         ) {
-            Text(
-                text = index.toString(),
-                style = MaterialTheme.typography.labelMedium.withTabularNums(),
-                color = foreground.copy(alpha = DiffIndexAlpha),
-                modifier = Modifier.width(DiffIndexWidth),
-            )
-            if (tone == LyteDiffTone.Skipped) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(DiffRowGap),
+            ) {
                 Text(
-                    text = stringResource(Res.string.diff_skipped),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = foreground,
-                    modifier = Modifier.weight(1f),
+                    text = index.toString(),
+                    style = MaterialTheme.typography.labelMedium.withTabularNums(),
+                    color = foreground.copy(alpha = DiffIndexAlpha),
+                    modifier = Modifier.width(DiffIndexWidth),
                 )
-            } else {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(DiffValueGap),
-                    modifier = Modifier.weight(1f),
-                ) {
-                    target?.let { SetValueText(notation = it, foreground = foreground, muted = true) }
-                    Text(text = "→", color = foreground.copy(alpha = DiffArrowAlpha), style = MaterialTheme.typography.bodyMedium)
-                    actual?.let { SetValueText(notation = it, foreground = foreground, muted = false) }
+                if (tone == LyteDiffTone.Skipped) {
+                    Text(
+                        text = stringResource(Res.string.diff_skipped),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = foreground,
+                        modifier = Modifier.weight(1f),
+                    )
+                } else {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(DiffValueGap),
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        target?.let { SetValueText(notation = it, foreground = foreground, muted = true) }
+                        Text(text = "→", color = foreground.copy(alpha = DiffArrowAlpha), style = MaterialTheme.typography.bodyMedium)
+                        actual?.let { SetValueText(notation = it, foreground = foreground, muted = false) }
+                    }
                 }
             }
             note?.let {
@@ -102,6 +111,7 @@ fun LyteDiffRow(
                     style = MaterialTheme.typography.bodySmall,
                     color = foreground.copy(alpha = DiffNoteAlpha),
                     fontStyle = FontStyle.Italic,
+                    modifier = Modifier.padding(start = DiffNoteIndent),
                 )
             }
         }
@@ -170,12 +180,21 @@ private fun LyteDiffRowPreview() {
     LyteTheme {
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
         ) {
-            LyteDiffRow(index = 1, tone = LyteDiffTone.Met, target = "10×60", actual = "10×60")
-            LyteDiffRow(index = 2, tone = LyteDiffTone.Positive, target = "10×60", actual = "12×60")
-            LyteDiffRow(index = 3, tone = LyteDiffTone.Negative, target = "10×60", actual = "8×60", note = "тяжело")
-            LyteDiffRow(index = 4, tone = LyteDiffTone.Skipped)
+            LyteDiffRow(index = 1, tone = LyteDiffTone.Met, target = "10×60", actual = "10×60", modifier = Modifier.fillMaxWidth())
+            LyteDiffRow(index = 2, tone = LyteDiffTone.Positive, target = "10×60", actual = "12×60", modifier = Modifier.fillMaxWidth())
+            LyteDiffRow(index = 3, tone = LyteDiffTone.Negative, target = "10×60", actual = "8×60", note = "тяжело", modifier = Modifier.fillMaxWidth())
+            // Длинная заметка — репро бага: раньше сжимала блок значений; теперь уходит на вторую строку.
+            LyteDiffRow(
+                index = 4,
+                tone = LyteDiffTone.Positive,
+                target = "10×60",
+                actual = "12×62.5",
+                note = "последние два повтора почти до отказа, в следующий раз добавить вес",
+                modifier = Modifier.fillMaxWidth(),
+            )
+            LyteDiffRow(index = 5, tone = LyteDiffTone.Skipped, note = "не успел по времени", modifier = Modifier.fillMaxWidth())
         }
     }
 }
