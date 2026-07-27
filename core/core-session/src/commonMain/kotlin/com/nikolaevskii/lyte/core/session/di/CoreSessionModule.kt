@@ -9,11 +9,16 @@ import org.koin.dsl.module
 
 /**
  * Одна реализация под двумя интерфейсами: трекер инжектит [WorkoutSessionRepository] (запись),
- * история — [SessionHistoryRepository] (чтение). `WorkoutSessionDao` приходит из `coreDbModule()`.
+ * история — [SessionHistoryRepository] (чтение). `WorkoutSessionDao` приходит из `coreDbModule()`,
+ * `WorkoutRepository` (прогрессия плана по итогам сессии) — из `coreWorkoutModule()`.
  */
 fun coreSessionModule(): Module = module {
     single<WorkoutSessionRepository> {
-        WorkoutSessionRepositoryImpl(workoutSessionDao = get(), clock = Clock.System)
+        WorkoutSessionRepositoryImpl(
+            workoutSessionDao = get(),
+            workoutRepository = get(),
+            clock = Clock.System,
+        )
     }
     single<SessionHistoryRepository> { get<WorkoutSessionRepository>() }
 }

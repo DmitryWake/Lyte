@@ -6,6 +6,7 @@ import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseWithRepsEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutRepEntity
+import com.nikolaevskii.lyte.core.workout.domain.repository.WorkoutRepository
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -121,6 +122,38 @@ class WorkoutSessionRepositoryImplTest {
     }
 
     @Test
+    fun finishSessionWritesActualValuesBackToProgram() = runTest {
+        val workoutRepository = FakeWorkoutRepository()
+        val workout = sampleWorkout()
+        workoutRepository.createWorkout(workout)
+        val repository = repository(workoutRepository = workoutRepository)
+        val sessionId = repository.startSession(workout)
+        val setId = firstSetId(repository)
+        repository.completeSet(setId = setId, count = 12, weight = 42.5)
+
+        repository.finishSession(sessionId)
+
+        val progressed = workoutRepository.getWorkout(workout.id)!!
+        // Выполненный подход задал новую цель; остальные пропущены завершением — цели прежние.
+        assertEquals(
+            listOf(WorkoutRepEntity(count = 12, weight = 42.5), WorkoutRepEntity(count = 8, weight = 45.0)),
+            progressed.exercises.first().reps,
+        )
+        assertEquals(listOf(WorkoutRepEntity(count = 12, weight = null)), progressed.exercises[1].reps)
+    }
+
+    @Test
+    fun finishSessionSucceedsWhenProgramIsGone() = runTest {
+        // Программу удалили физически (сессий на момент удаления ещё не было) — прогрессии просто нет.
+        val repository = repository()
+        val sessionId = repository.startSession(sampleWorkout())
+
+        repository.finishSession(sessionId)
+
+        assertNull(repository.getActiveSession())
+    }
+
+    @Test
     fun getActiveSessionIsNullBeforeStartAndAfterFinish() = runTest {
         val repository = repository()
         assertNull(repository.getActiveSession())
@@ -154,13 +187,20 @@ class WorkoutSessionRepositoryImplTest {
         assertEquals(Instant.fromEpochMilliseconds(FINISH_MILLIS), item.finishedAt)
     }
 
-    private fun repository(clock: Clock = MutableClock(START_MILLIS)): WorkoutSessionRepositoryImpl {
+    private fun repository(
+        clock: Clock = MutableClock(START_MILLIS),
+        workoutRepository: WorkoutRepository = FakeWorkoutRepository(),
+    ): WorkoutSessionRepositoryImpl {
         // Упражнения существуют в библиотеке до старта сессии — session_exercise берёт имя оттуда.
         val dao = FakeWorkoutSessionDao().apply {
             exerciseLibrary["ex-1"] = libraryExercise(id = "ex-1", name = "Жим", description = "Грудь")
             exerciseLibrary["ex-2"] = libraryExercise(id = "ex-2", name = "Тяга", description = null)
         }
-        return WorkoutSessionRepositoryImpl(workoutSessionDao = dao, clock = clock)
+        return WorkoutSessionRepositoryImpl(
+            workoutSessionDao = dao,
+            workoutRepository = workoutRepository,
+            clock = clock,
+        )
     }
 
     private fun libraryExercise(id: String, name: String, description: String?): ExerciseDatabaseEntity =

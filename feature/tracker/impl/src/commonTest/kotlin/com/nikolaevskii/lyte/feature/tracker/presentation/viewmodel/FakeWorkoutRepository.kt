@@ -32,5 +32,7 @@ internal class FakeWorkoutRepository(
 
     override suspend fun editWorkout(workoutEntity: WorkoutEntity) = Unit
 
+    override suspend fun updateWorkoutTargets(workoutEntity: WorkoutEntity) = Unit
+
     override suspend fun deleteWorkout(id: String) = Unit
 }

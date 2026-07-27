@@ -27,6 +27,7 @@ internal class FakeWorkoutRepository(
     val deletedIds = mutableListOf<String>()
     val createdWorkouts = mutableListOf<WorkoutEntity>()
     val editedWorkouts = mutableListOf<WorkoutEntity>()
+    val updatedTargetWorkouts = mutableListOf<WorkoutEntity>()
     val getWorkoutCalls = mutableListOf<String>()
 
     override suspend fun getWorkouts(): List<WorkoutItemEntity> {
@@ -53,6 +54,10 @@ internal class FakeWorkoutRepository(
     override suspend fun editWorkout(workoutEntity: WorkoutEntity) {
         editWorkoutError?.let { throw it }
         editedWorkouts += workoutEntity
+    }
+
+    override suspend fun updateWorkoutTargets(workoutEntity: WorkoutEntity) {
+        updatedTargetWorkouts += workoutEntity
     }
 
     override suspend fun deleteWorkout(id: String) {
