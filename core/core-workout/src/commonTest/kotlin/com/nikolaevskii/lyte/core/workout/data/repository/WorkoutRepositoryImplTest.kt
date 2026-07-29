@@ -68,6 +68,68 @@ class WorkoutRepositoryImplTest {
     }
 
     @Test
+    fun updateWorkoutTargetsChangesOnlyTargets() = runTest {
+        val repository = repository()
+        val original = sampleWorkout()
+        repository.createWorkout(original)
+
+        val progressed = original.copy(
+            exercises = listOf(
+                original.exercises[0].copy(
+                    // Упражнение подменено намеренно: цели идут по позициям, состав программы не меняется.
+                    exercise = WorkoutExerciseEntity(id = "ex-other", name = "Другое"),
+                    reps = listOf(
+                        WorkoutRepEntity(count = 12, weight = 42.5),
+                        WorkoutRepEntity(count = 8, weight = 45.0),
+                    ),
+                ),
+                original.exercises[1].copy(reps = listOf(WorkoutRepEntity(count = 15, weight = null))),
+            ),
+        )
+        repository.updateWorkoutTargets(progressed)
+        val loaded = repository.getWorkout(original.id)!!
+
+        assertEquals(original.exercises.map { it.exercise }, loaded.exercises.map { it.exercise })
+        assertEquals(
+            listOf(WorkoutRepEntity(count = 12, weight = 42.5), WorkoutRepEntity(count = 8, weight = 45.0)),
+            loaded.exercises[0].reps,
+        )
+        assertEquals(listOf(WorkoutRepEntity(count = 15, weight = null)), loaded.exercises[1].reps)
+    }
+
+    @Test
+    fun updateWorkoutTargetsKeepsWorkoutArchived() = runTest {
+        val dao = FakeWorkoutDao()
+        val repository = WorkoutRepositoryImpl(workoutDao = dao)
+        val workout = sampleWorkout()
+        repository.createWorkout(workout)
+        dao.sessionCountByWorkout[workout.id] = 1
+        repository.deleteWorkout(workout.id)
+
+        repository.updateWorkoutTargets(workout)
+
+        // Прогрессия не воскрешает удалённую программу — она остаётся скрытой из списков.
+        assertTrue(repository.getWorkouts().none { it.id == workout.id })
+    }
+
+    @Test
+    fun updateWorkoutTargetsIgnoresPositionsMissingInProgram() = runTest {
+        val repository = repository()
+        val original = sampleWorkout()
+        repository.createWorkout(original)
+
+        val longer = original.copy(
+            exercises = original.exercises + WorkoutExerciseWithRepsEntity(
+                exercise = WorkoutExerciseEntity(id = "ex-3", name = "Присед"),
+                reps = listOf(WorkoutRepEntity(count = 5, weight = 100.0)),
+            ),
+        )
+        repository.updateWorkoutTargets(longer)
+
+        assertEquals(original, repository.getWorkout(original.id))
+    }
+
+    @Test
     fun deleteWorkoutWithoutSessionsRemovesIt() = runTest {
         val repository = repository()
         val workout = sampleWorkout()

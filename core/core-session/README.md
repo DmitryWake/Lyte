@@ -14,10 +14,12 @@ Data-слой сессий тренировки: доменные модели, 
   - `WorkoutSessionRepository : SessionHistoryRepository` — **write**-поверхность трекинга (старт,
     completeSet/skipSet/saveSetNote/setCurrentExercise/finishSession, `getActiveSession`).
 - Доменные правила: `SessionProgression` (`effectiveCurrentExercise`, `currentSet`, `hasPendingSets`),
-  `SessionSetOutcomeUtils` (`outcome()`, `hasWeight`) — чистые функции, единый источник тонов трекинга и
-  диффа истории.
+  `SessionSetOutcomeUtils` (`outcome()`, `hasWeight`), `SessionPlanProgression`
+  (`WorkoutSessionEntity.applyProgressionTo(workout)`) — чистые функции, единый источник тонов трекинга,
+  диффа истории и прогрессии плана.
 - DI: `coreSessionModule()` — одна реализация под обоими интерфейсами (`WorkoutSessionRepository` и
-  `SessionHistoryRepository`), `Clock.System` инъектируется здесь.
+  `SessionHistoryRepository`), `Clock.System` инъектируется здесь. `WorkoutRepository` для прогрессии
+  плана приходит из `coreWorkoutModule()`.
 
 ## Подключение
 
@@ -32,5 +34,11 @@ implementation(projects.core.coreSession)
 
 - Инвариант «не более одной активной сессии» держит транзакция DAO (`:core:core-db`).
 - ISP: история инжектит `SessionHistoryRepository`, трекер — `WorkoutSessionRepository`.
+- **Прогрессия плана.** `finishSession(id)` после завершения сессии подтягивает цели программы под
+  факты: выполненный подход задаёт новую цель (и вверх, и вниз), пропущенный и невыполненный цель не
+  меняют. Сессия — снапшот, поэтому упражнения и подходы сопоставляются по позициям и упражнение
+  принимается только при совпадении id упражнения-библиотеки: правка программы во время сессии не
+  испортит чужие цели. Пишется узким `WorkoutRepository.updateWorkoutTargets` — структура программы и
+  её архивность не меняются. Программы уже нет — прогрессии просто нет, завершение не падает.
 
 > При изменении исходников модуля проверь и при необходимости обнови этот README в том же коммите.

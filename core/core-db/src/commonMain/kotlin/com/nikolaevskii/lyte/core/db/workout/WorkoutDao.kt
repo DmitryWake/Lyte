@@ -54,6 +54,27 @@ abstract class WorkoutDao {
     @Query("DELETE FROM workout_exercise WHERE workout_id = :id")
     abstract suspend fun deleteCrossRefsByWorkout(id: String)
 
+    /**
+     * Меняет цель одного подхода, адресуя его позициями. Если упражнения или подхода с такими
+     * позициями в программе нет (её отредактировали), обновляется ноль строк — это не ошибка.
+     */
+    @Query(
+        """
+        UPDATE workout_set SET count = :count, weight = :weight
+        WHERE position = :setPosition
+          AND workout_exercise_id IN (
+              SELECT id FROM workout_exercise WHERE workout_id = :workoutId AND position = :exercisePosition
+          )
+        """,
+    )
+    abstract suspend fun updateSetTarget(
+        workoutId: String,
+        exercisePosition: Int,
+        setPosition: Int,
+        count: Int,
+        weight: Double?,
+    )
+
     @Query("DELETE FROM workout WHERE id = :id")
     abstract suspend fun deleteWorkout(id: String)
 
@@ -96,5 +117,23 @@ abstract class WorkoutDao {
         upsertExercises(exercises)
         insertCrossRefs(crossRefs)
         insertSets(sets)
+    }
+
+    /**
+     * Обновляет цели подходов программы одной транзакцией. Структуру программы (состав и порядок
+     * упражнений, число подходов) и флаги `is_archived` не трогает — в отличие от [saveWorkoutGraph],
+     * который пересоздаёт связки и апсертит строки `workout`/`exercise`.
+     */
+    @Transaction
+    open suspend fun updateSetTargets(workoutId: String, targets: List<WorkoutSetTargetUpdate>) {
+        targets.forEach { target ->
+            updateSetTarget(
+                workoutId = workoutId,
+                exercisePosition = target.exercisePosition,
+                setPosition = target.setPosition,
+                count = target.count,
+                weight = target.weight,
+            )
+        }
     }
 }

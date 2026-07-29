@@ -87,6 +87,20 @@ internal class FakeWorkoutDao : WorkoutDao() {
         deleteCrossRefsByWorkout(id)
     }
 
+    override suspend fun updateSetTarget(
+        workoutId: String,
+        exercisePosition: Int,
+        setPosition: Int,
+        count: Int,
+        weight: Double?,
+    ) {
+        val crossRef = crossRefs.firstOrNull { it.workoutId == workoutId && it.position == exercisePosition } ?: return
+        val index = sets.indexOfFirst { it.workoutExerciseId == crossRef.id && it.position == setPosition }
+        if (index >= 0) {
+            sets[index] = sets[index].copy(count = count, weight = weight)
+        }
+    }
+
     override suspend fun countSessionsForWorkout(id: String): Int =
         sessionCountByWorkout[id] ?: 0
 

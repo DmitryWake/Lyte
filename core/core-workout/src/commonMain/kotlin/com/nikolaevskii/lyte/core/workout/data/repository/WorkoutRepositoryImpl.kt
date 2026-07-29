@@ -4,6 +4,7 @@ import com.nikolaevskii.lyte.core.db.workout.WorkoutDao
 import com.nikolaevskii.lyte.core.workout.data.mapper.toDomainEntity
 import com.nikolaevskii.lyte.core.workout.data.mapper.toItemEntity
 import com.nikolaevskii.lyte.core.workout.data.mapper.toRows
+import com.nikolaevskii.lyte.core.workout.data.mapper.toSetTargetUpdates
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutItemEntity
 import com.nikolaevskii.lyte.core.workout.domain.repository.WorkoutRepository
@@ -29,6 +30,13 @@ internal class WorkoutRepositoryImpl(
 
     override suspend fun editWorkout(workoutEntity: WorkoutEntity) {
         save(workoutEntity)
+    }
+
+    override suspend fun updateWorkoutTargets(workoutEntity: WorkoutEntity) {
+        workoutDao.updateSetTargets(
+            workoutId = workoutEntity.id,
+            targets = workoutEntity.toSetTargetUpdates(),
+        )
     }
 
     override suspend fun deleteWorkout(id: String) {

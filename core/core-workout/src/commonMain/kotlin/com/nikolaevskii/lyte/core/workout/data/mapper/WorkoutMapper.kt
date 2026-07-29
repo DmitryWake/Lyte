@@ -6,6 +6,7 @@ import com.nikolaevskii.lyte.core.db.workout.WorkoutExerciseCrossRefDatabaseEnti
 import com.nikolaevskii.lyte.core.db.workout.WorkoutExerciseWithSets
 import com.nikolaevskii.lyte.core.db.workout.WorkoutItemWithExerciseCount
 import com.nikolaevskii.lyte.core.db.workout.WorkoutSetDatabaseEntity
+import com.nikolaevskii.lyte.core.db.workout.WorkoutSetTargetUpdate
 import com.nikolaevskii.lyte.core.db.workout.WorkoutWithExercises
 import com.nikolaevskii.lyte.core.workout.data.model.WorkoutRowsModel
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
@@ -89,6 +90,19 @@ internal fun WorkoutEntity.toRows(): WorkoutRowsModel {
         sets = setRows,
     )
 }
+
+/** Цели подходов программы как точечные апдейты по позициям — см. [WorkoutSetTargetUpdate]. */
+internal fun WorkoutEntity.toSetTargetUpdates(): List<WorkoutSetTargetUpdate> =
+    exercises.flatMapIndexed { exerciseIndex, exerciseWithReps ->
+        exerciseWithReps.reps.mapIndexed { repIndex, rep ->
+            WorkoutSetTargetUpdate(
+                exercisePosition = exerciseIndex,
+                setPosition = repIndex,
+                count = rep.count,
+                weight = rep.weight,
+            )
+        }
+    }
 
 private fun WorkoutExerciseWithSets.toDomainEntity(): WorkoutExerciseWithRepsEntity =
     WorkoutExerciseWithRepsEntity(

@@ -1,4 +1,4 @@
-package com.nikolaevskii.lyte.feature.splash.data.initializer
+package com.nikolaevskii.lyte.core.session.data.repository
 
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutItemEntity
@@ -6,6 +6,11 @@ import com.nikolaevskii.lyte.core.workout.domain.repository.WorkoutRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
+/**
+ * In-memory реализация [WorkoutRepository] для тестов сессий: нужна, чтобы проверить прогрессию плана
+ * по итогам сессии. `updateWorkoutTargets` повторяет семантику `WorkoutDao.updateSetTargets` — правит
+ * только цели по позициям, структуру программы не меняет.
+ */
 internal class FakeWorkoutRepository : WorkoutRepository {
 
     private val workouts = mutableMapOf<String, WorkoutEntity>()
@@ -33,7 +38,15 @@ internal class FakeWorkoutRepository : WorkoutRepository {
     }
 
     override suspend fun updateWorkoutTargets(workoutEntity: WorkoutEntity) {
-        workouts[workoutEntity.id] = workoutEntity
+        val stored = workouts[workoutEntity.id] ?: return
+        val exercises = stored.exercises.mapIndexed { exerciseIndex, storedExercise ->
+            val source = workoutEntity.exercises.getOrNull(exerciseIndex) ?: return@mapIndexed storedExercise
+            val reps = storedExercise.reps.mapIndexed { repIndex, storedRep ->
+                source.reps.getOrNull(repIndex) ?: storedRep
+            }
+            storedExercise.copy(reps = reps)
+        }
+        workouts[workoutEntity.id] = stored.copy(exercises = exercises)
     }
 
     override suspend fun deleteWorkout(id: String) {
