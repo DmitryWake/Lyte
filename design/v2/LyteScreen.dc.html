@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/lyte-design-system-4a58ed82-d30c-4b92-8a56-e55130ee91b0/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/lyte-design-system-4a58ed82-d30c-4b92-8a56-e55130ee91b0/tokens/colors.css">
+<link rel="stylesheet" href="_ds/lyte-design-system-4a58ed82-d30c-4b92-8a56-e55130ee91b0/tokens/accents.css">
+<link rel="stylesheet" href="_ds/lyte-design-system-4a58ed82-d30c-4b92-8a56-e55130ee91b0/tokens/typography.css">
+<link rel="stylesheet" href="_ds/lyte-design-system-4a58ed82-d30c-4b92-8a56-e55130ee91b0/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/lyte-design-system-4a58ed82-d30c-4b92-8a56-e55130ee91b0/styles.css">
+<link rel="stylesheet" href="dark-scope.css">
+<script src="_ds/lyte-design-system-4a58ed82-d30c-4b92-8a56-e55130ee91b0/_ds_bundle.js"></script>
+<style>
+  body { margin: 0; background: #e9ece3; }
+  a { color: var(--md-sys-color-primary); text-decoration: none; }
+  a:hover { color: var(--md-sys-color-on-surface); }
+  @keyframes lyteIn { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+  @keyframes lyteFade { from { opacity: 0 } to { opacity: 1 } }
+  [data-lyte-phone] div[style*="85vh"] { max-height: 82% !important; }
+  [data-lyte-phone] div[style*="85vh"] > div[style*="auto"] { flex: 1; min-height: 0 }
+</style>
+</helmet>
+
+<div style="{{ rootStyle }}">
+
+  <div data-lyte-phone="1" data-theme="{{ theme }}" style="width:390px;height:844px;border-radius:54px;overflow:hidden;position:relative;transform:translateZ(0);background:var(--md-sys-color-surface);box-shadow:0 30px 80px rgba(21,26,13,0.20), 0 4px 14px rgba(21,26,13,0.08);outline:1px solid rgba(20,26,12,0.10)">
+
+    <div ref="{{ rootRef }}" style="position:absolute;left:0;right:0;top:58px;bottom:0;overflow:hidden">
+      <div style="position:absolute;inset:0;pointer-events:{{ appPointer }}">
+
+        <sc-if value="{{ vWelcome }}" hint-placeholder-val="{{ true }}">
+          <div data-screen-label="0.0 Приветствие" style="position:absolute;inset:0;display:flex;flex-direction:column">
+            <div style="padding:20px 24px 0">
+              <span style="font-family:var(--font-wordmark);font-weight:700;font-size:40px;line-height:46px;letter-spacing:-0.5px;color:var(--md-sys-color-on-surface)">Lyte<span style="color:var(--md-sys-color-primary)">.</span></span>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 36px;text-align:center">
+              <div style="width:120px;height:120px;border-radius:50%;background:var(--md-sys-color-primary-container);display:flex;align-items:center;justify-content:center;margin-bottom:30px">
+                <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Icon" name="dumbbell" size="{{ n.i52 }}" color="var(--md-sys-color-on-primary-container)" hint-size="52px,52px"></x-import>
+              </div>
+              <div style="font-size:var(--type-headline-small-size);line-height:var(--type-headline-small-line);font-weight:700;letter-spacing:-0.3px;color:var(--md-sys-color-on-surface)">Дневник силовых тренировок</div>
+              <div style="font-size:var(--type-body-medium-size);line-height:var(--type-body-medium-line);color:var(--md-sys-color-on-surface-variant);margin-top:8px;max-width:280px;text-wrap:pretty">Составляйте программы, отмечайте подходы и вес во время тренировки, смотрите прогресс — всё в одном месте.</div>
+            </div>
+            <div style="flex-shrink:0;padding:0 20px 30px;display:flex;flex-direction:column;gap:8px">
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Button" size="large" full-width="{{ true }}" on-click="{{ startWalkthrough }}" hint-size="100%,64px">Показать как это работает</x-import>
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Button" variant="text" full-width="{{ true }}" on-click="{{ skipOnboarding }}" hint-size="100%,56px">Пропустить</x-import>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ vHome }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="4.1 Нет активной сессии" style="position:absolute;inset:0;display:flex;flex-direction:column">
+            <div style="padding:20px 24px 0">
+              <span style="font-family:var(--font-wordmark);font-weight:700;font-size:40px;line-height:46px;letter-spacing:-0.5px;color:var(--md-sys-color-on-surface)">Lyte<span style="color:var(--md-sys-color-primary)">.</span></span>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 32px;text-align:center">
+              <div style="width:120px;height:120px;border-radius:50%;background:var(--md-sys-color-primary-container);display:flex;align-items:center;justify-content:center;margin-bottom:30px">
+                <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Icon" name="dumbbell" size="{{ n.i52 }}" color="var(--md-sys-color-on-primary-container)" hint-size="52px,52px"></x-import>
+              </div>
+              <div style="font-size:var(--type-headline-small-size);line-height:var(--type-headline-small-line);font-weight:700;letter-spacing:-0.3px;color:var(--md-sys-color-on-surface)">Нет активной сессии</div>
+              <div style="font-size:var(--type-body-medium-size);line-height:var(--type-body-medium-line);color:var(--md-sys-color-on-surface-variant);margin-top:8px;max-width:280px;text-wrap:pretty">Выберите программу — откроются её подходы, таймер запустится сам. Итог сохранится в историю.</div>
+              <div style="margin-top:32px" data-coach-target="start-cta">
+                <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Button" icon="{{ icoPlay }}" on-click="{{ openPickProgram }}" hint-size="150px,56px">Начать</x-import>
+              </div>
+            </div>
+            <div style="padding-bottom:22px">
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.BottomNav" active="workout" on-change="{{ setTab }}" hint-size="100%,64px"></x-import>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ vPreview }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="4.2 Превью программы" style="position:absolute;inset:0;display:flex;flex-direction:column">
+            <x-import component-from-global-scope="LyteDesignSystem_4a58ed.TopBar" size="large" title="{{ pv.name }}" subtitle="{{ pv.count }}" on-back="{{ pop }}" hint-size="100%,128px"></x-import>
+            <div style="flex:1;min-height:0;overflow-y:auto;padding:8px 20px 12px;display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ pv.items }}" as="e" hint-placeholder-count="5">
+                <x-import component-from-global-scope="LyteDesignSystem_4a58ed.ExerciseCard" name="{{ e.name }}" plan="{{ e.plan }}" color="{{ e.color }}" exercise="{{ e.exercise }}" draggable="{{ false }}" on-click="{{ e.onClick }}" hint-size="100%,96px"></x-import>
+              </sc-for>
+            </div>
+            <div style="flex-shrink:0;padding:14px 20px 30px;background:var(--md-sys-color-surface);box-shadow:0 -10px 24px rgba(21,26,13,0.07)">
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Button" size="large" full-width="{{ true }}" icon="{{ icoPlay }}" on-click="{{ startPreviewSession }}" hint-size="100%,64px">Начать</x-import>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ vSession }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="4.3 Активная сессия" style="position:absolute;inset:0;display:flex;flex-direction:column">
+            <div style="flex-shrink:0;display:flex;align-items:center;padding:6px 16px 0">
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.IconButton" icon="list" label="Упражнения сессии" on-click="{{ openSwitcher }}" hint-size="40px,40px"></x-import>
+              <div style="flex:1;display:flex;justify-content:center">
+                <x-import component-from-global-scope="LyteDesignSystem_4a58ed.SessionStopwatch" seconds="{{ seconds }}" size="large" hint-size="120px,48px"></x-import>
+              </div>
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.IconButton" icon="x" label="Завершить тренировку" on-click="{{ openEndEarly }}" hint-size="40px,40px"></x-import>
+            </div>
+            <div style="flex-shrink:0;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;text-align:center;padding:6px 32px 8px">
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Overline" hint-size="auto,16px">{{ exCounter }}</x-import>
+              <div style="font-size:24px;line-height:29px;font-weight:700;letter-spacing:-0.4px;color:var(--md-sys-color-on-surface);margin-top:6px;text-wrap:balance;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden">{{ exName }}</div>
+            </div>
+            <div data-setlist="1" ref="{{ scRef }}" style="position:relative;flex:1;min-height:0;box-sizing:border-box;overflow-y:auto;padding:0 20px;display:flex;flex-direction:column;gap:6px;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 20px);mask-image:linear-gradient(to bottom,transparent 0,#000 20px)">
+              <div style="flex-shrink:0;height:640px"></div>
+
+              <sc-for list="{{ doneSets }}" as="d" hint-placeholder-count="2">
+                <div style="flex-shrink:0;display:flex;align-items:center;gap:10px;padding:9px 16px;border-radius:var(--shape-large);background:{{ d.bg }};animation:lyteIn 260ms var(--motion-easing-emphasized) both">
+                  <span style="font-family:var(--font-numeric);font-variant-numeric:tabular-nums;font-size:12px;font-weight:600;width:12px;flex-shrink:0;color:{{ d.fg }}">{{ d.n }}</span>
+                  <span style="flex-shrink:0;display:flex">
+                    <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Icon" name="{{ d.icon }}" size="{{ n.i17 }}" color="{{ d.fg }}" hint-size="17px,17px"></x-import>
+                  </span>
+                  <span style="flex:1;min-width:0;font-size:12px;color:var(--md-sys-color-on-surface-variant);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.note }}</span>
+                  <span style="flex-shrink:0;font-family:var(--font-numeric);font-variant-numeric:tabular-nums;font-size:14.5px;font-weight:700;letter-spacing:-0.2px;color:{{ d.fg }}">{{ d.value }}</span>
+                </div>
+              </sc-for>
+
+              <div data-setcard="1" ref="{{ cardRef }}" style="flex-shrink:0;margin:6px 0;background:var(--md-sys-color-surface-container-lowest);border-radius:var(--shape-extra-large);box-shadow:inset 0 0 0 2px var(--md-sys-color-primary), var(--elevation-2);padding:18px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Icon" name="circle-dot" size="{{ n.i17 }}" color="var(--md-sys-color-primary)" hint-size="17px,17px"></x-import>
+                  <span style="font-size:14.5px;font-weight:600;letter-spacing:-0.1px;color:var(--md-sys-color-on-surface)">Подход {{ cur.n }}</span>
+                  <span style="flex:1"></span>
+                  <span style="font-size:12px;color:var(--md-sys-color-on-surface-variant)">{{ cur.of }}</span>
+                </div>
+                <div style="margin-top:6px;padding-left:25px;display:flex;flex-direction:column;gap:2px">
+                  <sc-for list="{{ cur.ref }}" as="r" hint-placeholder-count="2">
+                    <div style="display:flex;align-items:baseline;gap:8px">
+                      <span style="font-size:12px;color:var(--md-sys-color-on-surface-variant)">{{ r.label }}</span>
+                      <span style="flex:1;height:1px;background:var(--md-sys-color-outline-variant);opacity:0.6"></span>
+                      <span style="font-family:var(--font-numeric);font-variant-numeric:tabular-nums;font-size:12.5px;font-weight:600;color:var(--md-sys-color-on-surface)">{{ r.value }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+                <div data-coach-target="stepper" style="display:flex;flex-direction:column;gap:10px;margin-top:14px">
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <span style="width:40px;flex-shrink:0"><x-import component-from-global-scope="LyteDesignSystem_4a58ed.Overline" hint-size="auto,16px">Повт</x-import></span>
+                    <div style="flex:1;min-width:0;--stepper-width:100%">
+                      <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Stepper" size="medium" value="{{ cur.reps }}" step="{{ n.step1 }}" min="{{ n.zero }}" on-change="{{ setReps }}" hint-size="100%,48px"></x-import>
+                    </div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <span style="width:40px;flex-shrink:0"><x-import component-from-global-scope="LyteDesignSystem_4a58ed.Overline" hint-size="auto,16px">Вес</x-import></span>
+                    <div style="flex:1;min-width:0;--stepper-width:100%">
+                      <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Stepper" size="medium" value="{{ cur.weight }}" step="{{ n.step25 }}" min="{{ n.zero }}" unit="кг" on-change="{{ setWeight }}" hint-size="100%,48px"></x-import>
+                    </div>
+                  </div>
+                </div>
+                <sc-if value="{{ curNote }}" hint-placeholder-val="{{ false }}">
+                  <div onClick="{{ openNote }}" style="margin-top:14px;display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-radius:var(--shape-large);background:var(--md-sys-color-surface-container-low);cursor:pointer;animation:lyteFade 200ms var(--motion-easing-standard) both" style-hover="background:var(--md-sys-color-surface-container)">
+                    <span style="flex-shrink:0;display:flex;padding-top:1px">
+                      <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Icon" name="pencil-line" size="{{ n.i15 }}" color="var(--md-sys-color-on-surface-variant)" hint-size="15px,15px"></x-import>
+                    </span>
+                    <span style="flex:1;min-width:0;font-size:12.5px;line-height:17px;color:var(--md-sys-color-on-surface-variant);text-wrap:pretty">{{ curNote }}</span>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ noNote }}" hint-placeholder-val="{{ true }}">
+                  <div style="margin-top:16px;display:flex;justify-content:center">
+                    <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Chip" icon="{{ icoPencil }}" on-click="{{ openNote }}" hint-size="112px,34px">Заметка</x-import>
+                  </div>
+                </sc-if>
+              </div>
+
+              <sc-for list="{{ upNext }}" as="u" hint-placeholder-count="2">
+                <div style="flex-shrink:0;display:flex;align-items:center;gap:10px;padding:9px 16px;border-radius:var(--shape-large);background:var(--md-sys-color-surface-container-low)">
+                  <span style="font-family:var(--font-numeric);font-variant-numeric:tabular-nums;font-size:12px;font-weight:600;width:12px;flex-shrink:0;color:var(--md-sys-color-outline)">{{ u.n }}</span>
+                  <span style="flex:1"></span>
+                  <span style="font-family:var(--font-numeric);font-variant-numeric:tabular-nums;font-size:13.5px;font-weight:600;color:var(--md-sys-color-on-surface-variant)">{{ u.target }}</span>
+                </div>
+              </sc-for>
+
+              <sc-if value="{{ isLastSet }}" hint-placeholder-val="{{ false }}">
+                <div style="flex-shrink:0;padding:10px 0 2px;text-align:center">
+                  <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Overline" hint-size="auto,16px">{{ lastSetLabel }}</x-import>
+                </div>
+              </sc-if>
+              <div style="flex-shrink:0;height:104px"></div>
+            </div>
+            <div data-coach-target="commit" style="flex-shrink:0;padding:10px 20px 26px;display:flex;flex-direction:column;gap:2px">
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Button" size="large" full-width="{{ true }}" on-click="{{ commitSet }}" hint-size="100%,64px">Готово</x-import>
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Button" variant="text" full-width="{{ true }}" on-click="{{ skipSet }}" hint-size="100%,56px">Пропустить</x-import>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ vFinished }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="4.3 Тренировка завершена" style="position:absolute;inset:0;display:flex;flex-direction:column;animation:lyteFade 260ms var(--motion-easing-standard) both">
+            <div style="padding-top:10px;display:flex;justify-content:center">
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.SessionStopwatch" seconds="{{ seconds }}" size="large" hint-size="120px,48px"></x-import>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 40px;text-align:center">
+              <div style="width:120px;height:120px;border-radius:50%;background:var(--md-sys-color-success-container);display:flex;align-items:center;justify-content:center;margin-bottom:30px">
+                <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Icon" name="check" size="{{ n.i56 }}" color="var(--md-sys-color-on-success-container)" hint-size="56px,56px"></x-import>
+              </div>
+              <div style="font-size:var(--type-headline-small-size);line-height:var(--type-headline-small-line);font-weight:700;letter-spacing:-0.3px;color:var(--md-sys-color-on-surface)">Тренировка завершена</div>
+              <div style="font-size:var(--type-body-medium-size);color:var(--md-sys-color-on-surface-variant);margin-top:8px">{{ sessionName }}</div>
+              <div style="width:100%;max-width:220px;margin-top:20px">
+                <x-import component-from-global-scope="LyteDesignSystem_4a58ed.ProgressTrack" total="{{ totalSets }}" tones="{{ resultTones }}" height="{{ n.track }}" hint-size="100%,16px"></x-import>
+              </div>
+              <div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-top:10px">{{ resultSummary }}</div>
+            </div>
+            <div style="padding:0 20px 30px">
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Button" size="large" full-width="{{ true }}" on-click="{{ saveSession }}" hint-size="100%,64px">Сохранить тренировку</x-import>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ vPrograms }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="3.1 Программы" style="position:absolute;inset:0;display:flex;flex-direction:column">
+            <x-import component-from-global-scope="LyteDesignSystem_4a58ed.TopBar" size="large" title="Программы" hint-size="100%,90px"></x-import>
+            <div style="flex:1;min-height:0;overflow-y:auto;padding:2px 20px 0;display:flex;flex-direction:column;gap:12px">
+              <sc-for list="{{ programRows }}" as="p" hint-placeholder-count="3">
+                <x-import component-from-global-scope="LyteDesignSystem_4a58ed.ProgramCard" name="{{ p.name }}" exercise-count="{{ p.exerciseCount }}" color="{{ p.color }}" exercise="{{ p.exercise }}" on-click="{{ p.onClick }}" trailing="{{ p.trailing }}" hint-size="100%,84px"></x-import>
+              </sc-for>
+              <sc-if value="{{ programsEmpty }}" hint-placeholder-val="{{ false }}">
+                <div style="padding-top:60px;display:flex;flex-direction:column;align-items:center">
+                  <x-import component-from-global-scope="LyteDesignSystem_4a58ed.EmptyState" icon="clipboard-list" message="Создайте первую программу" hint="Программа — это список упражнений и подходов, по которому идёт тренировка." hint-size="100%,300px"></x-import>
+                  <div style="margin-top:-36px">
+                    <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Button" size="small" icon="{{ icoPlus }}" on-click="{{ newProgram }}" hint-size="190px,44px">Новая программа</x-import>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ programsFilled }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:4px;padding-bottom:8px">
+                  <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Button" variant="tonal" full-width="{{ true }}" icon="{{ icoPlus }}" on-click="{{ newProgram }}" hint-size="100%,56px">Новая программа</x-import>
+                </div>
+              </sc-if>
+            </div>
+            <div style="padding-bottom:22px">
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.BottomNav" active="programs" on-change="{{ setTab }}" hint-size="100%,64px"></x-import>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ vEditor }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="3.2 Редактор программы" style="position:absolute;inset:0;display:flex;flex-direction:column">
+            <x-import component-from-global-scope="LyteDesignSystem_4a58ed.TopBar" size="large" title="Программа" on-back="{{ pop }}" hint-size="100%,110px"></x-import>
+            <div style="flex:1;min-height:0;overflow-y:auto;padding:2px 20px 12px;display:flex;flex-direction:column;gap:16px">
+              <div style="display:flex;align-items:flex-end;gap:12px">
+                <div onClick="{{ openProgramMark }}" title="Цвет и знак программы" style="flex-shrink:0;cursor:pointer;padding-bottom:4px;border-radius:50%" style-hover="opacity:0.85">
+                  <x-import component-from-global-scope="LyteDesignSystem_4a58ed.ExerciseMark" color="{{ ed.color }}" exercise="{{ ed.exercise }}" size="{{ n.mark52 }}" hint-size="52px,52px"></x-import>
+                </div>
+                <div style="flex:1;min-width:0">
+                  <x-import component-from-global-scope="LyteDesignSystem_4a58ed.TextField" label="Название" value="{{ ed.name }}" placeholder="Например, Push Day" on-change="{{ setProgramName }}" hint-size="100%,76px"></x-import>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Overline" hint-size="auto,16px">{{ ed.countLabel }}</x-import>
+                <sc-for list="{{ ed.items }}" as="e" hint-placeholder-count="4">
+                  <div draggable="{{ true }}" onDragStart="{{ e.onDragStart }}" onDragOver="{{ e.onDragOver }}" onDrop="{{ e.onDrop }}" onDragEnd="{{ e.onDragEnd }}" style="opacity:{{ e.opacity }};cursor:grab">
+                    <x-import component-from-global-scope="LyteDesignSystem_4a58ed.ExerciseCard" name="{{ e.name }}" plan="{{ e.plan }}" color="{{ e.color }}" exercise="{{ e.exercise }}" draggable="{{ true }}" on-click="{{ e.onEdit }}" on-remove="{{ e.onRemove }}" hint-size="100%,96px"></x-import>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ ed.empty }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding:18px;border-radius:var(--shape-large);background:var(--md-sys-color-surface-container-low);font-size:13.5px;line-height:20px;color:var(--md-sys-color-on-surface-variant);text-wrap:pretty">Пока пусто. Добавьте первое упражнение — подходы настроите следом.</div>
+                </sc-if>
+              </div>
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Button" variant="tonal" full-width="{{ true }}" icon="{{ icoPlus }}" on-click="{{ openPicker }}" hint-size="100%,56px">Добавить упражнение</x-import>
+            </div>
+            <div style="flex-shrink:0;padding:12px 20px 28px;background:var(--md-sys-color-surface);box-shadow:0 -10px 24px rgba(21,26,13,0.07)">
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Button" size="medium" full-width="{{ true }}" on-click="{{ pop }}" hint-size="100%,56px">Готово</x-import>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ vPicker }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="3.3 Выбор упражнения" style="position:absolute;inset:0;display:flex;flex-direction:column">
+            <x-import component-from-global-scope="LyteDesignSystem_4a58ed.TopBar" size="large" title="Упражнение" on-back="{{ pop }}" hint-size="100%,110px"></x-import>
+            <div style="flex-shrink:0;padding:0 20px 10px">
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.TextField" value="{{ query }}" placeholder="Поиск по названию" on-change="{{ setQuery }}" hint-size="100%,52px"></x-import>
+            </div>
+            <div style="flex:1;min-height:0;overflow-y:auto;padding:0 20px 8px">
+              <sc-for list="{{ pickRows }}" as="r" hint-placeholder-count="6">
+                <x-import component-from-global-scope="LyteDesignSystem_4a58ed.ListRow" title="{{ r.name }}" subtitle="{{ r.desc }}" color="{{ r.color }}" exercise="{{ r.exercise }}" on-click="{{ r.onClick }}" hint-size="100%,64px"></x-import>
+              </sc-for>
+              <sc-if value="{{ pickEmpty }}" hint-placeholder-val="{{ false }}">
+                <div style="padding-top:40px">
+                  <x-import component-from-global-scope="LyteDesignSystem_4a58ed.EmptyState" icon="search-x" message="Ничего не найдено" hint="Проверьте запрос — или создайте своё упражнение." hint-size="100%,260px"></x-import>
+                </div>
+              </sc-if>
+            </div>
+            <div style="flex-shrink:0;padding:12px 20px 28px;background:var(--md-sys-color-surface);box-shadow:0 -10px 24px rgba(21,26,13,0.07)">
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Button" variant="tonal" full-width="{{ true }}" icon="{{ icoPlus }}" on-click="{{ openExCreate }}" hint-size="100%,56px">Создать упражнение</x-import>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ vExCreate }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="3.3 Новое упражнение" style="position:absolute;inset:0;display:flex;flex-direction:column">
+            <x-import component-from-global-scope="LyteDesignSystem_4a58ed.TopBar" size="large" title="Новое упражнение" on-back="{{ pop }}" hint-size="100%,110px"></x-import>
+            <div style="flex:1;min-height:0;overflow-y:auto;padding:2px 20px 12px;display:flex;flex-direction:column;gap:18px">
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.TextField" label="Название" value="{{ draft.name }}" placeholder="Например, Жим гантелей" on-change="{{ setDraftName }}" hint-size="100%,76px"></x-import>
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.TextField" label="Описание" value="{{ draft.desc }}" placeholder="Оборудование, техника — коротко" on-change="{{ setDraftDesc }}" hint-size="100%,76px"></x-import>
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.AccentPicker" value="{{ draft.color }}" on-change="{{ setDraftColor }}" hint-size="100%,80px"></x-import>
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.ExerciseIconPicker" value="{{ draft.exercise }}" color="{{ draft.color }}" on-change="{{ setDraftIcon }}" hint-size="100%,160px"></x-import>
+            </div>
+            <div style="flex-shrink:0;padding:12px 20px 28px;background:var(--md-sys-color-surface);box-shadow:0 -10px 24px rgba(21,26,13,0.07)">
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Button" size="medium" full-width="{{ true }}" disabled="{{ draft.invalid }}" on-click="{{ saveDraft }}" hint-size="100%,56px">Сохранить</x-import>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ vSets }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="3.4 Подходы упражнения" style="position:absolute;inset:0;display:flex;flex-direction:column">
+            <x-import component-from-global-scope="LyteDesignSystem_4a58ed.TopBar" size="large" title="{{ se.name }}" subtitle="{{ se.count }}" on-back="{{ pop }}" hint-size="100%,132px"></x-import>
+            <div style="flex:1;min-height:0;overflow-y:auto;padding:2px 20px 12px;display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ se.rows }}" as="s" hint-placeholder-count="3">
+                <div style="background:var(--md-sys-color-surface-container-lowest);border-radius:var(--shape-large-increased);box-shadow:var(--elevation-1);padding:14px 16px 16px">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span style="flex:1;font-size:14.5px;font-weight:600;letter-spacing:-0.1px;color:var(--md-sys-color-on-surface)">Подход {{ s.n }}</span>
+                    <x-import component-from-global-scope="LyteDesignSystem_4a58ed.IconButton" icon="trash-2" label="Удалить подход" size="{{ n.i36 }}" on-click="{{ s.onRemove }}" hint-size="36px,36px"></x-import>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+                    <div style="display:flex;align-items:center;gap:12px">
+                      <span style="width:40px;flex-shrink:0"><x-import component-from-global-scope="LyteDesignSystem_4a58ed.Overline" hint-size="auto,16px">Повт</x-import></span>
+                      <div style="flex:1;min-width:0;--stepper-width:100%">
+                        <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Stepper" size="medium" value="{{ s.reps }}" step="{{ n.step1 }}" min="{{ n.one }}" on-change="{{ s.onReps }}" hint-size="100%,48px"></x-import>
+                      </div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px">
+                      <span style="width:40px;flex-shrink:0"><x-import component-from-global-scope="LyteDesignSystem_4a58ed.Overline" hint-size="auto,16px">Вес</x-import></span>
+                      <div style="flex:1;min-width:0;--stepper-width:100%">
+                        <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Stepper" size="medium" value="{{ s.weight }}" step="{{ n.step25 }}" min="{{ n.zero }}" unit="кг" on-change="{{ s.onWeight }}" hint-size="100%,48px"></x-import>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="flex-shrink:0;padding:12px 20px 28px;background:var(--md-sys-color-surface);box-shadow:0 -10px 24px rgba(21,26,13,0.07);display:flex;flex-direction:column;gap:8px">
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Button" variant="tonal" full-width="{{ true }}" icon="{{ icoPlus }}" on-click="{{ addSet }}" hint-size="100%,56px">Добавить подход</x-import>
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Button" variant="text" full-width="{{ true }}" on-click="{{ pop }}" hint-size="100%,44px">Готово</x-import>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ vHistory }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="5.1 История" style="position:absolute;inset:0;display:flex;flex-direction:column">
+            <x-import component-from-global-scope="LyteDesignSystem_4a58ed.TopBar" size="large" title="История" hint-size="100%,90px"></x-import>
+            <div style="flex:1;min-height:0;overflow-y:auto;padding:2px 20px 12px;display:flex;flex-direction:column;gap:18px">
+              <sc-for list="{{ historyGroups }}" as="g" hint-placeholder-count="1">
+                <div style="display:flex;flex-direction:column;gap:12px">
+                  <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Overline" hint-size="auto,16px">{{ g.month }}</x-import>
+                  <sc-for list="{{ g.rows }}" as="s" hint-placeholder-count="2">
+                    <div data-coach-target="{{ s.coach }}">
+                      <x-import component-from-global-scope="LyteDesignSystem_4a58ed.SessionCard" program-name="{{ s.programName }}" date="{{ s.date }}" duration="{{ s.duration }}" tones="{{ s.tones }}" color="{{ s.color }}" exercise="{{ s.exercise }}" on-click="{{ s.onClick }}" hint-size="100%,88px"></x-import>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-for>
+              <sc-if value="{{ historyEmpty }}" hint-placeholder-val="{{ false }}">
+                <div style="padding-top:60px">
+                  <x-import component-from-global-scope="LyteDesignSystem_4a58ed.EmptyState" icon="history" message="Здесь появятся ваши тренировки" hint="Итоги сохраняются автоматически после каждой сессии." hint-size="100%,300px"></x-import>
+                </div>
+              </sc-if>
+            </div>
+            <div style="padding-bottom:22px">
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.BottomNav" active="history" on-change="{{ setTab }}" hint-size="100%,64px"></x-import>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ vDetail }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="5.2 Детали сессии" style="position:absolute;inset:0;display:flex;flex-direction:column">
+            <x-import component-from-global-scope="LyteDesignSystem_4a58ed.TopBar" size="large" title="{{ dt.programName }}" subtitle="{{ dt.dateFull }}" on-back="{{ pop }}" trailing="{{ dt.trailing }}" hint-size="100%,132px"></x-import>
+            <div style="flex:1;min-height:0;overflow-y:auto;padding:4px 20px 24px">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+                <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Badge" size="medium" hint-size="86px,30px">{{ dt.duration }}</x-import>
+                <div style="flex:1">
+                  <x-import component-from-global-scope="LyteDesignSystem_4a58ed.ProgressTrack" total="{{ dt.total }}" tones="{{ dt.tones }}" height="{{ n.track }}" hint-size="100%,16px"></x-import>
+                </div>
+              </div>
+              <sc-for list="{{ dt.groups }}" as="g" hint-placeholder-count="3">
+                <div style="margin-bottom:18px">
+                  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                    <x-import component-from-global-scope="LyteDesignSystem_4a58ed.ExerciseMark" color="{{ g.color }}" exercise="{{ g.exercise }}" size="{{ n.mark36 }}" hint-size="36px,36px"></x-import>
+                    <span style="font-size:var(--type-title-medium-size);font-weight:600;color:var(--md-sys-color-on-surface);text-wrap:pretty">{{ g.name }}</span>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:6px">
+                    <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="3">
+                      <x-import component-from-global-scope="LyteDesignSystem_4a58ed.DiffRow" index="{{ r.index }}" target="{{ r.target }}" actual="{{ r.actual }}" tone="{{ r.tone }}" note="{{ r.note }}" hint-size="100%,44px"></x-import>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ shPick }}" hint-placeholder-val="{{ false }}">
+          <x-import component-from-global-scope="LyteDesignSystem_4a58ed.BottomSheet" open="{{ true }}" title="Выбрать тренировку" on-close="{{ closeOverlay }}" hint-size="100%,340px">
+            <div style="display:flex;flex-direction:column;padding-bottom:8px">
+              <sc-for list="{{ pickProgramRows }}" as="r" hint-placeholder-count="3">
+                <x-import component-from-global-scope="LyteDesignSystem_4a58ed.ListRow" title="{{ r.name }}" subtitle="{{ r.subtitle }}" color="{{ r.color }}" exercise="{{ r.exercise }}" on-click="{{ r.onClick }}" hint-size="100%,64px"></x-import>
+              </sc-for>
+              <sc-if value="{{ programsEmpty }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:8px 0 12px">
+                  <x-import component-from-global-scope="LyteDesignSystem_4a58ed.EmptyState" icon="clipboard-list" message="Создайте первую программу" hint="Без программы нечего запускать — соберите её из упражнений." action-label="Новая программа" on-action="{{ newProgramFromSheet }}" hint-size="100%,280px"></x-import>
+                </div>
+              </sc-if>
+            </div>
+          </x-import>
+        </sc-if>
+
+        <sc-if value="{{ shExInfo }}" hint-placeholder-val="{{ false }}">
+          <x-import component-from-global-scope="LyteDesignSystem_4a58ed.BottomSheet" open="{{ true }}" title="{{ exInfo.name }}" on-close="{{ closeOverlay }}" hint-size="100%,380px">
+            <div style="display:flex;flex-direction:column;gap:16px;padding-bottom:10px">
+              <div style="display:flex;align-items:center;gap:14px">
+                <x-import component-from-global-scope="LyteDesignSystem_4a58ed.ExerciseMark" color="{{ exInfo.color }}" exercise="{{ exInfo.exercise }}" size="{{ n.mark52 }}" hint-size="52px,52px"></x-import>
+                <span style="flex:1;font-size:13.5px;line-height:20px;color:var(--md-sys-color-on-surface-variant);text-wrap:pretty">{{ exInfo.desc }}</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Overline" hint-size="auto,16px">{{ exInfo.count }}</x-import>
+                <sc-for list="{{ exInfo.rows }}" as="s" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:baseline;gap:10px;padding:8px 14px;border-radius:var(--shape-large);background:var(--md-sys-color-surface-container-low)">
+                    <span style="font-family:var(--font-numeric);font-variant-numeric:tabular-nums;font-size:12px;font-weight:600;width:12px;color:var(--md-sys-color-outline)">{{ s.n }}</span>
+                    <span style="flex:1"></span>
+                    <span style="font-family:var(--font-numeric);font-variant-numeric:tabular-nums;font-size:14.5px;font-weight:700;letter-spacing:-0.2px;color:var(--md-sys-color-on-surface)">{{ s.value }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </x-import>
+        </sc-if>
+
+        <sc-if value="{{ shMenu }}" hint-placeholder-val="{{ false }}">
+          <x-import component-from-global-scope="LyteDesignSystem_4a58ed.BottomSheet" open="{{ true }}" title="{{ menu.name }}" on-close="{{ closeOverlay }}" hint-size="100%,220px">
+            <div style="display:flex;flex-direction:column;padding-bottom:10px">
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.ListRow" title="Редактировать" leading-icon="pencil-line" show-chevron="{{ false }}" on-click="{{ menu.onEdit }}" hint-size="100%,60px"></x-import>
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.ListRow" title="Удалить программу" leading-icon="trash-2" show-chevron="{{ false }}" on-click="{{ menu.onDelete }}" hint-size="100%,60px"></x-import>
+            </div>
+          </x-import>
+        </sc-if>
+
+        <sc-if value="{{ shMark }}" hint-placeholder-val="{{ false }}">
+          <x-import component-from-global-scope="LyteDesignSystem_4a58ed.BottomSheet" open="{{ true }}" title="Цвет и знак" on-close="{{ closeOverlay }}" hint-size="100%,380px">
+            <div style="display:flex;flex-direction:column;gap:18px;padding-bottom:12px">
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.AccentPicker" value="{{ ed.color }}" on-change="{{ setProgramColor }}" hint-size="100%,80px"></x-import>
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.ExerciseIconPicker" value="{{ ed.exercise }}" color="{{ ed.color }}" on-change="{{ setProgramIcon }}" hint-size="100%,160px"></x-import>
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Button" full-width="{{ true }}" on-click="{{ closeOverlay }}" hint-size="100%,56px">Готово</x-import>
+            </div>
+          </x-import>
+        </sc-if>
+
+        <sc-if value="{{ shNote }}" hint-placeholder-val="{{ false }}">
+          <x-import component-from-global-scope="LyteDesignSystem_4a58ed.BottomSheet" open="{{ true }}" title="Заметка к подходу" on-close="{{ closeOverlay }}" hint-size="100%,300px">
+            <x-import component-from-global-scope="LyteDesignSystem_4a58ed.TextField" multiline="{{ true }}" value="{{ noteDraft }}" placeholder="Как прошёл подход…" on-change="{{ setNoteDraft }}" hint-size="100%,96px"></x-import>
+            <div style="margin:16px 0 8px">
+              <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Button" full-width="{{ true }}" on-click="{{ saveNote }}" hint-size="100%,56px">Готово</x-import>
+            </div>
+          </x-import>
+        </sc-if>
+
+        <sc-if value="{{ shSwitch }}" hint-placeholder-val="{{ false }}">
+          <x-import component-from-global-scope="LyteDesignSystem_4a58ed.BottomSheet" open="{{ true }}" title="Упражнения сессии" on-close="{{ closeOverlay }}" hint-size="100%,420px">
+            <div style="padding-bottom:10px;display:flex;flex-direction:column">
+              <sc-for list="{{ switchRows }}" as="r" hint-placeholder-count="5">
+                <x-import component-from-global-scope="LyteDesignSystem_4a58ed.ListRow" title="{{ r.name }}" subtitle="{{ r.subtitle }}" color="{{ r.color }}" exercise="{{ r.exercise }}" trailing="{{ r.trailing }}" show-chevron="{{ false }}" on-click="{{ r.onClick }}" hint-size="100%,64px"></x-import>
+              </sc-for>
+            </div>
+          </x-import>
+        </sc-if>
+
+        <sc-if value="{{ dlgEnd }}" hint-placeholder-val="{{ false }}">
+          <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Dialog" open="{{ true }}" title="На сегодня хватит?" description="Невыполненные подходы отметим как пропущенные." confirm-label="Завершить" cancel-label="Продолжить" destructive="{{ true }}" on-confirm="{{ endEarly }}" on-cancel="{{ closeOverlay }}" hint-size="100%,100%"></x-import>
+        </sc-if>
+
+        <sc-if value="{{ dlgDeleteProgram }}" hint-placeholder-val="{{ false }}">
+          <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Dialog" open="{{ true }}" title="{{ delProgramTitle }}" description="Тренировки в истории останутся." confirm-label="Удалить" cancel-label="Отмена" destructive="{{ true }}" on-confirm="{{ deleteProgram }}" on-cancel="{{ closeOverlay }}" hint-size="100%,100%"></x-import>
+        </sc-if>
+
+        <sc-if value="{{ dlgDeleteSession }}" hint-placeholder-val="{{ false }}">
+          <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Dialog" open="{{ true }}" title="{{ delSessionTitle }}" description="Запись пропадёт из истории." confirm-label="Удалить" cancel-label="Отмена" destructive="{{ true }}" on-confirm="{{ deleteSession }}" on-cancel="{{ closeOverlay }}" hint-size="100%,100%"></x-import>
+        </sc-if>
+
+      </div>
+
+      <sc-if value="{{ coach }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;z-index:3000;pointer-events:none">
+          <div style="position:absolute;left:{{ coach.x }}px;top:{{ coach.y }}px;width:{{ coach.w }}px;height:{{ coach.h }}px;border-radius:{{ coach.r }}px;box-shadow:0 0 0 2000px rgba(13,16,10,0.64);transition:all 320ms var(--motion-easing-emphasized)"></div>
+          <div style="position:absolute;left:{{ coach.calloutX }}px;top:{{ coach.calloutY }}px;width:{{ coach.calloutW }}px;pointer-events:auto;background:var(--md-sys-color-surface-container-lowest);border-radius:var(--shape-large-increased);box-shadow:var(--elevation-3);padding:16px;transition:all 320ms var(--motion-easing-emphasized)">
+            <div style="font-size:13px;line-height:19px;color:var(--md-sys-color-on-surface);text-wrap:pretty">{{ coach.text }}</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px">
+              <div style="display:flex;gap:6px">
+                <sc-for list="{{ coach.dots }}" as="d" hint-placeholder-count="4">
+                  <div onClick="{{ d.goTo }}" style="width:{{ d.w }}px;height:6px;border-radius:999px;background:{{ d.bg }};cursor:pointer"></div>
+                </sc-for>
+              </div>
+              <div style="display:flex;align-items:center;gap:14px">
+                <sc-if value="{{ coach.showSkip }}" hint-placeholder-val="{{ true }}">
+                  <span onClick="{{ skipOnboarding }}" style="font-size:12.5px;color:var(--md-sys-color-on-surface-variant);cursor:pointer">Пропустить</span>
+                </sc-if>
+                <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Button" size="small" on-click="{{ coachNext }}" hint-size="auto,44px">{{ coach.cta }}</x-import>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="position:absolute;top:0;left:0;right:0;height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 34px;box-sizing:border-box;z-index:4000;pointer-events:none">
+      <span style="font-family:var(--font-numeric);font-variant-numeric:tabular-nums;font-size:15px;font-weight:600;color:var(--md-sys-color-on-surface)">9:41</span>
+      <div style="position:absolute;left:50%;top:12px;transform:translateX(-50%);width:118px;height:32px;border-radius:999px;background:#0b0d09"></div>
+      <span style="display:flex;gap:6px;align-items:center;color:var(--md-sys-color-on-surface)">
+        <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Icon" name="signal" size="{{ n.i15 }}" hint-size="15px,15px"></x-import>
+        <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Icon" name="wifi" size="{{ n.i15 }}" hint-size="15px,15px"></x-import>
+        <x-import component-from-global-scope="LyteDesignSystem_4a58ed.Icon" name="battery-full" size="{{ n.i20 }}" hint-size="20px,20px"></x-import>
+      </span>
+    </div>
+    <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:999px;background:var(--md-sys-color-on-surface);opacity:0.75;z-index:4001"></div>
+  </div>
+
+  <sc-if value="{{ chrome }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;align-items:center;gap:20px">
+      <button type="button" onClick="{{ toggleTheme }}" style="border:none;background:transparent;font-family:var(--font-brand);font-size:13px;color:#6b7063;cursor:pointer;padding:4px 8px" style-hover="color:#22261d">{{ themeLabel }}</button>
+      <span style="width:1px;height:14px;background:#c9cec0"></span>
+      <button type="button" onClick="{{ resetAll }}" style="border:none;background:transparent;font-family:var(--font-brand);font-size:13px;color:#6b7063;cursor:pointer;padding:4px 8px" style-hover="color:#22261d">Сбросить прототип</button>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844},&quot;screen&quot;:{&quot;editor&quot;:null,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;overlays&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Экраны&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;\&quot;light\&quot; | \&quot;dark\&quot;&quot;,&quot;section&quot;:&quot;Прототип&quot;},&quot;startAt&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Онбординг&quot;,&quot;Главная&quot;],&quot;default&quot;:&quot;Онбординг&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Прототип&quot;},&quot;demoData&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Прототип&quot;}}">
+const REPS_F = ["повторение", "повторения", "повторений"];
+const SETS_F = ["подход", "подхода", "подходов"];
+const EX_F = ["упражнение", "упражнения", "упражнений"];
+function plural(n, f) {
+  const a = Math.abs(n) % 100, b = a % 10;
+  if (a > 10 && a < 20) return f[2];
+  if (b === 1) return f[0];
+  if (b >= 2 && b <= 4) return f[1];
+  return f[2];
+}
+const cnt = (n, f) => n + "\u00A0" + plural(n, f);
+const num = (v) => String(v).replace(".", ",");
+const fmt = (r, w) => (w > 0 ? r + "\u00A0повт × " + num(w) + "\u00A0кг" : cnt(r, REPS_F));
+const short = (r, w) => (w > 0 ? r + "×" + num(w) : r + "\u00A0повт");
+
+const TRACK = { hit: "met", exceed: "positive", miss: "negative", skip: "skipped", todo: "todo" };
+
+/* Тоны выполненного подхода в строке трекинга: иконка несёт направление
+   (галочка / стрелка вверх / стрелка вниз / минус), никогда не крестик. */
+const ROW_TONES = {
+  hit: { fg: "var(--diff-met)", bg: "var(--diff-met-bg)", icon: "circle-check" },
+  exceed: { fg: "var(--diff-positive)", bg: "var(--diff-positive-bg)", icon: "circle-arrow-up" },
+  miss: { fg: "var(--diff-negative)", bg: "var(--diff-negative-bg)", icon: "circle-arrow-down" },
+  skip: { fg: "var(--diff-skipped)", bg: "var(--diff-skipped-bg)", icon: "circle-minus" },
+};
+
+/* Карточка текущего подхода всегда стоит так, чтобы её низ был в ANCHOR px
+   от низа списка — один сквозной список, но палец попадает в одно место
+   и на первом подходе, и на последнем. */
+const ANCHOR = 104;
+
+let SEQ = 1;
+const uid = () => "u" + SEQ++;
+
+/* Библиотека упражнений. Цвет и знак — свойства упражнения (не группы мышц). */
+const LIB = [
+  { id: "e1", name: "Жим лёжа", desc: "Штанга, горизонтальная скамья", color: "indigo", exercise: "bench-press", reps: 8, weight: 70 },
+  { id: "e2", name: "Жим гантелей на наклонной скамье", desc: "Угол 30°, гантели", color: "indigo", exercise: "dumbbell-press", reps: 10, weight: 24 },
+  { id: "e3", name: "Отжимания на брусьях", desc: "Свой вес, наклон корпуса вперёд", color: "teal", exercise: "pull-up", reps: 12, weight: 0 },
+  { id: "e4", name: "Жим стоя", desc: "Штанга, от груди над головой", color: "indigo", exercise: "dumbbell-press", reps: 8, weight: 40 },
+  { id: "e5", name: "Разгибания на блоке", desc: "Верхний блок, канат", color: "amber", exercise: "machine", reps: 12, weight: 25 },
+  { id: "e6", name: "Становая тяга", desc: "Классическая, штанга с пола", color: "coral", exercise: "deadlift", reps: 6, weight: 90 },
+  { id: "e7", name: "Тяга штанги в наклоне", desc: "Корпус около 45°", color: "coral", exercise: "deadlift", reps: 10, weight: 55 },
+  { id: "e8", name: "Подтягивания", desc: "Свой вес, прямой хват", color: "coral", exercise: "pull-up", reps: 10, weight: 0 },
+  { id: "e9", name: "Тяга верхнего блока", desc: "Широкий хват к груди", color: "teal", exercise: "pull-up", reps: 12, weight: 45 },
+  { id: "e10", name: "Сгибания на бицепс", desc: "Гантели, стоя", color: "amber", exercise: "curl", reps: 12, weight: 14 },
+  { id: "e11", name: "Приседания со штангой", desc: "Штанга на спине, до параллели", color: "lime", exercise: "squat", reps: 8, weight: 60 },
+  { id: "e12", name: "Румынская тяга", desc: "Штанга, ноги почти прямые", color: "lime", exercise: "deadlift", reps: 10, weight: 50 },
+  { id: "e13", name: "Жим ногами", desc: "Тренажёр, полная амплитуда", color: "lime", exercise: "rack", reps: 12, weight: 90 },
+  { id: "e14", name: "Подъёмы на носки", desc: "Стоя, в тренажёре", color: "amber", exercise: "machine", reps: 15, weight: 40 },
+  { id: "e15", name: "Скручивания", desc: "Свой вес, на полу", color: "amber", exercise: "crunch", reps: 20, weight: 0 },
+  { id: "e16", name: "Растяжка", desc: "Заминка, 5–7 минут", color: "slate", exercise: "stretch", reps: 1, weight: 0 },
+];
+const byId = (id) => LIB.find((x) => x.id === id);
+
+function item(exId, sets, last) {
+  const ex = byId(exId);
+  return { uid: uid(), exId, name: ex.name, desc: ex.desc, color: ex.color, exercise: ex.exercise, sets, last: last || null };
+}
+
+function seedPrograms() {
+  return [
+    { id: "p1", name: "Push Day", color: "indigo", exercise: "bench-press", items: [
+      item("e1", [[8, 70], [8, 80], [6, 85], [6, 85]], [[8, 70], [8, 77.5], [6, 82.5], [6, 80]]),
+      item("e2", [[10, 24], [10, 26], [8, 26]], [[10, 24], [10, 24], [8, 24]]),
+      item("e3", [[12, 0], [12, 0], [10, 0]], [[12, 0], [11, 0], [10, 0]]),
+      item("e4", [[8, 40], [8, 45], [6, 45]]),
+      item("e5", [[12, 25], [12, 25], [12, 25]]),
+    ] },
+    { id: "p2", name: "Pull Day", color: "coral", exercise: "pull-up", items: [
+      item("e6", [[6, 90], [6, 100], [5, 105], [5, 105]]),
+      item("e7", [[10, 55], [10, 60], [8, 60]]),
+      item("e8", [[10, 0], [8, 0], [8, 0]]),
+      item("e9", [[12, 45], [12, 45], [10, 50]]),
+      item("e10", [[12, 14], [12, 14], [10, 16]]),
+    ] },
+    { id: "p3", name: "Leg Day", color: "lime", exercise: "squat", items: [
+      item("e11", [[8, 60], [8, 70], [6, 75], [6, 75]]),
+      item("e12", [[10, 50], [10, 55], [8, 55]]),
+      item("e13", [[12, 90], [12, 100], [10, 100]]),
+      item("e14", [[15, 40], [15, 40], [15, 45]]),
+    ] },
+  ];
+}
+
+function seedHistory() {
+  const groups = [
+    { name: "Становая тяга", color: "coral", exercise: "deadlift", rows: [
+      { index: 1, target: fmt(6, 90), actual: fmt(6, 90), tone: "met", note: "" },
+      { index: 2, target: fmt(6, 100), actual: fmt(7, 100), tone: "positive", note: "" },
+      { index: 3, target: fmt(5, 105), actual: fmt(5, 105), tone: "met", note: "" },
+      { index: 4, target: fmt(5, 105), actual: fmt(4, 105), tone: "negative", note: "Спина устала, доработал в неполной амплитуде" },
+    ] },
+    { name: "Тяга штанги в наклоне", color: "coral", exercise: "deadlift", rows: [
+      { index: 1, target: fmt(10, 55), actual: fmt(10, 55), tone: "met", note: "" },
+      { index: 2, target: fmt(10, 60), actual: fmt(10, 60), tone: "met", note: "" },
+      { index: 3, target: fmt(8, 60), actual: fmt(9, 60), tone: "positive", note: "" },
+    ] },
+    { name: "Подтягивания", color: "coral", exercise: "pull-up", rows: [
+      { index: 1, target: fmt(10, 0), actual: fmt(11, 0), tone: "positive", note: "" },
+      { index: 2, target: fmt(8, 0), actual: fmt(8, 0), tone: "met", note: "" },
+      { index: 3, target: fmt(8, 0), actual: "", tone: "skipped", note: "" },
+    ] },
+  ];
+  return [{
+    id: "h1", programName: "Pull Day", date: "Вчера", dateFull: "6 августа 2026 · начало 19:02",
+    duration: "58 мин", month: "Август", color: "coral", exercise: "pull-up", groups,
+  }];
+}
+
+const COACH = [
+  { tab: "workout", view: "home", key: "start-cta", text: "Нажмите «Начать» — выберите программу и запустите тренировку." },
+  { tab: "workout", view: "session", key: "stepper", text: "Меняйте повторения и вес: нажимайте на ± или на само число, чтобы ввести точное значение." },
+  { tab: "workout", view: "session", key: "commit", text: "«Готово» — подход записан, дальше следующий. «Пропустить» — если решили его не делать." },
+  { tab: "history", view: "history", key: "history-card", text: "Каждая тренировка сохраняется здесь — открывайте, чтобы увидеть подробные результаты." },
+];
+const PHONE_W = 390, PHONE_H = 786;
+
+/* Пресеты для канваса: ключ экрана → состояние, в котором его надо показать.
+   Канвас монтирует этот же компонент с prop `screen`, поэтому экраны на канвасе
+   и в прототипе — один и тот же код, а не две расходящиеся копии. */
+function applyPreset(key, base, withOverlays) {
+  const s = { ...base, phase: "app" };
+  const p1 = s.programs[0], p3 = s.programs[2];
+  const ov = (name, arg) => {
+    if (withOverlays) { s.overlay = name; s.overlayArg = arg === undefined ? null : arg; }
+  };
+  const stack = (tab, list) => { s.tab = tab; s.stacks = { ...s.stacks, [tab]: list }; };
+  const edStack = (tail) => stack("programs", [{ v: "programs" }, { v: "editor", pid: p1.id }].concat(tail || []));
+
+  const session = (over) => {
+    const p = p1 || seedPrograms()[0];
+    const ses = {
+      pid: p.id, name: p.name, color: p.color, exercise: p.exercise,
+      exIdx: 0, seconds: 1224, done: false,
+      plan: p.items.map((i) => ({ name: i.name, color: i.color, exercise: i.exercise })),
+      sets: p.items.map((i) => i.sets.map((t, k) => ({
+        target: t.slice(), last: i.last ? i.last[k] : null,
+        state: "todo", reps: t[0], weight: t[1], note: "",
+      }))),
+    };
+    if (over) over(ses);
+    s.session = ses;
+    stack("workout", [{ v: "home" }, { v: "session" }]);
+  };
+
+  /* Упражнение на 8 подходов — для кадров «много подходов». */
+  const eight = (doneCount, notes) => {
+    const rows = [];
+    for (let i = 0; i < 8; i++) {
+      const state = i >= doneCount ? "todo" : i === 1 ? "exceed" : i === 2 ? "miss" : "hit";
+      rows.push({
+        target: [8, 80], last: [8, 77.5], state,
+        reps: state === "exceed" ? 9 : state === "miss" ? 6 : 8, weight: 80,
+        note: (notes && notes[i]) || "",
+      });
+    }
+    return rows;
+  };
+
+  switch (key) {
+    case "onboarding-welcome":
+      s.phase = "welcome"; break;
+
+    case "coach-home": case "coach-stepper": case "coach-commit": case "coach-history": {
+      const idx = ["coach-home", "coach-stepper", "coach-commit", "coach-history"].indexOf(key);
+      const def = COACH[idx];
+      s.phase = "coach"; s.obStep = idx;
+      if (def.view === "session") session((ses) => { ses.sets[0][0].state = "hit"; ses.seconds = 132; });
+      else stack(def.tab, [{ v: def.view }]);
+      break;
+    }
+
+    case "workout-home": break;
+    case "program-pick": ov("pick"); break;
+    case "program-pick-empty": s.programs = []; ov("pick"); break;
+
+    case "program-preview":
+      stack("workout", [{ v: "home" }, { v: "preview", pid: p1.id }]); break;
+    case "preview-exercise":
+      stack("workout", [{ v: "home" }, { v: "preview", pid: p1.id }]);
+      ov("exInfo", p1.items[0].uid); break;
+    case "preview-exercise-bw":
+      stack("workout", [{ v: "home" }, { v: "preview", pid: p1.id }]);
+      ov("exInfo", p1.items[2].uid); break;
+
+    case "session":
+      session((ses) => {
+        ses.exIdx = 1;
+        const r = ses.sets[1][0];
+        r.state = "exceed"; r.reps = 12; r.weight = 24;
+      }); break;
+    case "session-first": session((ses) => { ses.sets[0] = eight(0); }); break;
+    case "session-mid": session((ses) => { ses.sets[0] = eight(3, { 2: "тяжело, без страхующего" }); }); break;
+    case "session-last": session((ses) => { ses.sets[0] = eight(7, { 2: "тяжело" }); }); break;
+    case "session-comment":
+      session((ses) => { ses.sets[0] = eight(3, { 1: "правое плечо щёлкнуло на третьем повторении, дальше страховал напарник" }); }); break;
+    case "session-note": session((ses) => { ses.exIdx = 1; }); ov("note"); break;
+    case "session-switcher":
+      session((ses) => { ses.exIdx = 1; ses.sets[0].forEach((x) => { x.state = "hit"; }); });
+      ov("switch"); break;
+    case "session-end-early": session((ses) => { ses.exIdx = 1; }); ov("endEarly"); break;
+    case "session-done":
+      session((ses) => {
+        ses.sets.forEach((r, gi) => r.forEach((x, i) => {
+          x.state = gi === 0 && i === 3 ? "skip" : i % 5 === 2 ? "exceed" : "hit";
+        }));
+        ses.done = true; ses.seconds = 3161;
+      });
+      stack("workout", [{ v: "home" }, { v: "finished" }]);
+      break;
+
+    case "programs-list": stack("programs", [{ v: "programs" }]); break;
+    case "programs-empty": s.programs = []; stack("programs", [{ v: "programs" }]); break;
+    case "programs-delete": stack("programs", [{ v: "programs" }]); ov("delProgram", p3.id); break;
+    case "program-editor": edStack(); break;
+    case "program-mark": edStack(); ov("mark"); break;
+    case "picker": edStack([{ v: "picker", pid: p1.id }]); break;
+    case "picker-results": edStack([{ v: "picker", pid: p1.id }]); s.query = "Жим"; break;
+    case "picker-empty": edStack([{ v: "picker", pid: p1.id }]); s.query = "Жим Арнольда"; break;
+    case "exercise-create":
+      edStack([{ v: "picker", pid: p1.id }, { v: "exCreate", pid: p1.id }]);
+      s.draft = { name: "Жим Арнольда", desc: "Гантели, разворот кистей в верхней точке", color: "indigo", exercise: "dumbbell-press" };
+      break;
+    case "sets-editor": edStack([{ v: "setsEditor", pid: p1.id, uid: p1.items[0].uid }]); break;
+
+    case "history-list": stack("history", [{ v: "history" }]); break;
+    case "history-empty": s.history = []; stack("history", [{ v: "history" }]); break;
+    case "session-detail":
+      stack("history", [{ v: "history" }, { v: "detail", id: s.history[0].id }]); break;
+  }
+  return s;
+}
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = this.fresh();
+    this._timers = [];
+  }
+
+  fresh() {
+    const demo = this.props.demoData !== false;
+    const base = {
+      phase: this.props.startAt === "Главная" ? "app" : "welcome",
+      obStep: -1,
+      obRect: null,
+      theme: this.props.theme === "dark" ? "dark" : "light",
+      tab: "workout",
+      stacks: { workout: [{ v: "home" }], programs: [{ v: "programs" }], history: [{ v: "history" }] },
+      programs: demo ? seedPrograms() : [],
+      history: demo ? seedHistory() : [],
+      lib: LIB.slice(),
+      session: null,
+      overlay: null,
+      overlayArg: null,
+      noteDraft: "",
+      query: "",
+      draft: null,
+      dragFrom: null,
+    };
+    /* Канвас передаёт `screen` — тогда компонент показывает один заданный
+       экран без служебных кнопок; без него — живой прототип. */
+    return this.props.screen ? applyPreset(this.props.screen, base, this.props.overlays !== false) : base;
+  }
+
+  componentDidMount() {
+    if (!window.LyteDesignSystem_4a58ed) {
+      let tries = 0;
+      this._wait = setInterval(() => {
+        if (window.LyteDesignSystem_4a58ed || ++tries > 100) { clearInterval(this._wait); this.forceUpdate(); }
+      }, 50);
+    }
+    this._tick = setInterval(() => {
+      if (this.props.screen) return;
+      this.setState((s) => (s.session && !s.session.done ? { session: { ...s.session, seconds: s.session.seconds + 1 } } : null));
+    }, 1000);
+    this.retryMeasure();
+    this.layoutSets(false);
+    /* componentDidUpdate в этом рантайме отстаёт от реальной отрисовки,
+       поэтому позицию карточки доводит лёгкий поллинг, а не lifecycle-хук. */
+    this._layoutPoll = setInterval(() => this.layoutSets(true), 60);
+  }
+
+  /* Отбивки списка заданы в шаблоне константами (640px сверху, ANCHOR снизу):
+     в content-box clientHeight включает паддинг, поэтому padTop, посчитанный
+     от него, наращивал сам себя, а пересчёт на каждом тике спорил с
+     корректирующей прокруткой — якорь скакал. Здесь остаётся только scrollTop. */
+  layoutSets(animate) {
+    /* Ищем узлы в живом DOM, а не через ref: ref-колбэк отдавал узел от
+       предыдущего рендера, и корректирующая прокрутка уходила в отсоединённый
+       элемент — карточка оставалась внизу и обрезалась. */
+    const root = this._root;
+    const sc = root && root.querySelector("[data-setlist]");
+    const card = sc && sc.querySelector("[data-setcard]");
+    if (!sc || !card) return;
+    const h = sc.clientHeight;
+    if (!h) return;
+
+    const ses = this.state.session;
+    const key = ses ? ses.exIdx + ":" + this.curIdx(ses.sets, ses.exIdx) : "-";
+
+    const target = () => {
+      const cr = card.getBoundingClientRect(), sr = sc.getBoundingClientRect();
+      /* Канвас масштабируется: scrollTop в локальных px, а rect — в экранных. */
+      const k = (sr.height && sc.clientHeight) ? sr.height / sc.clientHeight : 1;
+      return (cr.bottom - (sr.bottom - ANCHOR * k)) / k + sc.scrollTop;
+    };
+    const delta = () => target() - sc.scrollTop;
+
+    /* Гейт только по фактическому совпадению, а не по ключу подхода: ре-рендер
+       пересоздаёт узел скроллера и сбрасывает scrollTop в 0 уже после того, как ключ
+       был записан, и карточка оставалась внизу без повторной коррекции. */
+    if (Math.abs(delta()) < 1) { this._setKey = key; return; }
+    const jumped = key !== this._setKey;
+    this._setKey = key;
+
+    cancelAnimationFrame(this._raf);
+    if (!animate || this._firstLayout !== false || !jumped) {
+      sc.scrollTop = Math.max(0, target());
+      this._firstLayout = false;
+      return;
+    }
+    /* Ручной твин вместо scrollTo({behavior:"smooth"}): нативная плавная прокрутка
+       обрывалась на середине из-за гонки с коррекцией позиции. */
+    const from = sc.scrollTop, to = Math.max(0, target());
+    const t0 = performance.now(), dur = 260;
+    const ease = (x) => 1 - Math.pow(1 - x, 3);
+    const step = (t) => {
+      const p = Math.min(1, (t - t0) / dur);
+      sc.scrollTop = from + (to - from) * ease(p);
+      if (p < 1) { this._raf = requestAnimationFrame(step); return; }
+      sc.scrollTop = Math.max(0, target());
+    };
+    this._raf = requestAnimationFrame(step);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this._tick);
+    clearInterval(this._wait);
+    clearInterval(this._layoutPoll);
+    clearInterval(this._coachPoll);
+    cancelAnimationFrame(this._raf);
+    this._timers.forEach(clearTimeout);
+  }
+
+  /* ---------- навигация ---------- */
+
+  top() { const st = this.state.stacks[this.state.tab]; return st[st.length - 1]; }
+
+  push(entry) {
+    this.setState((s) => {
+      const stacks = { ...s.stacks, [s.tab]: s.stacks[s.tab].concat([entry]) };
+      return { stacks, overlay: null, overlayArg: null };
+    });
+  }
+
+  pop() {
+    this.setState((s) => {
+      const cur = s.stacks[s.tab];
+      if (cur.length < 2) return { overlay: null };
+      return { stacks: { ...s.stacks, [s.tab]: cur.slice(0, -1) }, overlay: null, overlayArg: null, query: "", draft: null };
+    });
+  }
+
+  replaceTop(entry) {
+    this.setState((s) => ({ stacks: { ...s.stacks, [s.tab]: s.stacks[s.tab].slice(0, -1).concat([entry]) }, overlay: null }));
+  }
+
+  setTab(tab) { this.setState({ tab, overlay: null, overlayArg: null }); }
+
+  resetTab(tab, entry) {
+    this.setState((s) => ({ tab, stacks: { ...s.stacks, [tab]: [entry] }, overlay: null, overlayArg: null }));
+  }
+
+  /* ---------- программы ---------- */
+
+  updProgram(pid, fn) {
+    this.setState((s) => ({
+      programs: s.programs.map((p) => (p.id === pid ? fn({ ...p, items: p.items.map((i) => ({ ...i, sets: i.sets.map((x) => x.slice()) })) }) : p)),
+    }));
+  }
+
+  newProgram() {
+    const p = { id: uid(), name: "Новая программа", color: "slate", exercise: "squat", items: [] };
+    this.setState((s) => ({
+      tab: "programs",
+      programs: s.programs.concat([p]),
+      stacks: { ...s.stacks, programs: [{ v: "programs" }, { v: "editor", pid: p.id }] },
+      overlay: null, overlayArg: null,
+    }));
+  }
+
+  addExercise(pid, exId) {
+    const ex = this.state.lib.find((x) => x.id === exId) || byId(exId);
+    this.updProgram(pid, (p) => {
+      p.items = p.items.concat([{
+        uid: uid(), exId: ex.id, name: ex.name, desc: ex.desc, color: ex.color, exercise: ex.exercise,
+        sets: [[ex.reps, ex.weight], [ex.reps, ex.weight], [ex.reps, ex.weight]], last: null,
+      }]);
+      return p;
+    });
+    this.pop();
+  }
+
+  reorder(pid, from, to) {
+    if (from === to || from == null) return;
+    this.updProgram(pid, (p) => {
+      const items = p.items.slice();
+      const [moved] = items.splice(from, 1);
+      items.splice(to, 0, moved);
+      p.items = items;
+      return p;
+    });
+  }
+
+  /* ---------- сессия ---------- */
+
+  startSession(program) {
+    this.setState((s) => ({
+      tab: "workout",
+      stacks: { ...s.stacks, workout: [{ v: "home" }, { v: "session" }] },
+      overlay: null, overlayArg: null,
+      session: {
+        pid: program.id, name: program.name, color: program.color, exercise: program.exercise,
+        exIdx: 0, seconds: 0, done: false,
+        plan: program.items.map((i) => ({ name: i.name, color: i.color, exercise: i.exercise })),
+        sets: program.items.map((i) => i.sets.map((t, k) => ({
+          target: t.slice(), last: i.last ? i.last[k] : null,
+          state: "todo", reps: t[0], weight: t[1], note: "",
+        }))),
+      },
+    }));
+  }
+
+  curIdx(sets, ex) { return sets[ex] ? sets[ex].findIndex((x) => x.state === "todo") : -1; }
+
+  patchSession(fn) {
+    this.setState((s) => {
+      if (!s.session) return null;
+      const sets = s.session.sets.map((r) => r.map((x) => ({ ...x })));
+      const next = fn(sets, s.session) || {};
+      return { session: { ...s.session, sets, ...next } };
+    });
+  }
+
+  closeSet(tone) {
+    this.patchSession((sets, ses) => {
+      const i = this.curIdx(sets, ses.exIdx);
+      if (i < 0) return null;
+      const set = sets[ses.exIdx][i];
+      if (tone) set.state = tone;
+      else {
+        const [tr, tw] = set.target;
+        set.state = set.reps > tr || (set.reps === tr && set.weight > tw) ? "exceed"
+          : set.reps === tr && set.weight === tw ? "hit" : "miss";
+      }
+      if (this.curIdx(sets, ses.exIdx) >= 0) return null;
+      for (let k = 1; k <= sets.length; k++) {
+        const j = (ses.exIdx + k) % sets.length;
+        if (this.curIdx(sets, j) >= 0) return { exIdx: j };
+      }
+      return { done: true };
+    });
+    this._timers.push(setTimeout(() => {
+      if (this.state.session && this.state.session.done) this.replaceTop({ v: "finished" });
+    }, 20));
+  }
+
+  endEarly() {
+    this.patchSession((sets) => {
+      sets.forEach((r) => r.forEach((x) => { if (x.state === "todo") x.state = "skip"; }));
+      return { done: true };
+    });
+    this.setState({ overlay: null });
+    this._timers.push(setTimeout(() => this.replaceTop({ v: "finished" }), 20));
+  }
+
+  saveSession() {
+    const ses = this.state.session;
+    if (!ses) return;
+    const groups = ses.plan.map((e, gi) => ({
+      name: e.name, color: e.color, exercise: e.exercise,
+      rows: ses.sets[gi].map((s, ri) => ({
+        index: ri + 1,
+        target: fmt(s.target[0], s.target[1]),
+        actual: s.state === "skip" ? "" : fmt(s.reps, s.weight),
+        tone: TRACK[s.state] || "skipped",
+        note: s.note || "",
+      })),
+    }));
+    const mins = Math.max(1, Math.round(ses.seconds / 60));
+    const entry = {
+      id: uid(), programName: ses.name, date: "Сегодня", dateFull: "7 августа 2026 · начало 9:41",
+      duration: mins + " мин", month: "Август", color: ses.color, exercise: ses.exercise, groups,
+    };
+    this.setState((s) => ({
+      history: [entry].concat(s.history),
+      session: null,
+      tab: "workout",
+      stacks: { ...s.stacks, workout: [{ v: "home" }] },
+      overlay: null,
+    }));
+  }
+
+  /* ---------- coach-marks ---------- */
+
+  /* Замер подсветки не одноразовый, а пока идёт обучение: на канвасе с десятками
+     рамок шрифты и маски-иконки догружаются заметно позже первого кадра,
+     и ранний замер оставлял рамку сдвинутой. */
+  retryMeasure() {
+    this._coachTimers && this._coachTimers.forEach(clearTimeout);
+    this._coachTimers = [0, 60, 150, 300, 600, 1000].map((ms) => setTimeout(() => this.measureOnce(), ms));
+    clearInterval(this._coachPoll);
+    this._coachPoll = setInterval(() => {
+      if (this.state.phase !== "coach") { clearInterval(this._coachPoll); return; }
+      this.measureOnce();
+    }, 400);
+  }
+
+  measureOnce() {
+    const st = this.state;
+    if (st.phase !== "coach") return;
+    const def = COACH[st.obStep];
+    const root = this._root;
+    if (!def || !root) return;
+    let el = null;
+    if (def.key === "stepper") {
+      el = root.querySelector('[data-coach-target="stepper"]');
+    } else {
+      el = root.querySelector('[data-coach-target="' + def.key + '"]');
+    }
+    if (!el) return;
+    const rr = root.getBoundingClientRect(), er = el.getBoundingClientRect();
+    /* Канвас масштабируется CSS-трансформом, а getBoundingClientRect возвращает
+       уже масштабированные пиксели — подсветка же ставится в локальных CSS px.
+       Без деления на масштаб зона ездила при каждом зуме. */
+    const k = (rr.width && root.offsetWidth) ? rr.width / root.offsetWidth : 1;
+    const rect = {
+      x: Math.round((er.left - rr.left) / k),
+      y: Math.round((er.top - rr.top) / k),
+      w: Math.round(er.width / k),
+      h: Math.round(er.height / k),
+    };
+    const sig = [rect.x, rect.y, rect.w, rect.h].join();
+    if (sig !== this._sig) { this._sig = sig; this.setState({ obRect: rect }); }
+  }
+
+  goToStep(i) {
+    const idx = Math.max(0, Math.min(COACH.length - 1, i));
+    const def = COACH[idx];
+    this._sig = null;
+    this.setState((s) => {
+      const next = { phase: "coach", obStep: idx, obRect: null, tab: def.tab, overlay: null };
+      if (def.view === "session") {
+        const p = s.programs[0] || seedPrograms()[0];
+        if (!s.session) {
+          next.session = {
+            pid: p.id, name: p.name, color: p.color, exercise: p.exercise, exIdx: 0, seconds: 132, done: false,
+            plan: p.items.map((i) => ({ name: i.name, color: i.color, exercise: i.exercise })),
+            sets: p.items.map((i) => i.sets.map((t, k) => ({
+              target: t.slice(), last: i.last ? i.last[k] : null,
+              state: k === 0 ? "hit" : "todo", reps: t[0], weight: t[1], note: "",
+            }))),
+          };
+        }
+        next.stacks = { ...s.stacks, workout: [{ v: "home" }, { v: "session" }] };
+      } else {
+        next.stacks = { ...s.stacks, workout: [{ v: "home" }], history: [{ v: "history" }] };
+      }
+      return next;
+    });
+    this.retryMeasure();
+  }
+
+  finishOnboarding() {
+    this.setState((s) => ({
+      phase: "app", obStep: -1, obRect: null, session: null, tab: "workout",
+      stacks: { ...s.stacks, workout: [{ v: "home" }] },
+    }));
+  }
+
+  resetAll() {
+    this._sig = null;
+    this.setState(this.fresh());
+    this.retryMeasure();
+  }
+
+  /* ---------- render ---------- */
+
+  renderVals() {
+    const DS = window.LyteDesignSystem_4a58ed;
+    const h = React.createElement;
+    const st = this.state;
+    const top = this.top();
+    const view = top.v;
+    const onboarding = st.phase === "coach";
+    const ov = st.overlay;
+
+    const program = (pid) => st.programs.find((p) => p.id === pid) || null;
+    const closeOverlay = () => this.setState({ overlay: null, overlayArg: null });
+
+    const v = {
+      n: { i15: 15, i17: 17, i20: 20, i36: 36, i52: 52, i56: 56, step1: 1, step25: 2.5, zero: 0, one: 1, track: 16, mark36: 36, mark44: 44, mark52: 52 },
+      theme: st.theme,
+      chrome: !this.props.screen,
+      rootStyle: this.props.screen
+        ? "position:absolute;inset:0;font-family:var(--font-brand)"
+        : "min-height:100vh;box-sizing:border-box;padding:44px 24px 34px;display:flex;flex-direction:column;align-items:center;gap:16px;font-family:var(--font-brand)",
+      themeLabel: st.theme === "dark" ? "Светлая тема" : "Тёмная тема",
+      toggleTheme: () => this.setState({ theme: st.theme === "dark" ? "light" : "dark" }),
+      resetAll: () => this.resetAll(),
+      rootRef: (el) => { if (el) this._root = el; },
+      scRef: (el) => { if (el) this._sc = el; },
+      cardRef: (el) => { if (el) this._card = el; },
+      appPointer: onboarding ? "none" : "auto",
+
+      vWelcome: st.phase === "welcome",
+      vHome: st.phase !== "welcome" && st.tab === "workout" && view === "home",
+      vPreview: st.phase !== "welcome" && st.tab === "workout" && view === "preview",
+      vSession: st.phase !== "welcome" && st.tab === "workout" && view === "session" && !!st.session,
+      vFinished: st.phase !== "welcome" && st.tab === "workout" && view === "finished" && !!st.session,
+      vPrograms: st.phase !== "welcome" && st.tab === "programs" && view === "programs",
+      vEditor: st.phase !== "welcome" && st.tab === "programs" && view === "editor",
+      vPicker: st.phase !== "welcome" && st.tab === "programs" && view === "picker",
+      vExCreate: st.phase !== "welcome" && st.tab === "programs" && view === "exCreate",
+      vSets: st.phase !== "welcome" && st.tab === "programs" && view === "setsEditor",
+      vHistory: st.phase !== "welcome" && st.tab === "history" && view === "history",
+      vDetail: st.phase !== "welcome" && st.tab === "history" && view === "detail",
+
+      shPick: ov === "pick",
+      shExInfo: ov === "exInfo",
+      shMenu: ov === "menu",
+      shMark: ov === "mark",
+      shNote: ov === "note",
+      shSwitch: ov === "switch",
+      dlgEnd: ov === "endEarly",
+      dlgDeleteProgram: ov === "delProgram",
+      dlgDeleteSession: ov === "delSession",
+      closeOverlay,
+
+      setTab: (t) => this.setTab(t),
+      pop: () => this.pop(),
+      startWalkthrough: () => this.goToStep(0),
+      skipOnboarding: () => this.finishOnboarding(),
+      coachNext: () => (st.obStep >= COACH.length - 1 ? this.finishOnboarding() : this.goToStep(st.obStep + 1)),
+
+      openPickProgram: () => this.setState({ overlay: "pick" }),
+      newProgram: () => this.newProgram(),
+      newProgramFromSheet: () => this.newProgram(),
+      query: st.query,
+      setQuery: (q) => this.setState({ query: q }),
+      noteDraft: st.noteDraft,
+      setNoteDraft: (t) => this.setState({ noteDraft: t }),
+
+      programsEmpty: st.programs.length === 0,
+      programsFilled: st.programs.length > 0,
+      programRows: st.programs.map((p) => ({
+        name: p.name, color: p.color, exercise: p.exercise, exerciseCount: p.items.length,
+        onClick: () => this.push({ v: "editor", pid: p.id }),
+        /* Одно действие на карточке — удаление; кебаб с меню убран. */
+        trailing: DS ? h(DS.IconButton, { icon: "trash-2", label: "Удалить программу", size: 38, onClick: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.setState({ overlay: "delProgram", overlayArg: p.id }); } }) : null,
+      })),
+      pickProgramRows: st.programs.map((p) => ({
+        name: p.name, color: p.color, exercise: p.exercise,
+        subtitle: cnt(p.items.length, EX_F),
+        onClick: () => { this.setState({ overlay: null }); this.push({ v: "preview", pid: p.id }); },
+      })),
+    };
+
+    /* превью программы */
+    const pvProgram = view === "preview" ? program(top.pid) : null;
+    v.pv = pvProgram ? {
+      name: pvProgram.name,
+      count: cnt(pvProgram.items.length, EX_F),
+      items: pvProgram.items.map((i) => ({
+        name: i.name, color: i.color, exercise: i.exercise, plan: i.sets,
+        onClick: () => this.setState({ overlay: "exInfo", overlayArg: i.uid }),
+      })),
+    } : { name: "", count: "", items: [] };
+    v.startPreviewSession = () => pvProgram && this.startSession(pvProgram);
+
+    /* карточка упражнения в превью */
+    let infoItem = null;
+    if (ov === "exInfo" && pvProgram) infoItem = pvProgram.items.find((i) => i.uid === st.overlayArg) || null;
+    v.exInfo = infoItem ? {
+      name: infoItem.name, desc: infoItem.desc, color: infoItem.color, exercise: infoItem.exercise,
+      count: cnt(infoItem.sets.length, SETS_F),
+      rows: infoItem.sets.map((s, i) => ({ n: i + 1, value: fmt(s[0], s[1]) })),
+    } : { name: "", desc: "", color: "slate", exercise: "squat", count: "", rows: [] };
+
+    /* меню программы + удаление */
+    const menuProgram = program(st.overlayArg);
+    v.menu = {
+      name: menuProgram ? menuProgram.name : "",
+      onEdit: () => { closeOverlay(); this.resetTab("programs", { v: "programs" }); this._timers.push(setTimeout(() => this.push({ v: "editor", pid: st.overlayArg }), 0)); },
+      onDelete: () => this.setState({ overlay: "delProgram" }),
+    };
+    v.delProgramTitle = menuProgram ? "Удалить программу «" + menuProgram.name + "»?" : "Удалить программу?";
+    v.deleteProgram = () => this.setState((s) => ({
+      programs: s.programs.filter((p) => p.id !== s.overlayArg),
+      overlay: null, overlayArg: null,
+      stacks: { ...s.stacks, programs: [{ v: "programs" }] },
+    }));
+
+    /* редактор программы */
+    const edProgram = ["editor", "picker", "exCreate", "setsEditor"].indexOf(view) >= 0 ? program(top.pid) : null;
+    const dragFrom = st.dragFrom;
+    v.ed = edProgram ? {
+      name: edProgram.name, color: edProgram.color, exercise: edProgram.exercise,
+      markLabel: "Как программа выглядит в списке",
+      countLabel: edProgram.items.length ? cnt(edProgram.items.length, EX_F) : "Упражнения",
+      empty: edProgram.items.length === 0,
+      items: edProgram.items.map((i, idx) => ({
+        name: i.name, color: i.color, exercise: i.exercise, plan: i.sets,
+        opacity: dragFrom === idx ? 0.45 : 1,
+        onEdit: () => this.push({ v: "setsEditor", pid: edProgram.id, uid: i.uid }),
+        onRemove: () => this.updProgram(edProgram.id, (p) => { p.items = p.items.filter((x) => x.uid !== i.uid); return p; }),
+        onDragStart: () => this.setState({ dragFrom: idx }),
+        onDragOver: (e) => e.preventDefault(),
+        onDrop: (e) => { e.preventDefault(); this.reorder(edProgram.id, st.dragFrom, idx); this.setState({ dragFrom: null }); },
+        onDragEnd: () => this.setState({ dragFrom: null }),
+      })),
+    } : { name: "", color: "slate", exercise: "squat", markLabel: "", countLabel: "", empty: true, items: [] };
+    v.setProgramName = (name) => edProgram && this.updProgram(edProgram.id, (p) => { p.name = name; return p; });
+    v.setProgramColor = (c) => edProgram && this.updProgram(edProgram.id, (p) => { p.color = c; return p; });
+    v.setProgramIcon = (g) => edProgram && this.updProgram(edProgram.id, (p) => { p.exercise = g; return p; });
+    v.openProgramMark = () => this.setState({ overlay: "mark" });
+    v.openPicker = () => edProgram && this.push({ v: "picker", pid: edProgram.id });
+
+    /* выбор упражнения */
+    const q = st.query.trim().toLowerCase();
+    const pick = st.lib.filter((e) => !q || e.name.toLowerCase().indexOf(q) >= 0);
+    v.pickRows = pick.map((e) => ({
+      name: e.name, desc: e.desc, color: e.color, exercise: e.exercise,
+      onClick: () => edProgram && this.addExercise(edProgram.id, e.id),
+    }));
+    v.pickEmpty = pick.length === 0;
+    v.openExCreate = () => { this.setState({ draft: { name: st.query.trim(), desc: "", color: "slate", exercise: "squat" } }); this.push({ v: "exCreate", pid: top.pid }); };
+
+    const d = st.draft || { name: "", desc: "", color: "slate", exercise: "squat" };
+    v.draft = { name: d.name, desc: d.desc, color: d.color, exercise: d.exercise, invalid: !d.name.trim() };
+    const setDraft = (patch) => this.setState((s) => ({ draft: { ...(s.draft || d), ...patch } }));
+    v.setDraftName = (t) => setDraft({ name: t });
+    v.setDraftDesc = (t) => setDraft({ desc: t });
+    v.setDraftColor = (c) => setDraft({ color: c });
+    v.setDraftIcon = (g) => setDraft({ exercise: g });
+    v.saveDraft = () => {
+      if (!d.name.trim()) return;
+      const ex = { id: uid(), name: d.name.trim(), desc: d.desc.trim() || "Своё упражнение", color: d.color, exercise: d.exercise, reps: 10, weight: 0 };
+      this.setState((s) => ({ lib: s.lib.concat([ex]), draft: null, query: "" }));
+      this._timers.push(setTimeout(() => {
+        const pid = top.pid;
+        this.setState((s) => {
+          const stack = s.stacks.programs.filter((x) => x.v !== "exCreate" && x.v !== "picker");
+          return { stacks: { ...s.stacks, programs: stack } };
+        });
+        this.updProgram(pid, (p) => {
+          p.items = p.items.concat([{
+            uid: uid(), exId: ex.id, name: ex.name, desc: ex.desc, color: ex.color, exercise: ex.exercise,
+            sets: [[10, 0], [10, 0], [10, 0]], last: null,
+          }]);
+          return p;
+        });
+      }, 0));
+    };
+
+    /* редактор подходов */
+    const seItem = view === "setsEditor" && edProgram ? edProgram.items.find((i) => i.uid === top.uid) : null;
+    v.se = seItem ? {
+      name: seItem.name, count: cnt(seItem.sets.length, SETS_F),
+      rows: seItem.sets.map((s, i) => ({
+        n: i + 1, reps: s[0], weight: s[1],
+        onReps: (val) => this.updProgram(edProgram.id, (p) => {
+          const it = p.items.find((x) => x.uid === seItem.uid); it.sets[i][0] = Math.max(1, val); return p;
+        }),
+        onWeight: (val) => this.updProgram(edProgram.id, (p) => {
+          const it = p.items.find((x) => x.uid === seItem.uid); it.sets[i][1] = Math.max(0, val); return p;
+        }),
+        onRemove: () => this.updProgram(edProgram.id, (p) => {
+          const it = p.items.find((x) => x.uid === seItem.uid);
+          if (it.sets.length > 1) it.sets.splice(i, 1);
+          return p;
+        }),
+      })),
+    } : { name: "", count: "", rows: [] };
+    v.addSet = () => seItem && this.updProgram(edProgram.id, (p) => {
+      const it = p.items.find((x) => x.uid === seItem.uid);
+      it.sets.push(it.sets[it.sets.length - 1].slice());
+      return p;
+    });
+
+    /* история */
+    const groups = [];
+    st.history.forEach((row) => {
+      let g = groups.find((x) => x.month === row.month);
+      if (!g) { g = { month: row.month, rows: [] }; groups.push(g); }
+      g.rows.push({
+        programName: row.programName, date: row.date, duration: row.duration,
+        color: row.color, exercise: row.exercise,
+        tones: row.groups.flatMap((gr) => gr.rows.map((r) => r.tone)),
+        coach: groups.length === 1 && g.rows.length === 0 ? "history-card" : "",
+        onClick: () => this.push({ v: "detail", id: row.id }),
+      });
+    });
+    v.historyGroups = groups;
+    v.historyEmpty = st.history.length === 0;
+
+    const dtRow = view === "detail" ? st.history.find((x) => x.id === top.id) : null;
+    v.dt = dtRow ? {
+      programName: dtRow.programName, dateFull: dtRow.dateFull, duration: dtRow.duration,
+      total: dtRow.groups.reduce((a, g) => a + g.rows.length, 0),
+      tones: dtRow.groups.flatMap((g) => g.rows.map((r) => r.tone)),
+      groups: dtRow.groups,
+      trailing: DS ? h(DS.IconButton, { icon: "trash-2", label: "Удалить тренировку", size: 44, onClick: () => this.setState({ overlay: "delSession", overlayArg: dtRow.id }) }) : null,
+    } : { programName: "", dateFull: "", duration: "", total: 0, tones: [], groups: [], trailing: null };
+    v.delSessionTitle = dtRow ? "Удалить тренировку «" + dtRow.programName + "»?" : "Удалить тренировку?";
+    v.deleteSession = () => this.setState((s) => ({
+      history: s.history.filter((x) => x.id !== s.overlayArg),
+      overlay: null, overlayArg: null,
+      stacks: { ...s.stacks, history: [{ v: "history" }] },
+    }));
+
+    /* активная сессия */
+    const ses = st.session;
+    if (ses) {
+      const ci = this.curIdx(ses.sets, ses.exIdx);
+      const row = ses.sets[ses.exIdx] || [];
+      const cur = row[ci < 0 ? row.length - 1 : ci] || { reps: 0, weight: 0, note: "", target: [0, 0] };
+      v.seconds = ses.seconds;
+      v.sessionName = ses.name;
+      v.exName = (ses.plan[ses.exIdx] || {}).name || "";
+      v.exCounter = "Упражнение " + (ses.exIdx + 1) + " из " + ses.plan.length;
+      const doneCount = ci < 0 ? row.length : ci;
+      v.doneSets = row.slice(0, doneCount).map((s, i) => {
+        const t = ROW_TONES[s.state] || ROW_TONES.skip;
+        return {
+          n: i + 1, fg: t.fg, bg: t.bg, icon: t.icon,
+          value: s.state === "skip" ? "пропущен" : fmt(s.reps, s.weight),
+          note: s.note || "",
+        };
+      });
+      /* Две подписанные строки-ориентира, а не один слипшийся прогон:
+         в подробном формате «цель … · в прошлый раз …» переносился по словам. */
+      v.cur = {
+        n: doneCount + 1,
+        of: "из " + row.length,
+        reps: cur.reps, weight: cur.weight,
+        ref: [
+          { label: "Цель", value: fmt(cur.target[0], cur.target[1]) },
+          cur.last ? { label: "В прошлый раз", value: fmt(cur.last[0], cur.last[1]) } : null,
+        ].filter(Boolean),
+      };
+      const rest = ci < 0 ? [] : row.slice(ci + 1);
+      v.upNext = rest.map((s, i) => ({ n: doneCount + 2 + i, target: fmt(s.target[0], s.target[1]) }));
+      v.isLastSet = rest.length === 0;
+      v.lastSetLabel = ses.exIdx === ses.plan.length - 1 ? "Последний подход" : "Последний подход в упражнении";
+      v.noteLabel = cur.note ? "Изменить заметку" : "Заметка";
+      const flat = ses.sets.flat();
+      v.totalSets = flat.length;
+      v.resultTones = flat.map((x) => TRACK[x.state] || "todo");
+      v.resultSummary = flat.filter((x) => x.state !== "todo" && x.state !== "skip").length + " из " + cnt(flat.length, SETS_F) + " выполнено";
+      v.setReps = (val) => this.patchSession((sets, s) => { const i = this.curIdx(sets, s.exIdx); if (i >= 0) sets[s.exIdx][i].reps = Math.max(0, val); });
+      v.setWeight = (val) => this.patchSession((sets, s) => { const i = this.curIdx(sets, s.exIdx); if (i >= 0) sets[s.exIdx][i].weight = Math.max(0, val); });
+      v.commitSet = () => this.closeSet(null);
+      v.skipSet = () => this.closeSet("skip");
+      v.openNote = () => this.setState({ overlay: "note", noteDraft: cur.note || "" });
+      v.saveNote = () => this.patchSession((sets, s) => {
+        const i = this.curIdx(sets, s.exIdx);
+        if (i >= 0) sets[s.exIdx][i].note = st.noteDraft.trim();
+        this.setState({ overlay: null });
+        return null;
+      });
+      v.openSwitcher = () => this.setState({ overlay: "switch" });
+      v.openEndEarly = () => this.setState({ overlay: "endEarly" });
+      v.endEarly = () => this.endEarly();
+      v.saveSession = () => this.saveSession();
+      v.curNote = cur.note;
+      v.noNote = !cur.note;
+    } else {
+      v.seconds = 0; v.sessionName = ""; v.exName = ""; v.exCounter = "";
+      v.doneSets = []; v.upNext = []; v.isLastSet = false; v.lastSetLabel = ""; v.noteLabel = "Заметка";
+      v.cur = { n: 1, of: "", reps: 0, weight: 0, ref: [] };
+      v.totalSets = 0; v.resultTones = []; v.resultSummary = "";
+      v.setReps = () => {}; v.setWeight = () => {}; v.commitSet = () => {}; v.skipSet = () => {};
+      v.openNote = () => {}; v.saveNote = () => {}; v.openSwitcher = () => {}; v.openEndEarly = () => {};
+      v.endEarly = () => {}; v.saveSession = () => {}; v.curNote = ""; v.noNote = true;
+    }
+
+    /* coach-marks */
+    let coach = null;
+    const def = COACH[st.obStep];
+    if (onboarding && def && st.obRect) {
+      const pad = 8, r = st.obRect;
+      const x = r.x - pad, y = r.y - pad, w = r.w + pad * 2, hh = r.h + pad * 2;
+      const calloutW = 300;
+      const below = PHONE_H - (y + hh) > 170;
+      coach = {
+        x, y, w, h: hh, r: Math.min(28, hh / 2),
+        calloutW,
+        calloutX: Math.max(12, Math.min(PHONE_W - calloutW - 12, x + w / 2 - calloutW / 2)),
+        calloutY: below ? y + hh + 14 : Math.max(12, y - 164),
+        text: def.text,
+        cta: st.obStep === COACH.length - 1 ? "Понятно" : "Далее",
+        showSkip: st.obStep !== COACH.length - 1,
+        dots: COACH.map((_, i) => ({
+          w: i === st.obStep ? 18 : 6,
+          bg: i === st.obStep ? "var(--md-sys-color-primary)" : "var(--md-sys-color-outline-variant)",
+          goTo: () => this.goToStep(i),
+        })),
+      };
+    }
+    v.coach = coach;
+
+    if (!DS) return v;
+    v.icoPlay = h(DS.Icon, { name: "play", size: 20 });
+    v.icoPlus = h(DS.Icon, { name: "plus", size: 20 });
+    v.icoPencil = h(DS.Icon, { name: "pencil-line", size: 16 });
+    v.noteChip = null;
+    if (ses) {
+      v.switchRows = ses.plan.map((e, i) => {
+        const r = ses.sets[i];
+        const left = r.filter((x) => x.state === "todo").length;
+        const at = this.curIdx(ses.sets, i);
+        return {
+          name: e.name, color: e.color, exercise: e.exercise,
+          subtitle: left === 0 ? "все подходы закрыты"
+            : i === ses.exIdx ? "подход " + (at + 1) + " из " + r.length
+            : r.length - left > 0 ? (r.length - left) + " из " + r.length
+            : cnt(r.length, SETS_F),
+          trailing: left === 0 ? h(DS.Icon, { name: "check", size: 18, color: "var(--md-sys-color-on-surface-variant)" })
+            : i === ses.exIdx ? h(DS.Badge, { tone: "primary" }, "сейчас") : null,
+          onClick: () => this.setState((s) => ({ overlay: null, session: { ...s.session, exIdx: i } })),
+        };
+      });
+    } else v.switchRows = [];
+    return v;
+  }
+}
+</script>
+</body>
+</html>

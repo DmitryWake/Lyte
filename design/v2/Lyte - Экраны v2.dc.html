@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/lyte-design-system-4a58ed82-d30c-4b92-8a56-e55130ee91b0/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/lyte-design-system-4a58ed82-d30c-4b92-8a56-e55130ee91b0/tokens/colors.css">
+<link rel="stylesheet" href="_ds/lyte-design-system-4a58ed82-d30c-4b92-8a56-e55130ee91b0/tokens/accents.css">
+<link rel="stylesheet" href="_ds/lyte-design-system-4a58ed82-d30c-4b92-8a56-e55130ee91b0/tokens/typography.css">
+<link rel="stylesheet" href="_ds/lyte-design-system-4a58ed82-d30c-4b92-8a56-e55130ee91b0/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/lyte-design-system-4a58ed82-d30c-4b92-8a56-e55130ee91b0/styles.css">
+<link rel="stylesheet" href="dark-scope.css">
+<script src="_ds/lyte-design-system-4a58ed82-d30c-4b92-8a56-e55130ee91b0/_ds_bundle.js"></script>
+<style>
+  body { margin: 0; background: #e9ece3; }
+  a { color: var(--md-sys-color-primary); text-decoration: none; }
+  a:hover { color: var(--md-sys-color-on-surface); }
+</style>
+</helmet>
+
+<div style="min-width:4400px;padding:80px 80px 130px;box-sizing:border-box;font-family:var(--font-brand);display:flex;flex-direction:column;gap:110px">
+
+  <div style="display:flex;flex-direction:column;gap:10px;max-width:900px">
+    <span style="font-family:var(--font-wordmark);font-weight:700;font-size:52px;line-height:56px;letter-spacing:-1px;color:#22261d">Lyte<span style="color:var(--md-sys-color-primary)">.</span></span>
+    <span style="font-size:19px;line-height:28px;color:#5b6154;text-wrap:pretty">Экраны MVP на дизайн-системе v2. Та же логика, что и в исходных макетах: маркер упражнения вместо крупного заголовка, одна цифра на карточку, шкала подходов вместо «15/16», трекинг на ExerciseSetList.</span>
+  </div>
+
+  <sc-for list="{{ sections }}" as="s" hint-placeholder-count="6">
+    <div style="display:flex;flex-direction:column;gap:30px">
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <span style="font-size:34px;font-weight:700;letter-spacing:-0.5px;color:#383d33">{{ s.title }}</span>
+        <span style="font-size:15px;color:#7b8073">{{ s.sub }}</span>
+      </div>
+      <div style="display:flex;gap:90px;align-items:flex-start">
+        <sc-for list="{{ s.frames }}" as="f" hint-placeholder-count="9">
+          <div data-screen-label="{{ f.label }}" style="width:390px;flex:0 0 auto">
+            <sc-if value="{{ showLabels }}" hint-placeholder-val="{{ true }}">
+              <div style="margin-bottom:14px;display:flex;flex-direction:column;gap:2px;padding-left:6px;min-height:38px">
+                <span style="font-size:15px;font-weight:600;color:#464b41">{{ f.label }}</span>
+                <span style="font-size:12.5px;color:#878b80">{{ f.note }}</span>
+              </div>
+            </sc-if>
+            <dc-import name="LyteScreen" screen="{{ f.screen }}" theme="{{ f.theme }}" overlays="{{ showOverlays }}" style="position:relative;width:390px;height:844px" hint-size="390px,844px"></dc-import>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-for>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showDark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Канвас&quot;},&quot;showAnnotations&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Канвас&quot;},&quot;overlays&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Экраны&quot;}}">
+const ONBOARDING_FRAMES = [
+  ["onboarding-welcome", "0.0 · Обучение — приветствие", "Что это и зачем, перед coach-marks"],
+  ["coach-home", "0.1 · Обучение — старт сессии", "Спотлайт на «Начать»: реальный экран 4.1 под затемнением"],
+  ["coach-stepper", "0.2 · Обучение — степперы", "Спотлайт на ± повторений и веса поверх реального экрана 4.3"],
+  ["coach-commit", "0.3 · Обучение — фиксация подхода", "Спотлайт на «Готово» / «Пропустить»"],
+  ["coach-history", "0.4 · Обучение — история", "Спотлайт на первую карточку сессии, экран 5.1"],
+];
+
+const WORKOUT = [
+  ["workout-home", "4.1 · Нет активной сессии", "Стартовый таб"],
+  ["program-pick", "4.1 · Выбор тренировки", "Список программ в режиме выбора"],
+  ["program-pick-empty", "4.1 · Выбор — нет программ", "Empty state со ссылкой на создание"],
+  ["program-preview", "4.2 · Превью программы", "Перед стартом сессии"],
+  ["preview-exercise", "4.2 · Описание упражнения", "Быстрый просмотр по тапу на упражнение"],
+  ["preview-exercise-bw", "4.2 · Описание — без веса", "Только повторения, вес не показываем"],
+  ["session", "4.3 · Активная сессия", "Карточка подхода закреплена: низ всегда на одной высоте"],
+  ["session-first", "4.3 · Много подходов — первый", "8 подходов, выполненных нет — карточка на том же месте"],
+  ["session-mid", "4.3 · Много подходов — середина", "3 выполнено, 4 впереди; у подхода 3 — заметка"],
+  ["session-last", "4.3 · Много подходов — последний", "Выполненные прокручиваются выше, ничего не перекрыто"],
+  ["session-comment", "4.3 · Длинная заметка к подходу", "Одна строка, дальше — многоточие"],
+  ["session-note", "4.3 · Заметка к подходу", "Свободный текст"],
+  ["session-switcher", "4.3 · Упражнения сессии", "Переключение на любое упражнение"],
+  ["session-end-early", "4.3 · Завершить досрочно", "Подтверждение из меню сессии"],
+  ["session-done", "4.3 · Все подходы завершены", "Переход к итогам"],
+];
+
+const PROGRAMS = [
+  ["programs-list", "3.1 · Список программ", "Цвет и знак — свойства упражнения"],
+  ["programs-empty", "3.1 · Empty state", "Одна строка и одно действие"],
+  ["programs-delete", "3.1 · Удаление программы", "Подтверждение деструктивного действия"],
+  ["program-editor", "3.2 · Редактор программы", "Порядок — перетаскиванием за хэндл"],
+  ["program-mark", "3.2 · Цвет и знак программы", "Тап по маркеру рядом с названием"],
+  ["picker", "3.3 · Выбор — без запроса", "Вся библиотека; «Создать» прибита к низу"],
+  ["picker-results", "3.3 · Выбор — есть результаты", "Фильтр по запросу «Жим»"],
+  ["picker-empty", "3.3 · Выбор — ничего не найдено", "Создание доступно той же кнопкой снизу"],
+  ["exercise-create", "3.3 · Новое упражнение", "Новые поля v2: цвет и знак"],
+  ["sets-editor", "3.4 · Подходы упражнения", "Вес шагом 2,5 кг, повторения шагом 1"],
+];
+
+const HISTORY = [
+  ["history-list", "5.1 · Список сессий", "Группы по месяцам, результат — шкалой"],
+  ["history-empty", "5.1 · Empty state", "Итоги сохраняются автоматически"],
+  ["session-detail", "5.2 · Детали сессии", "Также показывается сразу после завершения"],
+];
+
+const GROUPS = [
+  ["Онбординг", "Coach-marks поверх реальных экранов, один раз при первом запуске — 0.1–0.4", ONBOARDING_FRAMES],
+  ["Тренировка", "Запуск, активная сессия и её состояния — 4.1–4.3", WORKOUT],
+  ["Программы", "Список, редактор и шторки — 3.1–3.4", PROGRAMS],
+  ["История", "Сессии и дифф «цель → факт» — 5.1–5.2", HISTORY],
+];
+
+class Component extends DCLogic {
+  renderVals() {
+    const dark = this.props.showDark !== false;
+
+    const build = (theme) => GROUPS.map(([title, sub, list]) => ({
+      title: theme === "dark" ? title + " · тёмная тема" : title,
+      sub,
+      frames: list.map(([screen, label, note]) => ({ screen, label, note, theme })),
+    }));
+
+    const sections = build("light").concat(dark ? build("dark") : []);
+
+    return {
+      sections,
+      showLabels: this.props.showAnnotations !== false,
+      showOverlays: this.props.overlays !== false,
+      n: { i15: 15, i20: 20 },
+    };
+  }
+}
+</script>
+</body>
+</html>
