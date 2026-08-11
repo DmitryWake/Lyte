@@ -15,11 +15,20 @@
   - `LyteTheme.extendedColors` — `success`/`onSuccess`/`successContainer`/`onSuccessContainer`,
     `diffPositive/Bg`, `diffNegative/Bg`, `diffNeutral/Bg`, `diffSkipped/Bg`, `diffMet/Bg`
     (попал точно в цель — мягкий зелёный, отличен от «превысил»), `aiAccent`, `aiAccentContainer`.
+  - `LyteTheme.accents` — шесть акцентов упражнения (`LyteAccent`: `Coral`, `Indigo`, `Lime`,
+    `Amber`, `Teal`, `Slate`), каждый — пара `LyteAccentColors(fg, container)`: `container` заливает
+    круг-маркер, `fg` рисует глиф. Доступ по значению — `LyteTheme.accents[accent]`.
+    **`Slate` — дефолт** (`LyteAccent.Default`), упражнение без выбранного цвета выглядит осознанным.
+    Акценты — **не группы мышц**: цвет это обычное свойство упражнения, его выбирает пользователь.
   - `LyteTheme.spacing` — 4px-сетка: `s0, s1, s2, s3, s4, s5, s6, s8, s10, s12, s16, s20, s24` (`Dp`).
   - `LyteTheme.elevation` — `level1`…`level5` (`Dp`, для `shadowElevation`/`Modifier.shadow`).
   - `LyteTheme.numericTypography` — `hero`/`large`/`medium`: табличные (`tnum`) стили для «живых»
     чисел (секундомер, степпер, счётчики). Обычный текст всегда через `MaterialTheme.typography`.
   - `LyteTheme.extendedShapes` — `largeIncreased` (20dp), `extraLargeIncreased` (32dp), `full` (pill).
+  - `LyteTheme.motion` — токены движения: `durationShort/Medium/Long` (150/250/400, `Int` мс —
+    ложатся прямо в `tween()`) и `easingStandard/Emphasized/Decelerate/Accelerate` (`Easing`).
+    Анимации компонентов и экранов берут значения отсюда, а не подбирают свои: переходы быстрые
+    и без пружин.
 - `MaterialTheme.colorScheme` / `.typography` / `.shapes` — уже настроены; отдельно доставать токены
   Lyte для базовых M3-ролей не нужно, они и есть источник правды после `LyteTheme { … }`.
 
@@ -187,6 +196,9 @@ implementation(projects.core.coreDesign)
 - `libs.compose.material3` — `MaterialTheme`, `Scaffold`, `TopAppBar` и остальные M3-компоненты.
 - `libs.compose.runtime` — `@Composable`.
 - `libs.compose.ui` / `libs.compose.foundation` — базовые модификаторы и layout-примитивы.
+- `libs.compose.animation` — если модуль читает `LyteTheme.motion`: `Easing` и `tween()` живут в
+  `androidx.compose.animation.core` (приезжает и транзитивно с `compose.foundation`, но полагаться
+  на это не стоит).
 
 **Не нужно** подключать отдельно: `icons-lucide-cmp` (инкапсулирована за `LyteIcons`, возвращает
 обычный `ImageVector`) и `compose.components.resources` (шрифты/строки уже зашиты в `LyteTheme`/
