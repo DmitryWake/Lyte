@@ -1,0 +1,250 @@
+/* ==========================================================================
+   Lyte — Color tokens
+   Material 3 tonal-palette structure (source + on-color + container pairs),
+   built so this file drops directly onto a Compose Multiplatform MaterialTheme:
+   each --md-sys-color-* token maps 1:1 to a MaterialTheme.colorScheme.* field.
+
+   Brand direction: "Lyte" = lightweight, energetic, AI-assisted strength
+   training. Primary is a vivid lime — energy or a "spotter" that lightens
+   your training load. Secondary is warm coral (effort / heart-rate, a nod to
+   Apple Fitness' Exercise ring). Tertiary is an indigo reserved for AI
+   surfaces (auto-progression, smart substitutions) — a deliberately cooler,
+   "intelligent" register distinct from the two workout colors.
+   ========================================================================== */
+
+:root {
+  /* ---- Reference palette: Primary (Lyte lime) ---- */
+  --ref-primary-0: #000000;
+  --ref-primary-10: #051f00;
+  --ref-primary-20: #0e3300;
+  --ref-primary-30: #184700;
+  --ref-primary-40: #245c00;
+  --ref-primary-50: #357600;
+  --ref-primary-60: #57941a;
+  --ref-primary-70: #79b23e;
+  --ref-primary-80: #a6d768;
+  --ref-primary-90: #cdf593;
+  --ref-primary-95: #e4ffc0;
+  --ref-primary-99: #f7ffe8;
+  --ref-primary-100: #ffffff;
+
+  /* ---- Reference palette: Secondary (coral / effort) ---- */
+  --ref-secondary-0: #000000;
+  --ref-secondary-10: #3a0904;
+  --ref-secondary-20: #5c150a;
+  --ref-secondary-30: #7f2210;
+  --ref-secondary-40: #a13018;
+  --ref-secondary-50: #c74323;
+  --ref-secondary-60: #e85f3c;
+  --ref-secondary-70: #ff8562;
+  --ref-secondary-80: #ffb19d;
+  --ref-secondary-90: #ffdad2;
+  --ref-secondary-95: #ffede8;
+  --ref-secondary-99: #fffbff;
+  --ref-secondary-100: #ffffff;
+
+  /* ---- Reference palette: Tertiary (AI indigo) ---- */
+  --ref-tertiary-0: #000000;
+  --ref-tertiary-10: #12134a;
+  --ref-tertiary-20: #23266f;
+  --ref-tertiary-30: #363a8c;
+  --ref-tertiary-40: #4b4fab;
+  --ref-tertiary-50: #6367c9;
+  --ref-tertiary-60: #7d81e0;
+  --ref-tertiary-70: #999cf0;
+  --ref-tertiary-80: #bcbdff;
+  --ref-tertiary-90: #e0deff;
+  --ref-tertiary-95: #f0eeff;
+  --ref-tertiary-99: #fcfaff;
+  --ref-tertiary-100: #ffffff;
+
+  /* ---- Reference palette: Error ---- */
+  --ref-error-0: #000000;
+  --ref-error-10: #410002;
+  --ref-error-20: #690005;
+  --ref-error-30: #93000a;
+  --ref-error-40: #ba1a1a;
+  --ref-error-50: #de3730;
+  --ref-error-60: #ff5449;
+  --ref-error-70: #ff897d;
+  --ref-error-80: #ffb4ab;
+  --ref-error-90: #ffdad6;
+  --ref-error-95: #ffedea;
+  --ref-error-99: #fffbff;
+  --ref-error-100: #ffffff;
+
+  /* ---- Reference palette: Neutral (surfaces) ---- */
+  --ref-neutral-0: #000000;
+  --ref-neutral-10: #1a1c18;
+  --ref-neutral-20: #2e312c;
+  --ref-neutral-30: #444741;
+  --ref-neutral-40: #5c5f58;
+  --ref-neutral-50: #757870;
+  --ref-neutral-60: #8f9289;
+  --ref-neutral-70: #a9aca3;
+  --ref-neutral-80: #c5c8be;
+  --ref-neutral-90: #e1e4d9;
+  --ref-neutral-95: #eff2e6;
+  --ref-neutral-99: #fbfdf4;
+  --ref-neutral-100: #ffffff;
+
+  /* ---- Reference palette: Neutral variant ---- */
+  --ref-neutral-variant-0: #000000;
+  --ref-neutral-variant-10: #181d14;
+  --ref-neutral-variant-20: #2d3227;
+  --ref-neutral-variant-30: #43483c;
+  --ref-neutral-variant-40: #5b6053;
+  --ref-neutral-variant-50: #74796b;
+  --ref-neutral-variant-60: #8e9384;
+  --ref-neutral-variant-70: #a8ad9d;
+  --ref-neutral-variant-80: #c4c9b8;
+  --ref-neutral-variant-90: #e0e5d3;
+  --ref-neutral-variant-95: #eef3e1;
+  --ref-neutral-variant-99: #fbfdf4;
+
+  /* ==========================================================================
+     Light scheme — md-sys-color tokens (Compose MaterialTheme.colorScheme)
+     ========================================================================== */
+  --md-sys-color-primary: var(--ref-primary-40);
+  --md-sys-color-on-primary: var(--ref-primary-100);
+  --md-sys-color-primary-container: var(--ref-primary-90);
+  --md-sys-color-on-primary-container: var(--ref-primary-10);
+
+  --md-sys-color-secondary: var(--ref-secondary-40);
+  --md-sys-color-on-secondary: var(--ref-secondary-100);
+  --md-sys-color-secondary-container: var(--ref-secondary-90);
+  --md-sys-color-on-secondary-container: var(--ref-secondary-10);
+
+  --md-sys-color-tertiary: var(--ref-tertiary-40);
+  --md-sys-color-on-tertiary: var(--ref-tertiary-100);
+  --md-sys-color-tertiary-container: var(--ref-tertiary-90);
+  --md-sys-color-on-tertiary-container: var(--ref-tertiary-10);
+
+  --md-sys-color-error: var(--ref-error-40);
+  --md-sys-color-on-error: var(--ref-error-100);
+  --md-sys-color-error-container: var(--ref-error-90);
+  --md-sys-color-on-error-container: var(--ref-error-10);
+
+  /* semantic success (M3 doesn't define one; app needs it for diff states) */
+  --md-sys-color-success: #2f7d1f;
+  --md-sys-color-on-success: #ffffff;
+  --md-sys-color-success-container: #d3f8bd;
+  --md-sys-color-on-success-container: #072b00;
+
+  --md-sys-color-background: var(--ref-neutral-99);
+  --md-sys-color-on-background: var(--ref-neutral-10);
+
+  --md-sys-color-surface: var(--ref-neutral-99);
+  --md-sys-color-on-surface: var(--ref-neutral-10);
+  --md-sys-color-surface-variant: var(--ref-neutral-variant-90);
+  --md-sys-color-on-surface-variant: var(--ref-neutral-variant-30);
+
+  --md-sys-color-surface-dim: #dadcd1;
+  --md-sys-color-surface-bright: #fbfdf4;
+  --md-sys-color-surface-container-lowest: #ffffff;
+  --md-sys-color-surface-container-low: #f4f6ea;
+  --md-sys-color-surface-container: #eef1e4;
+  --md-sys-color-surface-container-high: #e8ebde;
+  --md-sys-color-surface-container-highest: #e2e5d8;
+
+  --md-sys-color-outline: var(--ref-neutral-variant-50);
+  --md-sys-color-outline-variant: var(--ref-neutral-variant-80);
+
+  --md-sys-color-inverse-surface: var(--ref-neutral-20);
+  --md-sys-color-inverse-on-surface: var(--ref-neutral-95);
+  --md-sys-color-inverse-primary: var(--ref-primary-80);
+
+  --md-sys-color-scrim: #000000;
+  --md-sys-color-shadow: #000000;
+
+  /* ---- Semantic aliases used across Lyte screens ---- */
+  --diff-positive: var(--md-sys-color-success);
+  --diff-positive-bg: var(--md-sys-color-success-container);
+  --diff-negative: var(--ref-error-40);
+  --diff-negative-bg: var(--ref-error-90);
+  --diff-neutral: var(--ref-neutral-variant-40);
+  --diff-neutral-bg: var(--ref-neutral-variant-90);
+  /* skipped — neutral-40, not -60: -60 on the -90 background is two adjacent
+     steps of the same ramp and measures 2.45:1, so no label built on that pair
+     can pass AA. -40 lands at 4.9:1 and still reads as "muted". */
+  --diff-skipped: var(--ref-neutral-40);
+  --diff-skipped-bg: var(--ref-neutral-90);
+  /* target met exactly — soft success tint, distinct from "exceeded" (positive).
+     color-mix over sys tokens so it auto-adapts to the dark scheme too. */
+  --diff-met: color-mix(in srgb, var(--md-sys-color-on-success-container) 30%, var(--md-sys-color-on-surface-variant));
+  --diff-met-bg: color-mix(in srgb, var(--md-sys-color-success-container) 16%, var(--md-sys-color-surface-container-high));
+
+  --ai-accent: var(--md-sys-color-tertiary);
+  --ai-accent-container: var(--md-sys-color-tertiary-container);
+}
+
+/* ==========================================================================
+   Dark scheme
+   ========================================================================== */
+:root[data-theme="dark"] {
+  --md-sys-color-primary: var(--ref-primary-80);
+  --md-sys-color-on-primary: var(--ref-primary-20);
+  --md-sys-color-primary-container: var(--ref-primary-30);
+  --md-sys-color-on-primary-container: var(--ref-primary-90);
+
+  --md-sys-color-secondary: var(--ref-secondary-80);
+  --md-sys-color-on-secondary: var(--ref-secondary-20);
+  --md-sys-color-secondary-container: var(--ref-secondary-30);
+  --md-sys-color-on-secondary-container: var(--ref-secondary-90);
+
+  --md-sys-color-tertiary: var(--ref-tertiary-80);
+  --md-sys-color-on-tertiary: var(--ref-tertiary-20);
+  --md-sys-color-tertiary-container: var(--ref-tertiary-30);
+  --md-sys-color-on-tertiary-container: var(--ref-tertiary-90);
+
+  --md-sys-color-error: var(--ref-error-80);
+  --md-sys-color-on-error: var(--ref-error-20);
+  --md-sys-color-error-container: var(--ref-error-30);
+  --md-sys-color-on-error-container: var(--ref-error-90);
+
+  --md-sys-color-success: #9adb85;
+  --md-sys-color-on-success: #123b06;
+  --md-sys-color-success-container: #1c5a0e;
+  --md-sys-color-on-success-container: #d3f8bd;
+
+  --md-sys-color-background: #12140f;
+  --md-sys-color-on-background: var(--ref-neutral-90);
+
+  --md-sys-color-surface: #12140f;
+  --md-sys-color-on-surface: var(--ref-neutral-90);
+  --md-sys-color-surface-variant: var(--ref-neutral-variant-30);
+  --md-sys-color-on-surface-variant: var(--ref-neutral-variant-80);
+
+  --md-sys-color-surface-dim: #12140f;
+  --md-sys-color-surface-bright: #383a34;
+  --md-sys-color-surface-container-lowest: #0c0e09;
+  --md-sys-color-surface-container-low: #1a1c18;
+  --md-sys-color-surface-container: #1e201c;
+  --md-sys-color-surface-container-high: #282b26;
+  --md-sys-color-surface-container-highest: #333630;
+
+  --md-sys-color-outline: var(--ref-neutral-variant-60);
+  --md-sys-color-outline-variant: var(--ref-neutral-variant-30);
+
+  --md-sys-color-inverse-surface: var(--ref-neutral-90);
+  --md-sys-color-inverse-on-surface: var(--ref-neutral-20);
+  --md-sys-color-inverse-primary: var(--ref-primary-40);
+
+  --md-sys-color-scrim: #000000;
+  --md-sys-color-shadow: #000000;
+
+  --diff-positive: var(--md-sys-color-success);
+  --diff-positive-bg: var(--md-sys-color-success-container);
+  --diff-negative: var(--ref-error-80);
+  --diff-negative-bg: var(--ref-error-30);
+  --diff-neutral: var(--ref-neutral-variant-70);
+  --diff-neutral-bg: var(--ref-neutral-variant-30);
+  /* skipped — neutral-80 on -30 gives 5.7:1; -60 there measures only 3.0:1. */
+  --diff-skipped: var(--ref-neutral-80);
+  --diff-skipped-bg: var(--ref-neutral-30);
+  --diff-met: color-mix(in srgb, var(--md-sys-color-on-success-container) 30%, var(--md-sys-color-on-surface-variant));
+  --diff-met-bg: color-mix(in srgb, var(--md-sys-color-success-container) 16%, var(--md-sys-color-surface-container-high));
+
+  --ai-accent: var(--md-sys-color-tertiary);
+  --ai-accent-container: var(--md-sys-color-tertiary-container);
+}

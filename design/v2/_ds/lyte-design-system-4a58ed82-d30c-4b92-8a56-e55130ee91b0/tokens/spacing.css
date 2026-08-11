@@ -1,0 +1,54 @@
+/* ==========================================================================
+   Lyte — Spacing, shape (radius) & elevation tokens
+   Spacing follows a 4px base grid (Material's default) — maps directly to
+   Compose `Dp` values. Shape tokens mirror M3's shape scale.
+   ========================================================================== */
+
+:root {
+  /* ---- Spacing (4px grid) ---- */
+  --space-0: 0px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* ---- Shape scale (M3 corner radii) ---- */
+  --shape-none: 0px;
+  --shape-extra-small: 4px;
+  --shape-small: 8px;
+  --shape-medium: 12px;
+  --shape-large: 16px;
+  --shape-large-increased: 20px;
+  --shape-extra-large: 28px;
+  --shape-extra-large-increased: 32px;
+  --shape-full: 999px;
+
+  /* ---- Elevation — soft, diffuse, premium (large blur, low alpha) ---- */
+  --elevation-0: none;
+  --elevation-1: 0px 2px 8px rgba(20, 26, 12, 0.05), 0px 1px 2px rgba(20, 26, 12, 0.04);
+  --elevation-2: 0px 6px 20px rgba(20, 26, 12, 0.07), 0px 2px 4px rgba(20, 26, 12, 0.04);
+  --elevation-3: 0px 12px 32px rgba(20, 26, 12, 0.10), 0px 3px 8px rgba(20, 26, 12, 0.05);
+  --elevation-4: 0px 18px 44px rgba(20, 26, 12, 0.13), 0px 4px 10px rgba(20, 26, 12, 0.06);
+  --elevation-5: 0px 26px 60px rgba(20, 26, 12, 0.16), 0px 6px 14px rgba(20, 26, 12, 0.07);
+
+  /* ---- Motion (M3 easing/duration) ---- */
+  --motion-easing-standard: cubic-bezier(0.2, 0, 0, 1); /* @kind other */
+  --motion-easing-emphasized: cubic-bezier(0.3, 0, 0.8, 0.15); /* @kind other */
+  --motion-easing-decelerate: cubic-bezier(0, 0, 0, 1); /* @kind other */
+  --motion-easing-accelerate: cubic-bezier(0.3, 0, 1, 1); /* @kind other */
+  --motion-duration-short: 150ms; /* @kind other */
+  --motion-duration-medium: 250ms; /* @kind other */
+  --motion-duration-long: 400ms; /* @kind other */
+
+  /* ---- Hit targets ---- */
+  --hit-target-min: 48px;
+  --stepper-target: 56px;
+}

@@ -76,6 +76,11 @@ Unit-тесты (host/JVM):
 
 Оба набора плюс сборки Android и iOS гоняются в CI на каждом pull request (`.github/workflows/ci.yml`).
 
+## Дизайн
+
+Макеты и дизайн-система — [design/v2](design/v2/README.md) (хендофф-бандл из Claude Design).
+План перехода приложения на неё — [design/v2/TASKS.md](design/v2/TASKS.md).
+
 ## Лицензии
 
 Исходный код — проприетарный, см. [LICENSE](LICENSE).

@@ -1,0 +1,44 @@
+/* ==========================================================================
+   Lyte — Webfonts
+   The real font binaries shipped by the Lyte app (OFL), copied out of
+   core-design/src/commonMain/composeResources/font/ — same files the
+   Compose Multiplatform build bundles, so web and app render identically.
+   Space Grotesk: all UI text and numerals (400/500/600/700).
+   Inter Tight 700: the «Lyte» wordmark only.
+   ========================================================================== */
+
+@font-face {
+  font-family: "Space Grotesk";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../assets/fonts/space_grotesk_regular.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Space Grotesk";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../assets/fonts/space_grotesk_medium.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Space Grotesk";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../assets/fonts/space_grotesk_semibold.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Space Grotesk";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../assets/fonts/space_grotesk_bold.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Inter Tight";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../assets/fonts/inter_tight_bold.ttf") format("truetype");
+}

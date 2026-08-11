@@ -1,0 +1,58 @@
+/* ==========================================================================
+   Lyte — Accent palette (v2)
+   Six colours an exercise can carry. The mark on every card and row is filled
+   with one of them, so a list is scanned by colour before a word is read.
+
+   These are NOT muscle groups. The app has no muscle-group data and is not
+   planning any: the colour is simply a property of the exercise. Seed
+   exercises ship pre-coloured; anything the user creates, the user colours.
+   Six is the whole palette — enough to tell a list apart, few enough to stay
+   a considered choice rather than a colour picker.
+
+   Coral, indigo, lime and slate come straight from the reference palette
+   (secondary / tertiary / primary / neutral). Amber and teal are interpolated
+   in oklch between them at the same chroma/lightness family, so the six read
+   as one palette. FLAGGED in readme.md: those two are the only colours in the
+   system that were not in the handoff bundle.
+   ========================================================================== */
+
+:root {
+  /* coral — ref-secondary-50 / -90 */
+  --accent-coral: #c74323;
+  --accent-coral-container: #ffdad2;
+
+  /* indigo — ref-tertiary-40 / -90 */
+  --accent-indigo: #4b4fab;
+  --accent-indigo-container: #e0deff;
+
+  /* lime — ref-primary-50 / -90 */
+  --accent-lime: #357600;
+  --accent-lime-container: #cdf593;
+
+  /* amber — new, oklch 0.55 0.13 70 / 0.93 0.06 85 */
+  --accent-amber: #96600b;
+  --accent-amber-container: #ffe0b3;
+
+  /* teal — new, oklch 0.52 0.09 190 / 0.92 0.05 190 */
+  --accent-teal: #00706b;
+  --accent-teal-container: #b8ece7;
+
+  /* slate — ref-neutral-40 / -90; the default for an uncoloured exercise */
+  --accent-slate: #5c5f58;
+  --accent-slate-container: #e1e4d9;
+}
+
+:root[data-theme="dark"] {
+  --accent-coral: #ffb19d;
+  --accent-coral-container: #5c150a;
+  --accent-indigo: #bcbdff;
+  --accent-indigo-container: #23266f;
+  --accent-lime: #a6d768;
+  --accent-lime-container: #0e3300;
+  --accent-amber: #f2c078;
+  --accent-amber-container: #4a2f00;
+  --accent-teal: #7fd6ce;
+  --accent-teal-container: #00382f;
+  --accent-slate: #c5c8be;
+  --accent-slate-container: #2e312c;
+}

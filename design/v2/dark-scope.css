@@ -1,0 +1,69 @@
+/* Scoped copy of the design system's dark scheme, generated from tokens/colors.css.
+   The DS ships it as :root[data-theme="dark"]; the canvas needs it per-phone. */
+[data-theme="dark"] {
+  --md-sys-color-primary: var(--ref-primary-80);
+  --md-sys-color-on-primary: var(--ref-primary-20);
+  --md-sys-color-primary-container: var(--ref-primary-30);
+  --md-sys-color-on-primary-container: var(--ref-primary-90);
+
+  --md-sys-color-secondary: var(--ref-secondary-80);
+  --md-sys-color-on-secondary: var(--ref-secondary-20);
+  --md-sys-color-secondary-container: var(--ref-secondary-30);
+  --md-sys-color-on-secondary-container: var(--ref-secondary-90);
+
+  --md-sys-color-tertiary: var(--ref-tertiary-80);
+  --md-sys-color-on-tertiary: var(--ref-tertiary-20);
+  --md-sys-color-tertiary-container: var(--ref-tertiary-30);
+  --md-sys-color-on-tertiary-container: var(--ref-tertiary-90);
+
+  --md-sys-color-error: var(--ref-error-80);
+  --md-sys-color-on-error: var(--ref-error-20);
+  --md-sys-color-error-container: var(--ref-error-30);
+  --md-sys-color-on-error-container: var(--ref-error-90);
+
+  --md-sys-color-success: #9adb85;
+  --md-sys-color-on-success: #123b06;
+  --md-sys-color-success-container: #1c5a0e;
+  --md-sys-color-on-success-container: #d3f8bd;
+
+  --md-sys-color-background: #12140f;
+  --md-sys-color-on-background: var(--ref-neutral-90);
+
+  --md-sys-color-surface: #12140f;
+  --md-sys-color-on-surface: var(--ref-neutral-90);
+  --md-sys-color-surface-variant: var(--ref-neutral-variant-30);
+  --md-sys-color-on-surface-variant: var(--ref-neutral-variant-80);
+
+  --md-sys-color-surface-dim: #12140f;
+  --md-sys-color-surface-bright: #383a34;
+  --md-sys-color-surface-container-lowest: #0c0e09;
+  --md-sys-color-surface-container-low: #1a1c18;
+  --md-sys-color-surface-container: #1e201c;
+  --md-sys-color-surface-container-high: #282b26;
+  --md-sys-color-surface-container-highest: #333630;
+
+  --md-sys-color-outline: var(--ref-neutral-variant-60);
+  --md-sys-color-outline-variant: var(--ref-neutral-variant-30);
+
+  --md-sys-color-inverse-surface: var(--ref-neutral-90);
+  --md-sys-color-inverse-on-surface: var(--ref-neutral-20);
+  --md-sys-color-inverse-primary: var(--ref-primary-40);
+
+  --md-sys-color-scrim: #000000;
+  --md-sys-color-shadow: #000000;
+
+  --diff-positive: var(--md-sys-color-success);
+  --diff-positive-bg: var(--md-sys-color-success-container);
+  --diff-negative: var(--ref-error-80);
+  --diff-negative-bg: var(--ref-error-30);
+  --diff-neutral: var(--ref-neutral-variant-70);
+  --diff-neutral-bg: var(--ref-neutral-variant-30);
+  /* skipped — neutral-80 on -30 gives 5.7:1; -60 there measures only 3.0:1. */
+  --diff-skipped: var(--ref-neutral-80);
+  --diff-skipped-bg: var(--ref-neutral-30);
+  --diff-met: color-mix(in srgb, var(--md-sys-color-on-success-container) 30%, var(--md-sys-color-on-surface-variant));
+  --diff-met-bg: color-mix(in srgb, var(--md-sys-color-success-container) 16%, var(--md-sys-color-surface-container-high));
+
+  --ai-accent: var(--md-sys-color-tertiary);
+  --ai-accent-container: var(--md-sys-color-tertiary-container);
+}
