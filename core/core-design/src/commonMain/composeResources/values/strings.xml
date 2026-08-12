@@ -30,4 +30,12 @@
     <string name="exercise_glyph_stretch">Растяжка</string>
     <string name="exercise_glyph_rack">Рама</string>
     <string name="exercise_glyph_machine">Тренажёр</string>
+    <string name="accent_coral">Коралловый</string>
+    <string name="accent_indigo">Индиго</string>
+    <string name="accent_lime">Лайм</string>
+    <string name="accent_amber">Янтарный</string>
+    <string name="accent_teal">Бирюзовый</string>
+    <string name="accent_slate">Серый</string>
+    <string name="accent_picker_label">Цвет</string>
+    <string name="exercise_icon_picker_label">Знак</string>
 </resources>
