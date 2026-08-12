@@ -1,5 +1,7 @@
 package com.nikolaevskii.lyte.core.workout.data.repository
 
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -11,11 +13,29 @@ class WorkoutExerciseRepositoryImplTest {
     @Test
     fun createThenGetReturnsExercise() = runTest {
         val repository = repository()
-        val exercise = WorkoutExerciseEntity(id = "ex-1", name = "Жим", description = "Грудь")
+        val exercise = WorkoutExerciseEntity(
+            id = "ex-1",
+            name = "Жим",
+            description = "Грудь",
+            // Маркер отличен от дефолтного — сравнение целиком доказывает, что он доезжает до БД и обратно.
+            accent = ExerciseAccent.Indigo,
+            glyph = ExerciseGlyph.BenchPress,
+        )
 
         repository.createExercise(exercise)
 
         assertEquals(exercise, repository.getExercise("ex-1"))
+    }
+
+    @Test
+    fun exerciseWithoutChosenMarkerGetsDefaultOne() = runTest {
+        val repository = repository()
+        repository.createExercise(WorkoutExerciseEntity(id = "ex-1", name = "Жим"))
+
+        val loaded = repository.getExercise("ex-1")
+
+        assertEquals(ExerciseAccent.Slate, loaded?.accent)
+        assertEquals(ExerciseGlyph.Squat, loaded?.glyph)
     }
 
     @Test

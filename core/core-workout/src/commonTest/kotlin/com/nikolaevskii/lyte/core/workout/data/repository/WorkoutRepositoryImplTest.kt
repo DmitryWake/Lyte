@@ -1,5 +1,7 @@
 package com.nikolaevskii.lyte.core.workout.data.repository
 
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseWithRepsEntity
@@ -34,6 +36,8 @@ class WorkoutRepositoryImplTest {
 
         assertEquals(2, items.size)
         assertEquals(setOf("w1", "w2"), items.map { it.id }.toSet())
+        // Список программ рисует маркер, поэтому лёгкая проекция обязана его нести.
+        assertTrue(items.all { it.accent == ExerciseAccent.Indigo && it.glyph == ExerciseGlyph.BenchPress })
     }
 
     @Test
@@ -167,9 +171,19 @@ class WorkoutRepositoryImplTest {
         id = id,
         name = name,
         description = "Описание",
+        // Маркеры отличны от дефолтных: сравнение графа целиком в тестах выше заодно доказывает,
+        // что цвет и знак программы и каждого упражнения переживают запись и чтение.
+        accent = ExerciseAccent.Indigo,
+        glyph = ExerciseGlyph.BenchPress,
         exercises = listOf(
             WorkoutExerciseWithRepsEntity(
-                exercise = WorkoutExerciseEntity(id = "ex-1", name = "Жим", description = null),
+                exercise = WorkoutExerciseEntity(
+                    id = "ex-1",
+                    name = "Жим",
+                    description = null,
+                    accent = ExerciseAccent.Teal,
+                    glyph = ExerciseGlyph.PullUp,
+                ),
                 reps = listOf(
                     WorkoutRepEntity(count = 10, weight = 40.0),
                     WorkoutRepEntity(count = 8, weight = 45.0),

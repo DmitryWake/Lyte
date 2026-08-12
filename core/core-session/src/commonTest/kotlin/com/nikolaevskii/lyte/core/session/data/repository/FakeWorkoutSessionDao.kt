@@ -47,6 +47,8 @@ internal class FakeWorkoutSessionDao : WorkoutSessionDao() {
                     id = session.id,
                     programId = session.programId,
                     programName = session.programName,
+                    programAccent = session.programAccent,
+                    programGlyph = session.programGlyph,
                     startedAt = session.startedAt,
                     finishedAt = session.finishedAt ?: 0L,
                     totalSetCount = sessionSets.size,

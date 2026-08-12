@@ -37,9 +37,10 @@
 
 - **Сделано:** RD-01 (ветка `design/v2-bundle`), RD-02 (ветка `design/v2-tokens`),
   RD-03 (ветка `claude/design-v2-migration-task-3-iiiql8`),
-  RD-04 (ветка `claude/design-v2-migration-nord0k`).
-- **Дальше:** RD-05 (данные) — единственное, что осталось перед этапом C; он ни от чего не зависит.
-  RD-07 и RD-08 тоже разблокированы и идут параллельно RD-05. RD-06 ждёт RD-05.
+  RD-04 (ветка `claude/design-v2-migration-nord0k`),
+  RD-05 (ветка `claude/design-v2-migration-lz7ozd`).
+- **Дальше:** этап C разблокирован целиком. RD-06 (карточки) — следующий по важности: от него зависят
+  все экраны программ, трекера и истории. RD-07 и RD-08 от RD-06 не зависят и идут параллельно.
   Полная картина зависимостей — § «Порядок и параллельность».
 
 ## Источники правды по дизайну
@@ -274,7 +275,27 @@ HEIGHT» и § «Marks, not imagery».
 
 # Этап B. Данные
 
-## RD-05 · Цвет и знак в модели: миграция БД v1→v2, репозитории, сид
+## RD-05 · Цвет и знак в модели: миграция БД v1→v2, репозитории, сид ✅
+
+**Статус: сделано** (ветка `claude/design-v2-migration-lz7ozd`).
+
+**Что сделано.** Доменные `ExerciseAccent`/`ExerciseGlyph` (`:core:core-workout`) — enum'ы со
+стабильным строковым `key` и `fromKey()` с фоллбэком на `Slate`/`Squat`; ключ (а не `ordinal`) —
+формат хранения, поэтому расширение набора не потребует миграции. Маркер получили
+`WorkoutExerciseEntity`, `WorkoutEntity`, `WorkoutItemEntity` и `SessionProgramEntity`;
+`WorkoutExerciseWithRepsEntity` отдельных полей не получил — он несёт `WorkoutExerciseEntity`, и
+дублировать в нём маркер значило бы завести второй источник правды.
+
+Схема — `version = 2`: `accent`/`glyph` у `exercise` и `workout`, `program_accent`/`program_glyph` —
+снапшот в `workout_session`. `session_exercise` не тронут: маркер упражнения, как имя и описание,
+читается живым join'ом к `exercise`, а снапшотится только программа (её можно удалить). Миграция
+раздаёт маркеры макета строкам `seed-*` по стабильным id и заполняет снапшот сессии из программы,
+на которую та ссылается (`COALESCE` до дефолта, если программу уже удалили).
+
+**Тест миграции** (`Migration1To2Test`) собирает БД v1 по DDL из закоммиченной `schemas/…/1.json`,
+наполняет её и мигрирует на **настоящей** SQLite. Он живёт в `androidHostTest` и берёт
+`AndroidSQLiteDriver` под Robolectric: JNI боевого `BundledSQLiteDriver` собран под Android и на
+host-JVM падает с `UnsatisfiedLinkError`. Модуль `:core:core-db` добавлен в гейт тестов и в CI.
 
 **Цель.** Упражнение и программа получают два новых свойства — `accent` и `glyph`. Без этого ни одна
 карточка v2 не может быть отрисована.

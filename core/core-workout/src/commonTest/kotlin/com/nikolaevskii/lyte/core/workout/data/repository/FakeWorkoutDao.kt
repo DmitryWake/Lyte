@@ -34,6 +34,8 @@ internal class FakeWorkoutDao : WorkoutDao() {
                     id = workout.id,
                     name = workout.name,
                     description = workout.description,
+                    accent = workout.accent,
+                    glyph = workout.glyph,
                     exerciseCount = crossRefs.count { it.workoutId == workout.id },
                 )
             }

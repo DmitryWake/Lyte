@@ -39,6 +39,7 @@ jobs:
         run: >
           ./gradlew
           :core:core-mvi:testAndroidHostTest
+          :core:core-db:testAndroidHostTest
           :core:core-workout:testAndroidHostTest
           :core:core-session:testAndroidHostTest
           :feature:tracker:impl:testAndroidHostTest
