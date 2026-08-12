@@ -20,6 +20,8 @@
     круг-маркер, `fg` рисует глиф. Доступ по значению — `LyteTheme.accents[accent]`.
     **`Slate` — дефолт** (`LyteAccent.Default`), упражнение без выбранного цвета выглядит осознанным.
     Акценты — **не группы мышц**: цвет это обычное свойство упражнения, его выбирает пользователь.
+    Подпись цвета («Коралловый», «Индиго», …) — `lyteAccentLabel(accent)`; в интерфейсе слово не
+    рисуется (цвет виден глазами), оно нужно скринридеру и долгому нажатию на кружок пикера.
   - `LyteTheme.spacing` — 4px-сетка: `s0, s1, s2, s3, s4, s5, s6, s8, s10, s12, s16, s20, s24` (`Dp`).
   - `LyteTheme.elevation` — `level1`…`level5` (`Dp`, для `shadowElevation`/`Modifier.shadow`).
   - `LyteTheme.numericTypography` — `hero`/`large`/`medium`: табличные (`tnum`) стили для «живых»
@@ -98,6 +100,9 @@ Lucide — `implementation`-only внутри `core-design`, подключат�
 | `component.switch` | `LyteSwitch` |
 | `component.textfield` | `LyteTextField` |
 | `component.overline` | `LyteOverline` (микро-заголовок капсом) |
+| `component.mark` | `LyteExerciseMark` (круг-маркер: цвет + знак движения; размеры макета — 36/38/52dp) |
+| `component.progress` | `LyteProgressTrack` (`LyteProgressTrackMode.Tones`/`Plan`/`Progress`, тона — `LyteProgressTone`) |
+| `component.picker` | `LyteAccentPicker` (шесть цветов), `LyteExerciseIconPicker` (сетка 5×2 знаков) |
 | `component.stepper` | `LyteStepper` (± контрол + ручной tap-to-edit ввод; ввод ограничен: ≤5 цифр целой части и ≤2 знаков после запятой, при `allowDecimal=false` — целочисленный режим для повторов без дробной части, `fillMaxWidth` — для колонок), `LyteSetEditRow` (строка редактирования одного планового подхода программы: заголовок-параметр `title`, удаление, степперы повторов/веса — планирование, не привязано к состоянию активной сессии в отличие от `LyteTrackSetRow`) |
 | `component.card` | `LyteProgramCard` (+`trailing`), `LyteExerciseCard` (`setLabels`-пилюли; ведущий элемент и действия задаёт `variant`: `LyteExerciseCardVariant.Editor` — drag-хэндл + edit/remove, `LyteExerciseCardVariant.Preview(index)` — номер упражнения без действий для read-only превью), `LyteSessionCard`, `LyteListRow` |
 | `component.feedback` | `LyteDiffRow` (тона Met/Positive/Negative/Neutral/Skipped), `LyteDialog`, `LyteEmptyState` |
@@ -109,6 +114,57 @@ Lucide — `implementation`-only внутри `core-design`, подключат�
 `LyteDialog` / `LyteBottomSheet` / `LyteRestTimerOverlay` не принимают флаг видимости — видимостью
 управляет вызывающая сторона самим фактом композиции (`if (showDialog) { LyteDialog(...) }`), как
 принято в M3 (`AlertDialog`, `ModalBottomSheet` не имеют параметра `visible`).
+
+### Маркер, трек и пикеры
+
+Четыре компонента, на которых держится визуальная логика: маркер отвечает на «что это за
+упражнение», трек — на «как оно прошло», пикеры дают пользователю задать первое.
+
+**`LyteExerciseMark(accent, glyph, size)`** — круг-маркер, единственный визуальный якорь карточек и
+строк. Несёт два сигнала: заливка = цвет упражнения, рисунок = знак движения. Оба — обычные свойства
+упражнения, выбранные пользователем; ничего не выводится из данных и таксономии за ними нет. Глиф
+занимает 0.58 диаметра, поэтому маркер одинаково читается и на 36dp, и на 52dp. По умолчанию
+декоративен (`contentDescription = null`) — рядом всегда стоит название упражнения; подпись нужна
+там, где нажимают по самому маркеру. Фотографий в системе нет: параметр `image` веб-версии не
+перенесён.
+
+**`LyteProgressTrack(mode)`** — прогресс подходов сегментами вместо чисел. Режим задаётся
+`LyteProgressTrackMode`, чтобы исключить бессмысленные сочетания полей:
+
+| Режим | Что показывает | Где |
+|---|---|---|
+| `Tones(tones)` | как прошла сессия — по сегменту на подход | карточка истории, итог сессии, детали |
+| `Plan(total, accent)` | что запланировано и не начиналось | карточка упражнения в программе и превью |
+| `Progress(total, done, missed)` | сколько подходов позади | сводки по ходу сессии |
+
+В режиме `Tones` **исход кодируется высотой сегмента, а не только цветом**: превысил цель — во всю
+высоту, попал — по средней линии, недобрал — короткий, пропустил — полая обводка, впереди — тонкая
+риска. Пять состояний неразличимы одним оттенком на пятипиксельной полоске (два зелёных — «попал» и
+«превысил» — сливаются), а легенда убила бы саму идею беглого взгляда. Тона (`LyteProgressTone`) —
+общий словарь системы: одно и то же событие обязано выглядеть одинаково и здесь, и в `LyteDiffRow`.
+
+Ширину задаёт вызывающая сторона (`Modifier.width(56.dp)` в карточке упражнения, `fillMaxWidth()`
+для сводки сессии) — сегменты делят её поровну.
+
+**`LyteAccentPicker(value, onChange)`** и **`LyteExerciseIconPicker(value, accent, onChange)`** —
+выбор цвета и знака, обычно рядом в одной шторке. Выбранный цвет отмечен **кольцом снаружи, а не
+галочкой**: галочка внутри кружка закрыла бы собой цвет, который в этот момент и выбирают. Кольцо
+входит в габариты компонента, а не висит поверх соседей, как box-shadow в вебе, — иначе его срезал
+бы первый же скроллер. Сетка знаков перекрашивается вслед за `accent`, и два пикера читаются как
+одно решение: выбрал цвет — перекрасилось всё, выбрал знак — маркер готов; тайл выглядит ровно так,
+как будет выглядеть маркер в списке. Подпись поля (`label`) можно убрать, передав `null`.
+
+```kotlin
+Column {
+    LyteExerciseMark(accent = accent, glyph = glyph, size = 52.dp)
+    LyteAccentPicker(value = accent, onChange = { accent = it })
+    LyteExerciseIconPicker(value = glyph, accent = accent, onChange = { glyph = it })
+    LyteProgressTrack(
+        mode = LyteProgressTrackMode.Plan(total = 4, accent = accent),
+        modifier = Modifier.width(56.dp),
+    )
+}
+```
 
 ### Слоты `LyteBottomSheet`
 
