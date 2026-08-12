@@ -1,5 +1,7 @@
 # Конфигурация GitHub Pages. Источник — ветка master, папка /docs (см. Settings → Pages).
-# Публикуется политика конфиденциальности: https://<username>.github.io/Lyte/PRIVACY.html
+# Публикуются: политика конфиденциальности https://<username>.github.io/Lyte/PRIVACY.html
+# и лицензии сторонних материалов https://<username>.github.io/Lyte/LICENSES.html — на вторую ведёт
+# ссылка с экрана «О приложении», этого требует бесплатная лицензия иконок Flaticon.
 title: Lyte
 description: Фитнес-трекер на Kotlin Multiplatform
 theme: jekyll-theme-minimal

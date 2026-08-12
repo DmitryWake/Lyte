@@ -41,16 +41,43 @@
 
 ### Иконки
 
-`LyteIcons` — небольшой осознанно ограниченный словарь (см. `ICONOGRAPHY.md` дизайн-системы) поверх
-`com.composables:icons-lucide-cmp` (KMP-порт Lucide для Compose Multiplatform: Android/iOS/JVM/JS/Wasm).
-Значения — обычный `ImageVector`; зависимость от библиотеки Lucide — `implementation`-only внутри
-`core-design`, подключать её отдельно потребителям не нужно.
+`LyteIcons` — небольшой осознанно ограниченный словарь (см. `design/v2/_ds/<id>/readme.md`
+§ Iconography) поверх `com.composables:icons-lucide-cmp` (KMP-порт Lucide для Compose
+Multiplatform: Android/iOS/JVM/JS/Wasm). Значения — обычный `ImageVector`; зависимость от библиотеки
+Lucide — `implementation`-only внутри `core-design`, подключать её отдельно потребителям не нужно.
 
 Доступные иконки: `Dumbbell`, `ClipboardList`, `History`, `Play`, `Plus`, `Minus`, `Check`, `Close`,
-`ChevronRight`, `ChevronDown`, `ChevronLeft`, `GripVertical`, `OverflowMenu`, `Search`, `Sparkles`
-(зарезервирована для ИИ-поверхностей — не использовать как обычную иконку), `AddNote`,
-`SkipForward`, `AddCircle`, `Delete`, `Edit`, `ListChecks`, `Circle`, `CircleDot`, `CircleCheck`,
-`CircleX`, `CircleMinus` (кружки-статусы подходов).
+`ChevronRight`, `ChevronLeft`, `GripVertical`, `OverflowMenu`, `Sparkles` (зарезервирована для
+ИИ-поверхностей — не использовать как обычную иконку), `Delete`, `Edit`, `List` (шторка упражнений
+сессии), `SearchX` (пустой результат поиска), `ListChecks`, `Circle`, `CircleDot`, `CircleCheck`,
+`CircleArrowUp`, `CircleArrowDown` (превысил/недобрал цель), `CircleX`, `CircleMinus`
+(кружки-статусы подходов).
+
+Словарь держит только то, что реально рисуется. `CircleX` и `OverflowMenu` в дизайне v2 не
+используются, но пока живы их call-site'ы: крестик уходит вместе с переписанным `LyteTrackSetRow`
+(RD-09), кебаб-меню — вместе со списком программ (RD-13).
+
+#### Пиктограммы движений
+
+`LyteExerciseIcon(glyph, tint, size, contentDescription)` — десять знаков движения
+(`LyteExerciseGlyph`: `Squat`, `Deadlift`, `BenchPress`, `PullUp`, `DumbbellPress`, `Curl`,
+`Crunch`, `Stretch`, `Rack`, `Machine`; дефолт — `Squat`). Вместе с `LyteAccent` образуют
+круг-маркер упражнения: цвет и знак — обычные свойства упражнения, ничего не выводится из данных.
+Подпись движения («Присед», «Становая», …) — `lyteExerciseGlyphLabel(glyph)`; по умолчанию она же
+идёт в `contentDescription`, внутри маркера рядом с названием упражнения передавайте `null`.
+
+Это **растровый** набор (PNG в `composeResources/drawable/ic_exercise_*.png`), а не vector drawable:
+исходники — линейная графика Flaticon, трассировка в вектор ухудшает рисунок. Чёрный штрих
+перекрашивается через `ColorFilter.tint` по альфе, поэтому один файл одинаково работает на светлой
+карточке, на тёмной теме и внутри насыщенного круга-маркера. Размер задаётся всегда явно: у
+растрового `Painter` есть свой intrinsic size, и дефолтные 24dp `Icon` не подставляет.
+
+Набор намеренно неполный: для жима стоя, брусьев и выпадов знака нет, они берут ближайший
+корректный. Приблизительный глиф хуже честно разделённого.
+
+**Иконки требуют атрибуции** — Flaticon, автор Icongeek26, бесплатная лицензия. Точная формулировка
+кредита, место, где он обязан быть виден, и рецепт получения файлов из бандла — в
+[`ATTRIBUTION.md`](ATTRIBUTION.md).
 
 ### Форматирование
 

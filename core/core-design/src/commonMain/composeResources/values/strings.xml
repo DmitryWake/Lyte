@@ -20,4 +20,14 @@
     <string name="set_target">цель %1$s</string>
     <string name="set_caption_reps">Повт</string>
     <string name="set_caption_weight">Кг</string>
+    <string name="exercise_glyph_squat">Присед</string>
+    <string name="exercise_glyph_deadlift">Становая</string>
+    <string name="exercise_glyph_bench_press">Жим лёжа</string>
+    <string name="exercise_glyph_pull_up">Подтягивания</string>
+    <string name="exercise_glyph_dumbbell_press">Жим гантелей</string>
+    <string name="exercise_glyph_curl">Сгибания</string>
+    <string name="exercise_glyph_crunch">Пресс</string>
+    <string name="exercise_glyph_stretch">Растяжка</string>
+    <string name="exercise_glyph_rack">Рама</string>
+    <string name="exercise_glyph_machine">Тренажёр</string>
 </resources>

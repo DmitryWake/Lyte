@@ -131,7 +131,7 @@ Lyte — фитнес-трекер на Kotlin Multiplatform (Android + iOS), UI
 
 - `LyteTheme(darkTheme, content)` настраивает `MaterialTheme.colorScheme/typography/shapes` под токены Lyte (M3 tonal-палитра light/dark, типографика на Space Grotesk, форма) и прокидывает расширенные токены через `CompositionLocal`; доступ к ним — аксессор-object `LyteTheme.{extendedColors,accents,spacing,elevation,numericTypography,extendedShapes,motion}`, по аналогии с `MaterialTheme`. `accents` — шесть акцентов упражнения (`LyteAccent`, дефолт `Slate`), `motion` — длительности и easing'и, из которых берутся все анимации ДС и экранов. Корень UI-дерева в `App()` (`:shared`) оборачивается в `LyteTheme { ... }` один раз.
 - Шрифты — Space Grotesk (400/500/600/700, весь UI и цифры) и Inter Tight (700, только вордмарк) — бандлятся в `composeResources/font/` модуля (OFL).
-- Иконки — `LyteIcons`, курируемый словарь `ImageVector` поверх `com.composables:icons-lucide-cmp` (KMP-порт Lucide, Android/iOS/JVM/JS/Wasm).
+- Иконки — `LyteIcons`, курируемый словарь `ImageVector` поверх `com.composables:icons-lucide-cmp` (KMP-порт Lucide, Android/iOS/JVM/JS/Wasm). Отдельно — пиктограммы движений: `LyteExerciseGlyph` (10 знаков) + `LyteExerciseIcon`, растровый набор Flaticon, перекрашивается тонированием по альфе. Кредит обязателен — `core/core-design/ATTRIBUTION.md`.
 - Компонент-кит (`Lyte*`) — на M3-примитивах, где дизайн позволяет (`Button`, `TextField`, `Card`, `AlertDialog`, `ModalBottomSheet`, `TopAppBar`, `FilterChip`, `Switch`), кастомные composable — только там, где нет M3-аналога (`LyteStepper`, `LyteDiffRow`, `LyteBottomNavigationBar`, `LyteRestTimerOverlay`, `LyteSessionStopwatch`, `LyteEmptyState`, `LyteBadge`, `LyteOverline`, `LyteTopBar` size=Large, а также `component.session`: `LyteSetDots`/`LyteSetOverview`/`LyteTrackSetRow`/`LyteExerciseStrip`). Полный список и API — `core/core-design/README.md`.
 - Доменный текст (заголовки, сводки) — всегда параметр вызывающей фичи; компонентный «хром» модуля — в его собственном `composeResources/values/strings.xml`.
 
@@ -177,6 +177,7 @@ Lyte — фитнес-трекер на Kotlin Multiplatform (Android + iOS), UI
 
 ### Ресурсы
 - Иконки — vector drawable в `composeResources/drawable/ic_*.xml`, подключение через `painterResource(Res.drawable.*)`.
+- **Исключение — пиктограммы движений** (`core-design/composeResources/drawable/ic_exercise_*.png`): это готовая растровая линейная графика Flaticon, трассировка в вектор ухудшает рисунок. Растр допустим только потому, что решена проблема тёмной темы: чёрный штрих перекрашивается тонированием по альфе (`LyteExerciseIcon` → `ColorFilter.tint`), а не рисуется как есть. Других растровых иконок в проекте быть не должно.
 - Все строки — в `composeResources/values/strings.xml`, использование — через `stringResource(Res.string.*)`. Хардкод строк в `@Composable` запрещён.
 
 ### UI
