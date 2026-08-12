@@ -13,6 +13,7 @@ abstract class WorkoutDao {
     @Query(
         """
         SELECT workout.id AS id, workout.name AS name, workout.description AS description,
+               workout.accent AS accent, workout.glyph AS glyph,
                COUNT(workout_exercise.id) AS exerciseCount
         FROM workout
         LEFT JOIN workout_exercise ON workout_exercise.workout_id = workout.id
@@ -26,6 +27,7 @@ abstract class WorkoutDao {
     @Query(
         """
         SELECT workout.id AS id, workout.name AS name, workout.description AS description,
+               workout.accent AS accent, workout.glyph AS glyph,
                COUNT(workout_exercise.id) AS exerciseCount
         FROM workout
         LEFT JOIN workout_exercise ON workout_exercise.workout_id = workout.id

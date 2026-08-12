@@ -7,7 +7,14 @@ Data-слой библиотеки упражнений и программ тр
 ## Публичный API
 
 - Модели (`domain.model`): `WorkoutEntity`, `WorkoutItemEntity`, `WorkoutExerciseEntity`,
-  `WorkoutExerciseWithRepsEntity`, `WorkoutRepEntity`.
+  `WorkoutExerciseWithRepsEntity`, `WorkoutRepEntity`, `ExerciseAccent`, `ExerciseGlyph`.
+  - `ExerciseAccent` (6 цветов, дефолт `Slate`) и `ExerciseGlyph` (10 движений, дефолт `Squat`) —
+    маркер упражнения и программы. У каждого значения есть `key` — **стабильная строка, которой оно
+    лежит в БД**; `fromKey(key)` отдаёт дефолт на неизвестном ключе, поэтому расширение набора не
+    требует миграции, а переименование ключа — требует. Маркер есть и у упражнения, и у программы:
+    программный не выводится из первого упражнения, его выбирают отдельно.
+  - Это **доменная** пара к UI-шным `LyteAccent`/`LyteExerciseGlyph` из `:core:core-design`: домен не
+    знает про Compose, дизайн-система — про домен, маппинг делает фича в своём `UiMapper`.
 - Контракты (`domain.repository`): `WorkoutRepository` (программы), `WorkoutExerciseRepository`
   (библиотека упражнений).
   - `WorkoutRepository.updateWorkoutTargets(workoutEntity)` — узкая запись **только целей** подходов

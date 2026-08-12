@@ -37,6 +37,14 @@ kotlin {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
         }
+        // Тест миграции гоняет настоящую SQLite, поэтому только Android-хост: JNI бандла собран под
+        // Android и на host-JVM не грузится, а Robolectric подкладывает нативную SQLite хоста
+        // (см. Migration1To2Test).
+        getByName("androidHostTest").dependencies {
+            implementation(libs.androidx.sqlite.framework)
+            implementation(libs.robolectric)
+            implementation(libs.junit)
+        }
     }
 }
 

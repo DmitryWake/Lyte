@@ -3,9 +3,10 @@ package com.nikolaevskii.lyte.core.session.domain.model
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 
 /**
- * Упражнение внутри сессии. [exercise] — снапшот упражнения-библиотеки на момент старта
- * (сессия самодостаточна и не зависит от того, изменилось ли упражнение позже).
- * Порядок — порядок в списке [WorkoutSessionEntity.exercises].
+ * Упражнение внутри сессии. [exercise] — упражнение-библиотека, прочитанное живым по `exercise_id`:
+ * имя, описание и маркер в истории всегда те же, что в библиотеке сейчас. Снапшотится только
+ * программа ([SessionProgramEntity]) — её можно удалить, упражнение же архивируется и остаётся
+ * доступным по id. Порядок — порядок в списке [WorkoutSessionEntity.exercises].
  */
 data class SessionExerciseEntity(
     val id: String,

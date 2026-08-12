@@ -5,5 +5,7 @@ data class WorkoutItemWithExerciseCount(
     val id: String,
     val name: String,
     val description: String?,
+    val accent: String,
+    val glyph: String,
     val exerciseCount: Int,
 )

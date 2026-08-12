@@ -2,6 +2,8 @@ package com.nikolaevskii.lyte.core.session.data.repository
 
 import com.nikolaevskii.lyte.core.db.workout.ExerciseDatabaseEntity
 import com.nikolaevskii.lyte.core.session.domain.model.SessionSetResultEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseWithRepsEntity
@@ -29,6 +31,9 @@ class WorkoutSessionRepositoryImplTest {
         assertEquals(sessionId, session?.id)
         assertEquals("prog-1", session?.program?.id)
         assertEquals("Push Day", session?.program?.name)
+        // Маркер программы снапшотится в саму сессию — она переживёт перекраску и удаление программы.
+        assertEquals(ExerciseAccent.Indigo, session?.program?.accent)
+        assertEquals(ExerciseGlyph.BenchPress, session?.program?.glyph)
         assertEquals(Instant.fromEpochMilliseconds(START_MILLIS), session?.startedAt)
         assertNull(session?.finishedAt)
         assertNull(session?.currentExerciseId)
@@ -37,6 +42,9 @@ class WorkoutSessionRepositoryImplTest {
         assertEquals(listOf("Жим", "Тяга"), session?.exercises?.map { it.exercise.name })
         val firstExercise = session?.exercises?.first()
         assertEquals("Грудь", firstExercise?.exercise?.description)
+        // А маркер упражнения — из живой библиотеки, а не из программы: он отличается от её маркера.
+        assertEquals(ExerciseAccent.Teal, firstExercise?.exercise?.accent)
+        assertEquals(ExerciseGlyph.PullUp, firstExercise?.exercise?.glyph)
         assertEquals(listOf(10, 8), firstExercise?.sets?.map { it.target.count })
         assertEquals(listOf(40.0, 45.0), firstExercise?.sets?.map { it.target.weight })
         // Факты пустые, заметки пустые.
@@ -181,6 +189,9 @@ class WorkoutSessionRepositoryImplTest {
         val item = finished.single()
         assertEquals(sessionId, item.id)
         assertEquals("prog-1", item.program.id)
+        // Список истории читает маркер из снапшота сессии, а не join'ом к программе.
+        assertEquals(ExerciseAccent.Indigo, item.program.accent)
+        assertEquals(ExerciseGlyph.BenchPress, item.program.glyph)
         assertEquals(3, item.totalSetCount)
         // Один выполнен, два пропущены завершением.
         assertEquals(1, item.completedSetCount)
@@ -193,7 +204,13 @@ class WorkoutSessionRepositoryImplTest {
     ): WorkoutSessionRepositoryImpl {
         // Упражнения существуют в библиотеке до старта сессии — session_exercise берёт имя оттуда.
         val dao = FakeWorkoutSessionDao().apply {
-            exerciseLibrary["ex-1"] = libraryExercise(id = "ex-1", name = "Жим", description = "Грудь")
+            exerciseLibrary["ex-1"] = libraryExercise(
+                id = "ex-1",
+                name = "Жим",
+                description = "Грудь",
+                accent = ExerciseAccent.Teal.key,
+                glyph = ExerciseGlyph.PullUp.key,
+            )
             exerciseLibrary["ex-2"] = libraryExercise(id = "ex-2", name = "Тяга", description = null)
         }
         return WorkoutSessionRepositoryImpl(
@@ -203,8 +220,21 @@ class WorkoutSessionRepositoryImplTest {
         )
     }
 
-    private fun libraryExercise(id: String, name: String, description: String?): ExerciseDatabaseEntity =
-        ExerciseDatabaseEntity(id = id, name = name, nameNormalized = name.lowercase(), description = description)
+    private fun libraryExercise(
+        id: String,
+        name: String,
+        description: String?,
+        accent: String = ExerciseAccent.Default.key,
+        glyph: String = ExerciseGlyph.Default.key,
+    ): ExerciseDatabaseEntity =
+        ExerciseDatabaseEntity(
+            id = id,
+            name = name,
+            nameNormalized = name.lowercase(),
+            description = description,
+            accent = accent,
+            glyph = glyph,
+        )
 
     private suspend fun firstSetId(repository: WorkoutSessionRepositoryImpl): String =
         repository.getActiveSession()!!.exercises.first().sets.first().id
@@ -216,6 +246,8 @@ class WorkoutSessionRepositoryImplTest {
         id = id,
         name = "Push Day",
         description = "Толчковый день",
+        accent = ExerciseAccent.Indigo,
+        glyph = ExerciseGlyph.BenchPress,
         exercises = listOf(
             WorkoutExerciseWithRepsEntity(
                 exercise = WorkoutExerciseEntity(id = "ex-1", name = "Жим", description = "Грудь"),

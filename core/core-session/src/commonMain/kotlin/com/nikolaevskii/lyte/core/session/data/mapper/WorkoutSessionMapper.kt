@@ -14,6 +14,8 @@ import com.nikolaevskii.lyte.core.session.domain.model.SessionSetResultEntity
 import com.nikolaevskii.lyte.core.session.domain.model.SessionSetValueEntity
 import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionEntity
 import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionItemEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import kotlin.time.Instant
@@ -30,6 +32,8 @@ internal fun WorkoutEntity.toSessionRows(sessionId: String, startedAt: Instant):
         id = sessionId,
         programId = id,
         programName = name,
+        programAccent = accent.key,
+        programGlyph = glyph.key,
         startedAt = startedAt.toEpochMilliseconds(),
         finishedAt = null,
         currentExerciseId = null,
@@ -72,7 +76,7 @@ internal fun WorkoutEntity.toSessionRows(sessionId: String, startedAt: Instant):
 internal fun SessionWithExercises.toDomainEntity(): WorkoutSessionEntity =
     WorkoutSessionEntity(
         id = session.id,
-        program = SessionProgramEntity(id = session.programId, name = session.programName),
+        program = session.toProgramEntity(),
         startedAt = Instant.fromEpochMilliseconds(session.startedAt),
         finishedAt = session.finishedAt?.let(Instant::fromEpochMilliseconds),
         currentExerciseId = session.currentExerciseId,
@@ -84,20 +88,37 @@ internal fun SessionWithExercises.toDomainEntity(): WorkoutSessionEntity =
 internal fun SessionItemWithSetCounts.toItemEntity(): WorkoutSessionItemEntity =
     WorkoutSessionItemEntity(
         id = id,
-        program = SessionProgramEntity(id = programId, name = programName),
+        program = SessionProgramEntity(
+            id = programId,
+            name = programName,
+            accent = ExerciseAccent.fromKey(programAccent),
+            glyph = ExerciseGlyph.fromKey(programGlyph),
+        ),
         startedAt = Instant.fromEpochMilliseconds(startedAt),
         finishedAt = Instant.fromEpochMilliseconds(finishedAt),
         completedSetCount = completedSetCount,
         totalSetCount = totalSetCount,
     )
 
+/** Снапшот программы: всё, что нужно карточке истории, лежит в самой строке сессии. */
+private fun WorkoutSessionDatabaseEntity.toProgramEntity(): SessionProgramEntity =
+    SessionProgramEntity(
+        id = programId,
+        name = programName,
+        accent = ExerciseAccent.fromKey(programAccent),
+        glyph = ExerciseGlyph.fromKey(programGlyph),
+    )
+
 private fun SessionExerciseWithSets.toDomainEntity(): SessionExerciseEntity =
     SessionExerciseEntity(
         id = sessionExercise.id,
+        // Упражнение читается живым из библиотеки — вместе с маркером, как и имя с описанием.
         exercise = WorkoutExerciseEntity(
             id = exercise.id,
             name = exercise.name,
             description = exercise.description,
+            accent = ExerciseAccent.fromKey(exercise.accent),
+            glyph = ExerciseGlyph.fromKey(exercise.glyph),
         ),
         sets = sets
             .sortedBy { it.position }

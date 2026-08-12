@@ -1,10 +1,17 @@
 package com.nikolaevskii.lyte.feature.splash.data.seed
 
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseWithRepsEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutRepEntity
 
-/** Стартовые программы тренировок — сеются в БД при первом запуске, см. [com.nikolaevskii.lyte.feature.splash.data.initializer.WorkoutLibraryInitializer]. */
+/**
+ * Стартовые программы тренировок — сеются в БД при первом запуске, см. [com.nikolaevskii.lyte.feature.splash.data.initializer.WorkoutLibraryInitializer].
+ *
+ * Маркеры — по макету v2 (`design/v2/LyteScreen.dc.html`, строки 583–606); существующим установкам
+ * их раздаёт миграция v1→v2, см. [DefaultExerciseLibrary].
+ */
 internal object DefaultWorkoutPrograms {
 
     val programs: List<WorkoutEntity> = listOf(
@@ -12,6 +19,8 @@ internal object DefaultWorkoutPrograms {
             id = "seed-program-push-day",
             name = "Push Day",
             description = null,
+            accent = ExerciseAccent.Indigo,
+            glyph = ExerciseGlyph.BenchPress,
             exercises = listOf(
                 exercise("seed-bench-press", 8 to 70.0, 8 to 80.0, 6 to 85.0, 6 to 85.0),
                 exercise("seed-incline-dumbbell-press", 10 to 24.0, 10 to 26.0, 8 to 26.0),
@@ -24,6 +33,8 @@ internal object DefaultWorkoutPrograms {
             id = "seed-program-pull-day",
             name = "Pull Day",
             description = null,
+            accent = ExerciseAccent.Coral,
+            glyph = ExerciseGlyph.PullUp,
             exercises = listOf(
                 exercise("seed-deadlift", 6 to 110.0, 6 to 110.0, 5 to 120.0),
                 exercise("seed-bent-over-row", 10 to 60.0, 10 to 60.0, 8 to 65.0),
@@ -35,6 +46,8 @@ internal object DefaultWorkoutPrograms {
             id = "seed-program-leg-day",
             name = "Leg Day",
             description = null,
+            accent = ExerciseAccent.Lime,
+            glyph = ExerciseGlyph.Squat,
             exercises = listOf(
                 exercise("seed-back-squat", 8 to 90.0, 8 to 90.0, 6 to 95.0),
                 exercise("seed-deadlift", 6 to 110.0, 6 to 110.0, 5 to 120.0),

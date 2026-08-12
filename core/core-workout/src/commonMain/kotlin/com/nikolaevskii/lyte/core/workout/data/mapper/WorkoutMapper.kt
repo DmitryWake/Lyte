@@ -9,6 +9,8 @@ import com.nikolaevskii.lyte.core.db.workout.WorkoutSetDatabaseEntity
 import com.nikolaevskii.lyte.core.db.workout.WorkoutSetTargetUpdate
 import com.nikolaevskii.lyte.core.db.workout.WorkoutWithExercises
 import com.nikolaevskii.lyte.core.workout.data.model.WorkoutRowsModel
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseWithRepsEntity
@@ -23,6 +25,8 @@ internal fun WorkoutItemWithExerciseCount.toItemEntity(): WorkoutItemEntity =
         id = id,
         name = name,
         description = description,
+        accent = ExerciseAccent.fromKey(accent),
+        glyph = ExerciseGlyph.fromKey(glyph),
         exerciseCount = exerciseCount,
     )
 
@@ -31,6 +35,8 @@ internal fun ExerciseDatabaseEntity.toDomainEntity(): WorkoutExerciseEntity =
         id = id,
         name = name,
         description = description,
+        accent = ExerciseAccent.fromKey(accent),
+        glyph = ExerciseGlyph.fromKey(glyph),
     )
 
 internal fun WorkoutExerciseEntity.toDatabaseEntity(): ExerciseDatabaseEntity =
@@ -40,6 +46,8 @@ internal fun WorkoutExerciseEntity.toDatabaseEntity(): ExerciseDatabaseEntity =
         // Служебная колонка под поиск и сортировку — см. ExerciseDatabaseEntity.nameNormalized.
         nameNormalized = name.lowercase(),
         description = description,
+        accent = accent.key,
+        glyph = glyph.key,
     )
 
 internal fun WorkoutWithExercises.toDomainEntity(): WorkoutEntity =
@@ -47,6 +55,8 @@ internal fun WorkoutWithExercises.toDomainEntity(): WorkoutEntity =
         id = workout.id,
         name = workout.name,
         description = workout.description,
+        accent = ExerciseAccent.fromKey(workout.accent),
+        glyph = ExerciseGlyph.fromKey(workout.glyph),
         exercises = exercises
             .sortedBy { it.crossRef.position }
             .map { it.toDomainEntity() },
@@ -57,6 +67,8 @@ internal fun WorkoutEntity.toRows(): WorkoutRowsModel {
         id = id,
         name = name,
         description = description,
+        accent = accent.key,
+        glyph = glyph.key,
     )
     val exerciseRows = mutableListOf<ExerciseDatabaseEntity>()
     val crossRefRows = mutableListOf<WorkoutExerciseCrossRefDatabaseEntity>()
