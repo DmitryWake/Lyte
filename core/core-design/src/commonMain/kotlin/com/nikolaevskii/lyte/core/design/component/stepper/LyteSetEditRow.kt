@@ -19,7 +19,7 @@ import com.nikolaevskii.lyte.core.design.component.overline.LyteOverline
 import com.nikolaevskii.lyte.core.design.generated.resources.Res
 import com.nikolaevskii.lyte.core.design.generated.resources.a11y_remove_set
 import com.nikolaevskii.lyte.core.design.generated.resources.set_caption_reps
-import com.nikolaevskii.lyte.core.design.generated.resources.set_caption_weight
+import com.nikolaevskii.lyte.core.design.generated.resources.set_caption_weight_unit
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
 import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.stringResource
@@ -92,7 +92,7 @@ fun LyteSetEditRow(
                         fillMaxWidth = true,
                     )
                 }
-                SetEditStepperColumn(caption = stringResource(Res.string.set_caption_weight)) {
+                SetEditStepperColumn(caption = stringResource(Res.string.set_caption_weight_unit)) {
                     LyteStepper(
                         value = weight,
                         onValueChange = onWeightChange,

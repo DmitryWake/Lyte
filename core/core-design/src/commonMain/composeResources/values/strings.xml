@@ -15,10 +15,14 @@
     <string name="a11y_remove_from_program">Убрать из программы</string>
     <string name="a11y_remove_set">Удалить подход</string>
     <string name="set_number">Подход %1$d</string>
-    <string name="set_last_time">в прошлый раз %1$s</string>
+    <string name="set_of_total">из %1$d</string>
     <string name="set_target">цель %1$s</string>
+    <string name="set_skipped">пропущен</string>
+    <string name="set_reference_target">Цель</string>
+    <string name="set_reference_last">В прошлый раз</string>
     <string name="set_caption_reps">Повт</string>
-    <string name="set_caption_weight">Кг</string>
+    <string name="set_caption_weight_name">Вес</string>
+    <string name="set_caption_weight_unit">Кг</string>
     <string name="exercise_glyph_squat">Присед</string>
     <string name="exercise_glyph_deadlift">Становая</string>
     <string name="exercise_glyph_bench_press">Жим лёжа</string>
