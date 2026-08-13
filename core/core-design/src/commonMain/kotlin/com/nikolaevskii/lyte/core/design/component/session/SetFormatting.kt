@@ -8,13 +8,15 @@ import com.nikolaevskii.lyte.core.design.generated.resources.diff_weight
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * Единый формат значения подхода для session-компонентов: «10×60 кг» при весе > 0,
- * иначе «10 повт» (свой вес). Единицы — общий компонентный «хром» (переиспользует строки [LyteDiffRow]).
+ * Единый формат значения подхода для session-компонентов: «10×60 кг» при заданном весе,
+ * иначе «10 повт» (свой вес). Единицы — общий компонентный «хром» (переиспользует строки `LyteDiffRow`).
  */
 @Composable
-internal fun setValueLabel(reps: Int, weight: Double): String =
-    if (weight > 0.0) {
-        "$reps×${formatWeight(weight)} " + stringResource(Res.string.diff_weight)
+internal fun setValueLabel(value: LyteSetValue): String {
+    val weight = value.weight
+    return if (weight != null && weight > 0.0) {
+        "${value.reps}×${formatWeight(weight)} " + stringResource(Res.string.diff_weight)
     } else {
-        "$reps " + stringResource(Res.string.diff_reps)
+        "${value.reps} " + stringResource(Res.string.diff_reps)
     }
+}

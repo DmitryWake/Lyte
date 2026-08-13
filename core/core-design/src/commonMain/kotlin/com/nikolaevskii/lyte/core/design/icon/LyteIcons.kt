@@ -10,7 +10,6 @@ import com.composables.icons.lucide.CircleArrowUp
 import com.composables.icons.lucide.CircleCheckBig
 import com.composables.icons.lucide.CircleDot
 import com.composables.icons.lucide.CircleMinus
-import com.composables.icons.lucide.CircleX
 import com.composables.icons.lucide.ClipboardList
 import com.composables.icons.lucide.Dumbbell
 import com.composables.icons.lucide.EllipsisVertical
@@ -59,6 +58,5 @@ object LyteIcons {
     val CircleCheck: ImageVector get() = Lucide.CircleCheckBig
     val CircleArrowUp: ImageVector get() = Lucide.CircleArrowUp
     val CircleArrowDown: ImageVector get() = Lucide.CircleArrowDown
-    val CircleX: ImageVector get() = Lucide.CircleX
     val CircleMinus: ImageVector get() = Lucide.CircleMinus
 }
