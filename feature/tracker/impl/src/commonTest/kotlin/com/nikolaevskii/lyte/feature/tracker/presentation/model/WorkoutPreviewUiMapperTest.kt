@@ -1,5 +1,9 @@
 package com.nikolaevskii.lyte.feature.tracker.presentation.model
 
+import com.nikolaevskii.lyte.core.design.icon.LyteExerciseGlyph
+import com.nikolaevskii.lyte.core.design.theme.LyteAccent
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseWithRepsEntity
@@ -14,8 +18,8 @@ class WorkoutPreviewUiMapperTest {
         val model = workout(
             name = "Push Day",
             exercises = listOf(
-                exercise("Жим лёжа", rep(8, 80.0), rep(8, 80.0)),
-                exercise("Отжимания на брусьях", rep(12, null)),
+                exercise(name = "Жим лёжа", reps = listOf(rep(8, 80.0), rep(8, 80.0))),
+                exercise(name = "Отжимания на брусьях", reps = listOf(rep(12, null))),
             ),
         ).toPreviewUiModel()
 
@@ -27,8 +31,27 @@ class WorkoutPreviewUiMapperTest {
     }
 
     @Test
+    fun mapsExerciseMarkToDesignSystemValues() {
+        val exercises = workout(
+            exercises = listOf(
+                exercise(
+                    name = "Жим лёжа",
+                    accent = ExerciseAccent.Indigo,
+                    glyph = ExerciseGlyph.BenchPress,
+                    reps = listOf(rep(8, 80.0)),
+                ),
+                // Упражнение без выбранного маркера: дефолт домена доезжает как дефолт дизайн-системы.
+                exercise(name = "Растяжка", reps = listOf(rep(1, null))),
+            ),
+        ).toPreviewUiModel().exercises
+
+        assertEquals(listOf(LyteAccent.Indigo, LyteAccent.Slate), exercises.map { it.accent })
+        assertEquals(listOf(LyteExerciseGlyph.BenchPress, LyteExerciseGlyph.Squat), exercises.map { it.glyph })
+    }
+
+    @Test
     fun formatsWeightWithoutTrailingZero() {
-        val sets = workout(exercises = listOf(exercise("Жим", rep(8, 60.0), rep(8, 62.5))))
+        val sets = workout(exercises = listOf(exercise(name = "Жим", reps = listOf(rep(8, 60.0), rep(8, 62.5)))))
             .toPreviewUiModel()
             .exercises
             .single()
@@ -45,7 +68,7 @@ class WorkoutPreviewUiMapperTest {
 
     @Test
     fun treatsNullAndZeroWeightAsBodyweight() {
-        val sets = workout(exercises = listOf(exercise("Брусья", rep(12, null), rep(10, 0.0))))
+        val sets = workout(exercises = listOf(exercise(name = "Брусья", reps = listOf(rep(12, null), rep(10, 0.0)))))
             .toPreviewUiModel()
             .exercises
             .single()
@@ -63,10 +86,15 @@ class WorkoutPreviewUiMapperTest {
     private fun workout(name: String = "Program", exercises: List<WorkoutExerciseWithRepsEntity>): WorkoutEntity =
         WorkoutEntity(id = "w1", name = name, description = null, exercises = exercises)
 
-    private fun exercise(name: String, vararg reps: WorkoutRepEntity): WorkoutExerciseWithRepsEntity =
+    private fun exercise(
+        name: String,
+        reps: List<WorkoutRepEntity>,
+        accent: ExerciseAccent = ExerciseAccent.Default,
+        glyph: ExerciseGlyph = ExerciseGlyph.Default,
+    ): WorkoutExerciseWithRepsEntity =
         WorkoutExerciseWithRepsEntity(
-            exercise = WorkoutExerciseEntity(id = name, name = name),
-            reps = reps.toList(),
+            exercise = WorkoutExerciseEntity(id = name, name = name, accent = accent, glyph = glyph),
+            reps = reps,
         )
 
     private fun rep(count: Int, weight: Double?): WorkoutRepEntity = WorkoutRepEntity(count = count, weight = weight)

@@ -104,7 +104,7 @@ Lucide — `implementation`-only внутри `core-design`, подключат�
 | `component.progress` | `LyteProgressTrack` (`LyteProgressTrackMode.Tones`/`Plan`/`Progress`, тона — `LyteProgressTone`) |
 | `component.picker` | `LyteAccentPicker` (шесть цветов), `LyteExerciseIconPicker` (сетка 5×2 знаков) |
 | `component.stepper` | `LyteStepper` (± контрол + ручной tap-to-edit ввод; ввод ограничен: ≤5 цифр целой части и ≤2 знаков после запятой, при `allowDecimal=false` — целочисленный режим для повторов без дробной части, `fillMaxWidth` — для колонок), `LyteSetEditRow` (строка редактирования одного планового подхода программы: заголовок-параметр `title`, удаление, степперы повторов/веса — планирование, не привязано к состоянию активной сессии в отличие от `LyteTrackSetRow`) |
-| `component.card` | `LyteProgramCard` (+`trailing`), `LyteExerciseCard` (`setLabels`-пилюли; ведущий элемент и действия задаёт `variant`: `LyteExerciseCardVariant.Editor` — drag-хэндл + edit/remove, `LyteExerciseCardVariant.Preview(index)` — номер упражнения без действий для read-only превью), `LyteSessionCard`, `LyteListRow` |
+| `component.card` | `LyteProgramCard` (маркер + один факт + `trailing`), `LyteExerciseCard` (маркер + трек плана; действия задаёт `variant`: `LyteExerciseCardVariant.Editor` — drag-хэндл + edit/remove, `LyteExerciseCardVariant.ReadOnly` — превью программы), `LyteSessionCard` (маркер + геро-число + трек), `LyteListRow` (ведущий элемент — `LyteListRowLeading.Mark`/`Icon`) |
 | `component.feedback` | `LyteDiffRow` (тона Met/Positive/Negative/Neutral/Skipped), `LyteDialog`, `LyteEmptyState` |
 | `component.navigation` | `LyteTopBar` (size Small/Large), `LyteBottomNavigationBar` (+ `LyteBottomNavigationBarHeight` — резерв под него для контента, см. «Нюансы») |
 | `component.overlay` | `LyteBottomSheet` (слоты `title`/`subtitle`/`topContent`/`content`/`bottomBar` + `LyteBottomSheetHeight`, см. ниже), `LyteRestTimerOverlay` |
@@ -166,6 +166,46 @@ Column {
 }
 ```
 
+### Анатомия карточки
+
+У всех карточек она **одна и фиксированная**:
+
+```
+маркер → заголовок → один тихий факт → [геро-число справа] → [трек во всю ширину]
+```
+
+Больше в карточку не помещается ничего. Это не стилевое пожелание, а следствие: в v1 карточка несла
+две строки метаданных равного веса («5 упражнений · посл. сессия 2 июл»), и три таких карточки
+подряд не давали глазу за что зацепиться. Поэтому факт — ровно один, а всё остальное уезжает на
+экран-деталь или на касание глубже.
+
+| Компонент | Маркер | Факт | Геро | Трек |
+|---|---|---|---|---|
+| `LyteProgramCard` | 52dp | «N упражнений» | — | — |
+| `LyteSessionCard` | 52dp | дата | длительность (19sp/700, табличная) | `Tones` или `Progress` |
+| `LyteExerciseCard` | 38dp | «N подходов» | — | `Plan` в слоте 76dp |
+| `LyteListRow` | 36dp | подзаголовок | — | — |
+
+Тексты и числа формирует вызывающая фича: компоненты задают раскладку и стиль, но не склеивают
+единицы и не выбирают форму множественного числа. У `LyteExerciseCard` из этого следует пара
+параметров `setCount` + `setsLabel`: первое задаёт число сегментов трека, второе — готовую подпись,
+и они обязаны быть про одно и то же число.
+
+`LyteSessionCard.track` принимает режим целиком (`LyteProgressTrackMode?`), а не список тонов:
+по-хорошему сводка сессии — это `Tones`, но пока исходы подходов не посчитаны, честнее показать
+`Progress` («сколько подходов позади»), чем выдумывать тона.
+
+**Плотный план трека не получает.** Сегмент в узком слоте зажат с двух сторон (`lytePlanTrackWidth`):
+сверху 16dp — чтобы при одном-трёх подходах трек не растягивался на весь слот и выглядел как до
+расширения; снизу 9dp — порог, ниже которого пилюля при высоте 5dp становится кругом. В слоте 76dp
+это шесть подходов; семь пилюль туда не влезают ни при каком зазоре, поэтому от семи трек **не
+рисуется вовсе** и подпись «N подходов» становится обычным подзаголовком под названием — как у
+упражнения без подходов. Так в списке не соседствуют карточки с пилюлями и карточки с точками:
+трек — избыточность к подписи, и когда он не читается взглядом, он только шумит. Число подходов
+при этом не теряется, оно в подписи.
+
+Кебаба на карточках нет: единственное действие (удаление) стоит в `trailing` прямо на карточке.
+
 ### Слоты `LyteBottomSheet`
 
 Сверху вниз: `title` → `subtitle` → `topContent` → `content` → `bottomBar`. Всё, кроме `content`,
@@ -211,7 +251,12 @@ LyteBottomSheet(
         modifier = Modifier.fillMaxSize(),
     ) {
         items(exercises, key = { it.id }) { exercise ->
-            LyteListRow(title = exercise.name, onClick = { onPick(exercise.id) })
+            LyteListRow(
+                title = exercise.name,
+                subtitle = exercise.description,
+                leading = LyteListRowLeading.Mark(accent = exercise.accent, glyph = exercise.glyph),
+                onClick = { onPick(exercise.id) },
+            )
         }
     }
 }

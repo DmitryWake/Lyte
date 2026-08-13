@@ -3,9 +3,12 @@ package com.nikolaevskii.lyte.core.design.component.card
 import androidx.compose.ui.Modifier
 
 /**
- * Вариант карточки упражнения — задаёт ведущий элемент строки и набор действий, зависящие от контекста.
- * Вынесен в sealed-тип, чтобы исключить бессмысленные сочетания (номер-бейдж с кнопками действий или
- * drag-хэндл в read-only превью): [LyteExerciseCard] не принимает эти параметры по отдельности.
+ * Вариант карточки упражнения — задаёт, есть ли у строки drag-хэндл и кнопки действий. Вынесен в
+ * sealed-тип, чтобы исключить бессмысленное сочетание «read-only карточка с кнопкой удаления»:
+ * [LyteExerciseCard] не принимает эти параметры по отдельности.
+ *
+ * Двух вариантов ровно столько, сколько мест у карточки в v2: редактор программы (3.2) и read-only
+ * превью программы перед стартом (4.2).
  */
 sealed interface LyteExerciseCardVariant {
 
@@ -24,8 +27,8 @@ sealed interface LyteExerciseCardVariant {
     ) : LyteExerciseCardVariant
 
     /**
-     * Read-only превью программы (спека 4.2): слева круглый бейдж с порядковым номером [index]
-     * (позиция упражнения в программе), без действий и переупорядочивания.
+     * Read-only превью программы (спека 4.2): ни хэндла, ни действий. Порядкового номера у
+     * упражнения в v2 нет — карточку ведёт маркер, а порядок читается по самому списку.
      */
-    data class Preview(val index: Int) : LyteExerciseCardVariant
+    data object ReadOnly : LyteExerciseCardVariant
 }

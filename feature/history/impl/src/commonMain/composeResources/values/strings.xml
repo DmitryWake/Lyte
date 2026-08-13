@@ -5,7 +5,7 @@
     <string name="history_empty_hint">Итоги каждой сессии сохраняются автоматически</string>
     <string name="history_error">Не удалось загрузить историю</string>
     <string name="history_date">%1$d %2$s</string>
-    <string name="history_session_summary">%1$d мин · выполнено %2$d/%3$d подходов</string>
+    <string name="history_session_duration">%1$d мин</string>
     <string name="history_details_title">Тренировка</string>
     <string name="history_details_error">Не удалось загрузить сессию</string>
     <string name="history_details_meta">%1$d %2$s · начало %3$s</string>

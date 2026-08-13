@@ -24,10 +24,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nikolaevskii.lyte.core.design.LyteTheme
 import com.nikolaevskii.lyte.core.design.component.button.LyteButton
 import com.nikolaevskii.lyte.core.design.component.card.LyteListRow
+import com.nikolaevskii.lyte.core.design.component.card.LyteListRowLeading
 import com.nikolaevskii.lyte.core.design.component.feedback.LyteEmptyState
 import com.nikolaevskii.lyte.core.design.component.overlay.LyteBottomSheet
 import com.nikolaevskii.lyte.core.design.component.textfield.LyteTextField
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import com.nikolaevskii.lyte.feature.workout.generated.resources.Res
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_picker_create
@@ -39,6 +42,8 @@ import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_picker_search_placeholder
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_picker_title
 import com.nikolaevskii.lyte.feature.workout.presentation.model.ExercisePickerResult
+import com.nikolaevskii.lyte.feature.workout.presentation.model.toLyteAccent
+import com.nikolaevskii.lyte.feature.workout.presentation.model.toLyteGlyph
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExercisePickerIntent
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExercisePickerUiState
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExercisePickerUiState.ExercisePickerContent
@@ -52,18 +57,30 @@ private val previewLibrary = listOf(
         id = "1",
         name = "Приседания со штангой",
         description = "Штанга на верхней части спины, присед до параллели бёдер с полом.",
+        accent = ExerciseAccent.Lime,
+        glyph = ExerciseGlyph.Squat,
     ),
     WorkoutExerciseEntity(
         id = "2",
         name = "Становая тяга",
         description = "Подъём штанги с пола за счёт разгибания бёдер и спины, руки прямые.",
+        accent = ExerciseAccent.Amber,
+        glyph = ExerciseGlyph.Deadlift,
     ),
     WorkoutExerciseEntity(
         id = "3",
         name = "Жим лёжа",
         description = "Жим штанги от середины груди лёжа на горизонтальной скамье.",
+        accent = ExerciseAccent.Indigo,
+        glyph = ExerciseGlyph.BenchPress,
     ),
-    WorkoutExerciseEntity(id = "4", name = "Подтягивания", description = null),
+    WorkoutExerciseEntity(
+        id = "4",
+        name = "Подтягивания",
+        description = null,
+        accent = ExerciseAccent.Coral,
+        glyph = ExerciseGlyph.PullUp,
+    ),
 )
 
 /**
@@ -177,6 +194,10 @@ fun WorkoutExercisePickerSheetContent(
                     LyteListRow(
                         title = exercise.name,
                         subtitle = exercise.description,
+                        leading = LyteListRowLeading.Mark(
+                            accent = exercise.accent.toLyteAccent(),
+                            glyph = exercise.glyph.toLyteGlyph(),
+                        ),
                         onClick = { onIntent(ExercisePickerIntent.OnExerciseClicked(exercise.id)) },
                     )
                 }

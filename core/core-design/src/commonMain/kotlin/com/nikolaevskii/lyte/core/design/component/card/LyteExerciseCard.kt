@@ -5,11 +5,10 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -18,184 +17,179 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.nikolaevskii.lyte.core.design.LyteTheme
 import com.nikolaevskii.lyte.core.design.component.iconbutton.LyteIconButton
+import com.nikolaevskii.lyte.core.design.component.mark.LyteExerciseMark
+import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTrack
+import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTrackMode
+import com.nikolaevskii.lyte.core.design.component.progress.lytePlanTrackWidth
 import com.nikolaevskii.lyte.core.design.generated.resources.Res
 import com.nikolaevskii.lyte.core.design.generated.resources.a11y_edit_sets
 import com.nikolaevskii.lyte.core.design.generated.resources.a11y_remove_from_program
+import com.nikolaevskii.lyte.core.design.icon.LyteExerciseGlyph
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
-import com.nikolaevskii.lyte.core.design.theme.withTabularNums
+import com.nikolaevskii.lyte.core.design.theme.LyteAccent
 import org.jetbrains.compose.resources.stringResource
 
-private val ExerciseCardPaddingTop = 12.dp
-private val ExerciseCardPaddingBottom = 14.dp
-private val ExerciseCardPaddingHorizontal = 10.dp
-private val ExerciseCardRowGap = 4.dp
-private val ExerciseCardHandleSize = 20.dp
-private val ExerciseCardHandleGap = 8.dp
-private val ExerciseCardContentStart = 28.dp
-private val ExerciseCardBadgeSize = 24.dp
-private val ExerciseCardBadgeGap = 6.dp
-private val ExerciseCardBadgeTextSize = 12.5.sp
-private val ExerciseCardPlanSpacing = 8.dp
-private val ExerciseCardSummarySpacing = 4.dp
-private val ExerciseCardPillGap = 5.dp
-private val ExerciseCardPillPaddingHorizontal = 10.dp
-private val ExerciseCardPillPaddingVertical = 4.dp
-private val ExerciseCardActionSize = 38.dp
-private val ExerciseCardPillTextSize = 12.5.sp
-private const val ExerciseCardTitleMaxLines = 2
+private val ExerciseCardPaddingStart = 8.dp
+private val ExerciseCardPadding = 12.dp
+private val ExerciseCardGap = 10.dp
+private val ExerciseCardHandleSize = 18.dp
+private val ExerciseCardMarkSize = 38.dp
+private val ExerciseCardPlanSpacing = 6.dp
+private val ExerciseCardPlanGap = 8.dp
+private val ExerciseCardActionSize = 36.dp
 
 /**
- * Строка упражнения: название (до 2 строк) и — снизу — раскладка подходов. [setLabels] (готовые
- * подписи подходов от вызывающей стороны) рендерятся переносящимся рядом пилюль и имеют приоритет над
- * компактным [summary]; единицы/формат числа выбирает вызывающая сторона.
- *
- * Ведущий элемент строки и доступные действия задаёт [variant]:
- * [LyteExerciseCardVariant.Editor] — drag-хэндл + кнопки «редактировать»/«убрать» (редактор
- * программы); [LyteExerciseCardVariant.Preview] — порядковый номер упражнения без действий (read-only
- * превью, спека 4.2). План при [LyteExerciseCardVariant.Editor] выравнивается под название (за
- * хэндлом), при [LyteExerciseCardVariant.Preview] — во всю ширину.
+ * Место под трек плана. Резервируется целиком, даже когда трек занимает меньше: так подпись
+ * «N подходов» у всех карточек списка начинается с одного места.
  */
-@OptIn(ExperimentalLayoutApi::class)
+private val ExerciseCardPlanSlotWidth = 76.dp
+
+/** Сегмент не растёт дальше — при одном-трёх подходах трек выглядит так же, как до расширения слота. */
+private val ExerciseCardPlanSegmentMaxWidth = 16.dp
+
+/**
+ * Порог, ниже которого трек не рисуется совсем (см. [lytePlanTrackWidth]). Взят от высоты сегмента
+ * (5dp): при ширине меньше ~1.8 высоты пилюля превращается в круг, и ряд начинает читаться как
+ * индикатор загрузки, а не как «сколько подходов». В слоте 76dp это шесть подходов; семь пилюль
+ * в такую ширину не влезают ни при каком зазоре, поэтому дальше остаётся одна подпись.
+ */
+private val ExerciseCardPlanSegmentMinWidth = 9.dp
+private const val ExerciseCardTitleMaxLines = 2
+
+private val ExerciseCardSpecimenGap = 10.dp
+private val ExerciseCardSpecimenPadding = 16.dp
+
+/**
+ * Карточка упражнения в программе: редактор (3.2) или read-only превью (4.2) — см. [variant].
+ *
+ * В v1 карточка рисовала каждый плановый подход отдельной пилюлей («10×60 кг» ×4), и одно упражнение
+ * превращалось в пять конкурирующих текстовых блоков. В v2 тот же план читается [LyteProgressTrack]
+ * в режиме `Plan` плюс одна подпись-счётчик; точные числа живут на касание глубже, в редакторе
+ * подходов.
+ *
+ * Трек здесь — **план**, поэтому все сегменты одного цвета: он отвечает на «сколько подходов», а не
+ * «сколько сделано». Прогресс — свойство сессии, и наполовину закрашенный трек в списке упражнений
+ * программы читался бы как ошибка.
+ *
+ * [setCount] задаёт число сегментов, [setsLabel] — готовую подпись к ним («3 подхода»): число в
+ * подписи и [setCount] обязаны быть про одно и то же, склейку с единицами делает вызывающая сторона.
+ *
+ * Трека нет при [setCount] = 0 и при плотном плане (в текущем слоте — от семи подходов): сегменты
+ * становятся круглыми, и ряд читается индикатором загрузки, а не планом. Тогда остаётся одна подпись
+ * — число подходов она несёт и так, а список карточек не мешает пилюли с точками. Арифметика и
+ * обоснование — в [lytePlanTrackWidth].
+ */
 @Composable
 fun LyteExerciseCard(
     title: String,
+    accent: LyteAccent,
+    glyph: LyteExerciseGlyph,
     variant: LyteExerciseCardVariant,
-    summary: String? = null,
-    setLabels: List<String>? = null,
+    setCount: Int,
+    setsLabel: String,
     onClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
-    val contentStartPadding = when (variant) {
-        is LyteExerciseCardVariant.Editor -> ExerciseCardContentStart
-        is LyteExerciseCardVariant.Preview -> 0.dp
-    }
-
     Surface(
         modifier = modifier,
         shape = LyteTheme.extendedShapes.largeIncreased,
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
         shadowElevation = LyteTheme.elevation.level1,
     ) {
-        Column(
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(ExerciseCardGap),
             modifier = Modifier.padding(
-                start = ExerciseCardPaddingHorizontal,
-                top = ExerciseCardPaddingTop,
-                end = ExerciseCardPaddingHorizontal,
-                bottom = ExerciseCardPaddingBottom,
+                start = ExerciseCardPaddingStart,
+                top = ExerciseCardPadding,
+                end = ExerciseCardPadding,
+                bottom = ExerciseCardPadding,
             ),
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(ExerciseCardRowGap),
+            if (variant is LyteExerciseCardVariant.Editor) {
+                Icon(
+                    imageVector = LyteIcons.GripVertical,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.outlineVariant,
+                    modifier = variant.dragHandleModifier.size(ExerciseCardHandleSize),
+                )
+            }
+            LyteExerciseMark(accent = accent, glyph = glyph, size = ExerciseCardMarkSize)
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .then(clickableContentModifier(onClick)),
             ) {
-                when (variant) {
-                    is LyteExerciseCardVariant.Preview -> IndexBadge(index = variant.index)
-                    is LyteExerciseCardVariant.Editor -> Icon(
-                        imageVector = LyteIcons.GripVertical,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = variant.dragHandleModifier
-                            .padding(end = ExerciseCardHandleGap)
-                            .size(ExerciseCardHandleSize),
-                    )
-                }
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = rowTitleStrongStyle,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = ExerciseCardTitleMaxLines,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .weight(1f)
-                        .then(clickableTitleModifier(onClick)),
                 )
-                if (variant is LyteExerciseCardVariant.Editor) {
-                    variant.onEdit?.let { onEdit ->
-                        LyteIconButton(
-                            icon = LyteIcons.Edit,
-                            contentDescription = stringResource(Res.string.a11y_edit_sets),
-                            onClick = onEdit,
-                            size = ExerciseCardActionSize,
-                        )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(ExerciseCardPlanGap),
+                    modifier = Modifier.padding(top = ExerciseCardPlanSpacing),
+                ) {
+                    val trackWidth = lytePlanTrackWidth(
+                        setCount = setCount,
+                        slotWidth = ExerciseCardPlanSlotWidth,
+                        minSegmentWidth = ExerciseCardPlanSegmentMinWidth,
+                        maxSegmentWidth = ExerciseCardPlanSegmentMaxWidth,
+                    )
+                    if (trackWidth != null) {
+                        Box(
+                            contentAlignment = Alignment.CenterStart,
+                            modifier = Modifier.width(ExerciseCardPlanSlotWidth),
+                        ) {
+                            LyteProgressTrack(
+                                mode = LyteProgressTrackMode.Plan(total = setCount, accent = accent),
+                                modifier = Modifier.width(trackWidth),
+                            )
+                        }
                     }
-                    variant.onRemove?.let { onRemove ->
-                        LyteIconButton(
-                            icon = LyteIcons.Delete,
-                            contentDescription = stringResource(Res.string.a11y_remove_from_program),
-                            onClick = onRemove,
-                            size = ExerciseCardActionSize,
-                        )
-                    }
+                    Text(
+                        text = setsLabel,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
             }
-            when {
-                !setLabels.isNullOrEmpty() -> FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(ExerciseCardPillGap),
-                    verticalArrangement = Arrangement.spacedBy(ExerciseCardPillGap),
-                    modifier = Modifier.padding(top = ExerciseCardPlanSpacing, start = contentStartPadding),
-                ) {
-                    setLabels.forEach { label -> SetPill(label = label) }
+            if (variant is LyteExerciseCardVariant.Editor) {
+                variant.onEdit?.let { onEdit ->
+                    LyteIconButton(
+                        icon = LyteIcons.Edit,
+                        contentDescription = stringResource(Res.string.a11y_edit_sets),
+                        onClick = onEdit,
+                        size = ExerciseCardActionSize,
+                    )
                 }
-
-                summary != null -> Text(
-                    text = summary,
-                    style = MaterialTheme.typography.bodyMedium.withTabularNums(),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = ExerciseCardSummarySpacing, start = contentStartPadding),
-                )
+                variant.onRemove?.let { onRemove ->
+                    LyteIconButton(
+                        icon = LyteIcons.Delete,
+                        contentDescription = stringResource(Res.string.a11y_remove_from_program),
+                        onClick = onRemove,
+                        size = ExerciseCardActionSize,
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun clickableTitleModifier(onClick: (() -> Unit)?): Modifier {
+private fun clickableContentModifier(onClick: (() -> Unit)?): Modifier {
     if (onClick == null) return Modifier
     val interactionSource = remember { MutableInteractionSource() }
     return Modifier.clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
-}
-
-@Composable
-private fun SetPill(label: String) {
-    Surface(shape = LyteTheme.extendedShapes.full, color = MaterialTheme.colorScheme.surfaceContainer) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge.copy(fontSize = ExerciseCardPillTextSize).withTabularNums(),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            modifier = Modifier.padding(horizontal = ExerciseCardPillPaddingHorizontal, vertical = ExerciseCardPillPaddingVertical),
-        )
-    }
-}
-
-@Composable
-private fun IndexBadge(index: Int) {
-    Surface(
-        shape = LyteTheme.extendedShapes.full,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        modifier = Modifier.padding(end = ExerciseCardBadgeGap),
-    ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.size(ExerciseCardBadgeSize),
-        ) {
-            Text(
-                text = index.toString(),
-                style = MaterialTheme.typography.labelLarge
-                    .copy(fontSize = ExerciseCardBadgeTextSize, fontWeight = FontWeight.Bold)
-                    .withTabularNums(),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-            )
-        }
-    }
 }
 
 @Preview
@@ -203,25 +197,55 @@ private fun IndexBadge(index: Int) {
 private fun LyteExerciseCardPreview() {
     LyteTheme {
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(ExerciseCardSpecimenGap),
+            modifier = Modifier.padding(ExerciseCardSpecimenPadding),
         ) {
             LyteExerciseCard(
                 title = "Жим лёжа",
-                setLabels = listOf("10×60 кг", "10×60 кг", "8×62.5 кг"),
+                accent = LyteAccent.Indigo,
+                glyph = LyteExerciseGlyph.BenchPress,
                 variant = LyteExerciseCardVariant.Editor(onEdit = {}, onRemove = {}),
+                setCount = 3,
+                setsLabel = "3 подхода",
                 onClick = {},
             )
+            // Самый плотный трек, который ещё рисуется: сегменты остаются пилюлями.
             LyteExerciseCard(
-                title = "Подтягивания",
-                summary = "3×10 · свой вес",
+                title = "Подтягивания широким хватом до касания грудью",
+                accent = LyteAccent.Coral,
+                glyph = LyteExerciseGlyph.PullUp,
                 variant = LyteExerciseCardVariant.Editor(onRemove = {}),
+                setCount = 6,
+                setsLabel = "6 подходов",
                 onClick = {},
             )
             LyteExerciseCard(
-                title = "Жим гантелей на наклонной",
-                setLabels = listOf("10×24 кг", "10×26 кг", "8×26 кг"),
-                variant = LyteExerciseCardVariant.Preview(index = 2),
+                title = "Приседания со штангой",
+                accent = LyteAccent.Lime,
+                glyph = LyteExerciseGlyph.Squat,
+                variant = LyteExerciseCardVariant.ReadOnly,
+                setCount = 4,
+                setsLabel = "4 подхода",
+                onClick = {},
+            )
+            // Плотный план: восемь пилюль в слот не влезают, поэтому трека нет — только подпись.
+            LyteExerciseCard(
+                title = "Подъём на носки",
+                accent = LyteAccent.Amber,
+                glyph = LyteExerciseGlyph.Machine,
+                variant = LyteExerciseCardVariant.Editor(onEdit = {}, onRemove = {}),
+                setCount = 8,
+                setsLabel = "8 подходов",
+                onClick = {},
+            )
+            // Упражнение без подходов: трека нет, остаётся подпись.
+            LyteExerciseCard(
+                title = "Растяжка",
+                accent = LyteAccent.Teal,
+                glyph = LyteExerciseGlyph.Stretch,
+                variant = LyteExerciseCardVariant.ReadOnly,
+                setCount = 0,
+                setsLabel = "Без подходов",
             )
         }
     }

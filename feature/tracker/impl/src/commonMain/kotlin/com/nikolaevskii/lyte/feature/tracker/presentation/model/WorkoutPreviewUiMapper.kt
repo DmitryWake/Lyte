@@ -19,6 +19,8 @@ fun WorkoutEntity.toPreviewUiModel(): WorkoutPreviewUiModel =
                 number = index + 1,
                 name = exercise.exercise.name,
                 sets = exercise.reps.map { rep -> rep.toPreviewSet() },
+                accent = exercise.exercise.accent.toLyteAccent(),
+                glyph = exercise.exercise.glyph.toLyteGlyph(),
             )
         },
     )

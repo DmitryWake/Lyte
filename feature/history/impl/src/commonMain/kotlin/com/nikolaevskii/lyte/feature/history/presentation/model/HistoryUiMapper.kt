@@ -31,5 +31,7 @@ private fun WorkoutSessionItemEntity.toSessionUiModel(timeZone: TimeZone): Histo
         durationMinutes = (finishedAt - startedAt).inWholeMinutes.toInt().coerceAtLeast(0),
         completedSetCount = completedSetCount,
         totalSetCount = totalSetCount,
+        accent = program.accent.toLyteAccent(),
+        glyph = program.glyph.toLyteGlyph(),
     )
 }

@@ -10,7 +10,6 @@
     <string name="dialog_cancel_default">Отмена</string>
     <string name="stepper_edit">Ввести значение</string>
     <string name="a11y_remove">Удалить</string>
-    <string name="a11y_menu">Меню</string>
     <string name="a11y_back">Назад</string>
     <string name="a11y_edit_sets">Редактировать подходы</string>
     <string name="a11y_remove_from_program">Убрать из программы</string>

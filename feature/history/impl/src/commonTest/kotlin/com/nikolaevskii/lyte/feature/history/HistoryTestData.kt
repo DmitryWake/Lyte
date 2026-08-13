@@ -7,6 +7,8 @@ import com.nikolaevskii.lyte.core.session.domain.model.SessionSetResultEntity
 import com.nikolaevskii.lyte.core.session.domain.model.SessionSetValueEntity
 import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionEntity
 import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionItemEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import kotlin.time.Duration.Companion.minutes
 import kotlinx.datetime.LocalDateTime
@@ -27,12 +29,14 @@ internal fun finishedSession(
     durationMinutes: Int,
     completedSetCount: Int,
     totalSetCount: Int,
+    accent: ExerciseAccent = ExerciseAccent.Default,
+    glyph: ExerciseGlyph = ExerciseGlyph.Default,
     timeZone: TimeZone = TEST_TIME_ZONE,
 ): WorkoutSessionItemEntity {
     val finished = finishedAt.toInstant(timeZone)
     return WorkoutSessionItemEntity(
         id = id,
-        program = SessionProgramEntity(id = "prog-$id", name = programName),
+        program = SessionProgramEntity(id = "prog-$id", name = programName, accent = accent, glyph = glyph),
         startedAt = finished - durationMinutes.minutes,
         finishedAt = finished,
         completedSetCount = completedSetCount,
