@@ -1,13 +1,19 @@
 package com.nikolaevskii.lyte.core.design.component.session
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -15,98 +21,212 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nikolaevskii.lyte.core.design.LyteTheme
 import com.nikolaevskii.lyte.core.design.component.overline.LyteOverline
+import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTone
 import com.nikolaevskii.lyte.core.design.component.stepper.LyteStepper
 import com.nikolaevskii.lyte.core.design.component.stepper.LyteStepperSize
 import com.nikolaevskii.lyte.core.design.generated.resources.Res
-import com.nikolaevskii.lyte.core.design.generated.resources.diff_skipped
+import com.nikolaevskii.lyte.core.design.generated.resources.diff_weight
 import com.nikolaevskii.lyte.core.design.generated.resources.set_caption_reps
-import com.nikolaevskii.lyte.core.design.generated.resources.set_caption_weight
-import com.nikolaevskii.lyte.core.design.generated.resources.set_last_time
+import com.nikolaevskii.lyte.core.design.generated.resources.set_caption_weight_name
 import com.nikolaevskii.lyte.core.design.generated.resources.set_number
+import com.nikolaevskii.lyte.core.design.generated.resources.set_of_total
+import com.nikolaevskii.lyte.core.design.generated.resources.set_reference_last
+import com.nikolaevskii.lyte.core.design.generated.resources.set_reference_target
+import com.nikolaevskii.lyte.core.design.generated.resources.set_skipped
 import com.nikolaevskii.lyte.core.design.generated.resources.set_target
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
 import com.nikolaevskii.lyte.core.design.theme.withTabularNums
 import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.stringResource
 
-enum class LyteTrackSetState { Current, DoneHit, DoneMiss, DoneSkip, Todo }
+private val TrackSetRestingMinHeight = 36.dp
+private val TrackSetRestingPaddingHorizontal = 16.dp
+private val TrackSetRestingPaddingVertical = 9.dp
+private val TrackSetRestingGap = 10.dp
+private val TrackSetIndexWidth = 12.dp
+private val TrackSetIconSize = 17.dp
+private val TrackSetIndexTextSize = 12.sp
+private val TrackSetValueTextSize = 14.5.sp
+private val TrackSetValueTracking = (-0.2).sp
+private val TrackSetTargetTextSize = 13.5.sp
+private val TrackSetSkippedTextSize = 13.sp
+private val TrackSetNoteTextSize = 12.sp
 
-private val TrackSetOutlineWidth = 1.5.dp
-private val TrackSetCurrentPaddingTop = 16.dp
-private val TrackSetCurrentPaddingHorizontal = 18.dp
-private val TrackSetCurrentPaddingBottom = 18.dp
-private val TrackSetHeaderSpacing = 14.dp
-private val TrackSetHeaderIconGap = 8.dp
-private val TrackSetIconSize = 20.dp
+/** Строка спокойного подхода держит 36dp: интерлиньяж задан явно, иначе её распирает стилем текста. */
+private val TrackSetRestingLineHeight = 18.sp
+
+private val TrackSetCardPadding = 18.dp
+private val TrackSetCardRingWidth = 2.dp
+private val TrackSetCardHeaderGap = 8.dp
+private val TrackSetCardTitleTextSize = 14.5.sp
+private val TrackSetCardTitleTracking = (-0.1).sp
+private val TrackSetCardTotalTextSize = 12.sp
+private val TrackSetReferenceIndent = 25.dp
+private val TrackSetReferenceTopGap = 6.dp
+private val TrackSetReferenceRowGap = 2.dp
+private val TrackSetReferenceGap = 8.dp
+private val TrackSetReferenceLabelTextSize = 12.sp
+private val TrackSetReferenceValueTextSize = 12.5.sp
+private val TrackSetReferenceLeaderHeight = 1.dp
+private const val TrackSetReferenceLeaderAlpha = 0.6f
+private val TrackSetSteppersTopGap = 14.dp
+private val TrackSetStepperRowGap = 10.dp
 private val TrackSetStepperGap = 12.dp
-private val TrackSetStepperColumnGap = 6.dp
-private val TrackSetCompactPaddingHorizontal = 16.dp
-private val TrackSetCompactPaddingVertical = 13.dp
-private val TrackSetCompactGap = 10.dp
-private val TrackSetHeaderTextSize = 15.sp
-private val TrackSetLastTextSize = 12.5.sp
-private val TrackSetValueTextSize = 15.sp
-private val TrackSetLabelTextSize = 14.sp
-private const val TrackSetTodoAlpha = 0.7f
+private val TrackSetStepperCaptionWidth = 40.dp
+private val TrackSetContentTopGap = 16.dp
+
+private val TrackSetPreviewGap = 6.dp
+private val TrackSetPreviewPadding = 16.dp
 
 /**
- * Один подход в трекере активной сессии. Две формы:
- * [LyteTrackSetState.Current] — приподнятая фокус-карточка со степперами повторов/веса,
- * опциональной ссылкой «в прошлый раз» и слотом [content] под заметку;
- * остальные состояния — компактная строка с результатом (done-hit/miss/skip) либо целью (todo).
+ * Один подход на экране тренировки. Форму выбирает [state]:
+ * [LyteTrackSetState.Resting] — спокойная строка 36dp с исходом справа,
+ * [LyteTrackSetState.Current] — фокус-карточка со степперами повторов и веса.
+ *
+ * Спокойные строки намеренно узкие и без слова «Подход»: внутри списка позиция сама говорит, какой
+ * это подход, и именно отказ от слова позволяет семи отработанным подходам поместиться на экране
+ * рядом с фокус-карточкой.
+ *
+ * [content] — слот под заметку или чип внизу фокус-карточки; в спокойной строке он не рисуется
+ * (её заметка — часть [LyteTrackSetState.Resting]).
  */
 @Composable
 fun LyteTrackSetRow(
     number: Int,
     state: LyteTrackSetState,
-    reps: Int = 0,
-    weight: Double = 0.0,
-    target: String? = null,
-    last: String? = null,
     onRepsChange: (Int) -> Unit = {},
     onWeightChange: (Double) -> Unit = {},
-    repsStep: Int = 1,
-    weightStep: Double = 2.5,
     content: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
-    if (state == LyteTrackSetState.Current) {
-        CurrentSetCard(
+    when (state) {
+        is LyteTrackSetState.Current -> CurrentSetCard(
             number = number,
-            reps = reps,
-            weight = weight,
-            last = last,
+            state = state,
             onRepsChange = onRepsChange,
             onWeightChange = onWeightChange,
-            repsStep = repsStep,
-            weightStep = weightStep,
             content = content,
             modifier = modifier,
         )
-    } else {
-        CompactSetRow(number = number, state = state, reps = reps, weight = weight, target = target, modifier = modifier)
+
+        is LyteTrackSetState.Resting -> RestingSetRow(number = number, state = state, modifier = modifier)
+    }
+}
+
+@Composable
+private fun RestingSetRow(
+    number: Int,
+    state: LyteTrackSetState.Resting,
+    modifier: Modifier = Modifier,
+) {
+    val colors = restingToneColors(state.tone)
+    Surface(
+        modifier = modifier.defaultMinSize(minHeight = TrackSetRestingMinHeight),
+        shape = MaterialTheme.shapes.large,
+        color = colors.background,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(TrackSetRestingGap),
+            modifier = Modifier.padding(
+                horizontal = TrackSetRestingPaddingHorizontal,
+                vertical = TrackSetRestingPaddingVertical,
+            ),
+        ) {
+            Text(
+                text = number.toString(),
+                style = MaterialTheme.typography.labelMedium
+                    .copy(
+                        fontSize = TrackSetIndexTextSize,
+                        lineHeight = TrackSetRestingLineHeight,
+                        letterSpacing = 0.sp,
+                    )
+                    .withTabularNums(),
+                color = colors.foreground,
+                maxLines = 1,
+                // Минимум, а не фиксированная ширина: двузначный номер подхода не должен обрезаться.
+                modifier = Modifier.widthIn(min = TrackSetIndexWidth),
+            )
+            Icon(
+                imageVector = colors.icon,
+                contentDescription = null,
+                tint = colors.foreground,
+                modifier = Modifier.size(TrackSetIconSize),
+            )
+            if (state.note == null) {
+                Spacer(modifier = Modifier.weight(1f))
+            } else {
+                Text(
+                    text = state.note,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontSize = TrackSetNoteTextSize,
+                        lineHeight = TrackSetRestingLineHeight,
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            RestingSetValue(state = state, foreground = colors.foreground)
+        }
+    }
+}
+
+@Composable
+private fun RestingSetValue(state: LyteTrackSetState.Resting, foreground: Color) {
+    when (state.tone) {
+        LyteProgressTone.Met, LyteProgressTone.Positive, LyteProgressTone.Negative -> Text(
+            text = setValueLabel(reps = state.reps, weight = state.weight),
+            style = MaterialTheme.typography.labelLarge
+                .copy(
+                    fontSize = TrackSetValueTextSize,
+                    lineHeight = TrackSetRestingLineHeight,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = TrackSetValueTracking,
+                )
+                .withTabularNums(),
+            color = foreground,
+            maxLines = 1,
+        )
+
+        LyteProgressTone.Skipped -> Text(
+            text = stringResource(Res.string.set_skipped),
+            style = MaterialTheme.typography.labelLarge.copy(
+                fontSize = TrackSetSkippedTextSize,
+                lineHeight = TrackSetRestingLineHeight,
+                fontWeight = FontWeight.Medium,
+            ),
+            color = foreground,
+            maxLines = 1,
+        )
+
+        LyteProgressTone.Todo -> Text(
+            text = stringResource(Res.string.set_target, state.target.orEmpty()),
+            style = MaterialTheme.typography.labelLarge
+                .copy(fontSize = TrackSetTargetTextSize, lineHeight = TrackSetRestingLineHeight)
+                .withTabularNums(),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+        )
     }
 }
 
 @Composable
 private fun CurrentSetCard(
     number: Int,
-    reps: Int,
-    weight: Double,
-    last: String?,
+    state: LyteTrackSetState.Current,
     onRepsChange: (Int) -> Unit,
     onWeightChange: (Double) -> Unit,
-    repsStep: Int,
-    weightStep: Double,
     content: (@Composable () -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
@@ -115,168 +235,251 @@ private fun CurrentSetCard(
         shape = MaterialTheme.shapes.extraLarge,
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
         shadowElevation = LyteTheme.elevation.level2,
-        border = BorderStroke(TrackSetOutlineWidth, MaterialTheme.colorScheme.primary),
+        // Обводка Compose рисуется внутрь границ — то же, что `inset` box-shadow в макете: её не
+        // срежет скроллер, когда карточка прижата к нижнему краю списка.
+        border = BorderStroke(TrackSetCardRingWidth, MaterialTheme.colorScheme.primary),
     ) {
-        Column(
-            modifier = Modifier.padding(
-                start = TrackSetCurrentPaddingHorizontal,
-                end = TrackSetCurrentPaddingHorizontal,
-                top = TrackSetCurrentPaddingTop,
-                bottom = TrackSetCurrentPaddingBottom,
-            ),
-        ) {
+        Column(modifier = Modifier.padding(TrackSetCardPadding)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().padding(bottom = TrackSetHeaderSpacing),
+                horizontalArrangement = Arrangement.spacedBy(TrackSetCardHeaderGap),
+                modifier = Modifier.fillMaxWidth(),
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(TrackSetHeaderIconGap),
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Icon(
-                        imageVector = LyteIcons.CircleDot,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.size(TrackSetIconSize),
-                    )
-                    Text(
-                        text = stringResource(Res.string.set_number, number),
-                        style = MaterialTheme.typography.titleMedium.copy(fontSize = TrackSetHeaderTextSize, fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                }
-                last?.let {
-                    Text(
-                        text = stringResource(Res.string.set_last_time, it),
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = TrackSetLastTextSize).withTabularNums(),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+                Icon(
+                    imageVector = LyteIcons.CircleDot,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(TrackSetIconSize),
+                )
+                Text(
+                    text = stringResource(Res.string.set_number, number),
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontSize = TrackSetCardTitleTextSize,
+                        letterSpacing = TrackSetCardTitleTracking,
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = stringResource(Res.string.set_of_total, state.total),
+                    style = MaterialTheme.typography.bodySmall
+                        .copy(fontSize = TrackSetCardTotalTextSize)
+                        .withTabularNums(),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(TrackSetStepperGap)) {
-                StepperColumn(caption = stringResource(Res.string.set_caption_reps)) {
+            CurrentSetReferences(target = state.target, last = state.last)
+            Column(
+                verticalArrangement = Arrangement.spacedBy(TrackSetStepperRowGap),
+                modifier = Modifier.padding(top = TrackSetSteppersTopGap),
+            ) {
+                StepperRow(caption = stringResource(Res.string.set_caption_reps)) {
                     LyteStepper(
-                        value = reps.toDouble(),
+                        value = state.reps.toDouble(),
                         onValueChange = { onRepsChange(it.roundToInt()) },
-                        step = repsStep.toDouble(),
+                        step = state.repsStep.toDouble(),
                         size = LyteStepperSize.Small,
                         allowDecimal = false,
                         fillMaxWidth = true,
                     )
                 }
-                StepperColumn(caption = stringResource(Res.string.set_caption_weight)) {
+                StepperRow(caption = stringResource(Res.string.set_caption_weight_name)) {
                     LyteStepper(
-                        value = weight,
+                        value = state.weight,
                         onValueChange = onWeightChange,
-                        step = weightStep,
+                        step = state.weightStep,
+                        unit = stringResource(Res.string.diff_weight),
                         size = LyteStepperSize.Small,
                         fillMaxWidth = true,
                     )
                 }
             }
-            content?.invoke()
+            content?.let {
+                Box(modifier = Modifier.padding(top = TrackSetContentTopGap)) { it() }
+            }
         }
     }
 }
 
+/**
+ * Ориентиры текущего подхода — двумя подписанными строками, а не одним прогоном «цель … · в прошлый
+ * раз …»: склейка переносилась по словам и переставала читаться.
+ */
 @Composable
-private fun RowScope.StepperColumn(caption: String, stepper: @Composable () -> Unit) {
+private fun CurrentSetReferences(target: String?, last: String?) {
+    if (target == null && last == null) {
+        return
+    }
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(TrackSetStepperColumnGap),
-        modifier = Modifier.weight(1f),
+        verticalArrangement = Arrangement.spacedBy(TrackSetReferenceRowGap),
+        modifier = Modifier.padding(top = TrackSetReferenceTopGap, start = TrackSetReferenceIndent),
     ) {
-        LyteOverline(text = caption)
-        stepper()
-    }
-}
-
-@Composable
-private fun CompactSetRow(
-    number: Int,
-    state: LyteTrackSetState,
-    reps: Int,
-    weight: Double,
-    target: String?,
-    modifier: Modifier = Modifier,
-) {
-    val (icon, iconColor) = compactIcon(state)
-    val alpha = if (state == LyteTrackSetState.Todo) TrackSetTodoAlpha else 1f
-    Surface(
-        modifier = modifier.alpha(alpha),
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(TrackSetCompactGap),
-            modifier = Modifier.padding(horizontal = TrackSetCompactPaddingHorizontal, vertical = TrackSetCompactPaddingVertical),
-        ) {
-            Icon(imageVector = icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(TrackSetIconSize))
-            Text(
-                text = stringResource(Res.string.set_number, number),
-                style = MaterialTheme.typography.titleMedium.copy(fontSize = TrackSetHeaderTextSize),
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f),
-            )
-            CompactSetValue(state = state, reps = reps, weight = weight, target = target)
+        target?.let {
+            ReferenceRow(label = stringResource(Res.string.set_reference_target), value = it)
+        }
+        last?.let {
+            ReferenceRow(label = stringResource(Res.string.set_reference_last), value = it)
         }
     }
 }
 
 @Composable
-private fun CompactSetValue(state: LyteTrackSetState, reps: Int, weight: Double, target: String?) {
-    val extended = LyteTheme.extendedColors
-    when (state) {
-        LyteTrackSetState.DoneSkip -> Text(
-            text = stringResource(Res.string.diff_skipped),
-            style = MaterialTheme.typography.bodyMedium.copy(fontSize = TrackSetLabelTextSize, fontWeight = FontWeight.Medium),
-            color = extended.diffSkipped,
-        )
-
-        LyteTrackSetState.DoneHit -> Text(
-            text = setValueLabel(reps = reps, weight = weight),
-            style = MaterialTheme.typography.titleMedium.copy(fontSize = TrackSetValueTextSize, fontWeight = FontWeight.Bold).withTabularNums(),
-            color = MaterialTheme.colorScheme.primary,
-        )
-
-        LyteTrackSetState.DoneMiss -> Text(
-            text = setValueLabel(reps = reps, weight = weight),
-            style = MaterialTheme.typography.titleMedium.copy(fontSize = TrackSetValueTextSize, fontWeight = FontWeight.Bold).withTabularNums(),
-            color = extended.diffNegative,
-        )
-
-        LyteTrackSetState.Todo -> Text(
-            text = stringResource(Res.string.set_target, target.orEmpty()),
-            style = MaterialTheme.typography.titleSmall.copy(fontSize = TrackSetLabelTextSize).withTabularNums(),
+private fun ReferenceRow(label: String, value: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(TrackSetReferenceGap),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall.copy(fontSize = TrackSetReferenceLabelTextSize),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
         )
+        Spacer(
+            modifier = Modifier
+                .weight(1f)
+                .height(TrackSetReferenceLeaderHeight)
+                .background(
+                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = TrackSetReferenceLeaderAlpha),
+                ),
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.labelMedium
+                .copy(fontSize = TrackSetReferenceValueTextSize, letterSpacing = 0.sp)
+                .withTabularNums(),
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+        )
+    }
+}
 
-        LyteTrackSetState.Current -> Unit
+/** Подпись слева фиксированной ширины — так кнопки ± обоих степперов стоят на одной вертикали. */
+@Composable
+private fun StepperRow(caption: String, stepper: @Composable () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(TrackSetStepperGap),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        LyteOverline(text = caption, modifier = Modifier.width(TrackSetStepperCaptionWidth))
+        Box(modifier = Modifier.weight(1f)) { stepper() }
     }
 }
 
 @Composable
-private fun compactIcon(state: LyteTrackSetState): Pair<ImageVector, Color> = when (state) {
-    LyteTrackSetState.DoneSkip -> LyteIcons.CircleMinus to LyteTheme.extendedColors.diffSkipped
-    LyteTrackSetState.DoneMiss -> LyteIcons.CircleX to LyteTheme.extendedColors.diffNegative
-    LyteTrackSetState.DoneHit -> LyteIcons.CircleCheck to MaterialTheme.colorScheme.primary
-    LyteTrackSetState.Todo -> LyteIcons.Circle to MaterialTheme.colorScheme.outlineVariant
-    LyteTrackSetState.Current -> LyteIcons.Circle to MaterialTheme.colorScheme.outlineVariant
+private fun restingToneColors(tone: LyteProgressTone): TrackSetToneColors {
+    val extended = LyteTheme.extendedColors
+    return when (tone) {
+        LyteProgressTone.Met -> TrackSetToneColors(
+            icon = LyteIcons.CircleCheck,
+            foreground = extended.diffMet,
+            background = extended.diffMetBg,
+        )
+
+        LyteProgressTone.Positive -> TrackSetToneColors(
+            icon = LyteIcons.CircleArrowUp,
+            foreground = extended.diffPositive,
+            background = extended.diffPositiveBg,
+        )
+
+        LyteProgressTone.Negative -> TrackSetToneColors(
+            icon = LyteIcons.CircleArrowDown,
+            foreground = extended.diffNegative,
+            background = extended.diffNegativeBg,
+        )
+
+        LyteProgressTone.Skipped -> TrackSetToneColors(
+            icon = LyteIcons.CircleMinus,
+            foreground = extended.diffSkipped,
+            background = extended.diffSkippedBg,
+        )
+
+        LyteProgressTone.Todo -> TrackSetToneColors(
+            icon = LyteIcons.Circle,
+            foreground = MaterialTheme.colorScheme.outline,
+            background = MaterialTheme.colorScheme.surfaceContainerLow,
+        )
+    }
+}
+
+private data class TrackSetToneColors(
+    val icon: ImageVector,
+    val foreground: Color,
+    val background: Color,
+)
+
+@Preview
+@Composable
+private fun LyteTrackSetRowRestingPreview() {
+    LyteTheme {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(TrackSetPreviewGap),
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(TrackSetPreviewPadding),
+        ) {
+            LyteTrackSetRow(
+                number = 1,
+                state = LyteTrackSetState.Resting(tone = LyteProgressTone.Met, reps = 10, weight = 60.0),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            LyteTrackSetRow(
+                number = 2,
+                state = LyteTrackSetState.Resting(tone = LyteProgressTone.Positive, reps = 12, weight = 60.0),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            LyteTrackSetRow(
+                number = 3,
+                state = LyteTrackSetState.Resting(
+                    tone = LyteProgressTone.Negative,
+                    reps = 8,
+                    weight = 62.5,
+                    note = "Локоть увёл вправо — снизил вес на последнем повторе",
+                ),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            LyteTrackSetRow(
+                number = 4,
+                state = LyteTrackSetState.Resting(tone = LyteProgressTone.Skipped),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            LyteTrackSetRow(
+                number = 5,
+                state = LyteTrackSetState.Resting(tone = LyteProgressTone.Todo, target = "10×62.5 кг"),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
 }
 
 @Preview
 @Composable
-private fun LyteTrackSetRowPreview() {
+private fun LyteTrackSetRowCurrentPreview() {
     LyteTheme {
         Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(TrackSetPreviewGap),
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(TrackSetPreviewPadding),
         ) {
-            LyteTrackSetRow(number = 1, state = LyteTrackSetState.DoneHit, reps = 10, weight = 60.0)
-            LyteTrackSetRow(number = 2, state = LyteTrackSetState.Current, reps = 10, weight = 62.5, last = "10×60")
-            LyteTrackSetRow(number = 3, state = LyteTrackSetState.Todo, target = "10×62.5")
+            LyteTrackSetRow(
+                number = 3,
+                state = LyteTrackSetState.Current(
+                    total = 5,
+                    reps = 10,
+                    weight = 62.5,
+                    target = "10×62.5 кг",
+                    last = "10×60 кг",
+                ),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            LyteTrackSetRow(
+                number = 1,
+                state = LyteTrackSetState.Current(total = 3, reps = 12, weight = 0.0, target = "12 повт"),
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 }
