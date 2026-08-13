@@ -28,7 +28,12 @@ import androidx.compose.ui.unit.dp
 import com.nikolaevskii.lyte.core.design.LyteTheme
 import com.nikolaevskii.lyte.core.design.theme.LyteAccent
 
-private val TrackSegmentGap = 4.dp
+/**
+ * Зазор между сегментами. Не приватный: узкому треку в карточке приходится считать свою ширину
+ * самому, а без зазора эту арифметику не сделать — см. [lytePlanTrackWidth].
+ */
+internal val LyteProgressTrackSegmentGap = 4.dp
+
 private val TonesTrackHeight = 14.dp
 private val PlainSegmentHeight = 5.dp
 private val SegmentRingWidth = 1.5.dp
@@ -48,6 +53,7 @@ private const val PlanSegmentAccentFraction = 0.62f
 private val TrackSpecimenGap = 12.dp
 private val TrackSpecimenPadding = 16.dp
 private val TrackSpecimenPlanWidth = 56.dp
+private val TrackSpecimenTitleGap = 4.dp
 
 /**
  * Прогресс подходов сегментами вместо чисел: «как прошло» читается взглядом, а точные значения
@@ -98,7 +104,7 @@ private fun ToneSegments(
 ) {
     val motion = LyteTheme.motion
     Row(
-        horizontalArrangement = Arrangement.spacedBy(TrackSegmentGap),
+        horizontalArrangement = Arrangement.spacedBy(LyteProgressTrackSegmentGap),
         // Сегменты стоят на общей нижней линии — только так разная высота читается как шкала.
         verticalAlignment = Alignment.Bottom,
         modifier = modifier.height(TonesTrackHeight),
@@ -130,7 +136,7 @@ private fun PlainSegments(
     colorsAt: @Composable (index: Int) -> SegmentColors,
 ) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(TrackSegmentGap),
+        horizontalArrangement = Arrangement.spacedBy(LyteProgressTrackSegmentGap),
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier,
     ) {
@@ -182,7 +188,7 @@ private fun TrackSpecimen(
     content: @Composable () -> Unit,
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(TrackSegmentGap),
+        verticalArrangement = Arrangement.spacedBy(TrackSpecimenTitleGap),
         modifier = modifier,
     ) {
         Text(

@@ -28,14 +28,14 @@ import com.nikolaevskii.lyte.core.design.component.card.LyteExerciseCard
 import com.nikolaevskii.lyte.core.design.component.card.LyteExerciseCardVariant
 import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBar
 import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBarSize
+import com.nikolaevskii.lyte.core.design.icon.LyteExerciseGlyph
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
+import com.nikolaevskii.lyte.core.design.theme.LyteAccent
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.Res
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_error
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_start_error
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_exercise_count
-import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_set_bodyweight
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_set_count
-import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_set_weight
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_start
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_summary
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.WorkoutPreviewExerciseUiModel
@@ -148,8 +148,15 @@ private fun WorkoutPreviewExerciseList(
         items(items = exercises, key = { exercise -> exercise.number }) { exercise ->
             LyteExerciseCard(
                 title = exercise.name,
-                setLabels = exercise.sets.map { set -> setLabel(set) },
-                variant = LyteExerciseCardVariant.Preview(index = exercise.number),
+                accent = exercise.accent,
+                glyph = exercise.glyph,
+                variant = LyteExerciseCardVariant.ReadOnly,
+                setCount = exercise.sets.size,
+                setsLabel = pluralStringResource(
+                    Res.plurals.workout_preview_set_count,
+                    exercise.sets.size,
+                    exercise.sets.size,
+                ),
             )
         }
     }
@@ -186,13 +193,6 @@ private fun programSummary(program: WorkoutPreviewUiModel): String = stringResou
     pluralStringResource(Res.plurals.workout_preview_set_count, program.setCount, program.setCount),
 )
 
-/** Локализованная подпись подхода: единицы подставляются здесь, число и формат веса — из модели. */
-@Composable
-private fun setLabel(set: WorkoutPreviewSetUiModel): String = when (set) {
-    is WorkoutPreviewSetUiModel.Weighted -> stringResource(Res.string.workout_preview_set_weight, set.reps, set.weight)
-    is WorkoutPreviewSetUiModel.Bodyweight -> stringResource(Res.string.workout_preview_set_bodyweight, set.reps)
-}
-
 @Composable
 @Preview
 private fun WorkoutPreviewContentPreview() {
@@ -209,16 +209,22 @@ private fun WorkoutPreviewContentPreview() {
                                 number = 1,
                                 name = "Жим лёжа",
                                 sets = listOf(weighted(8, "70"), weighted(8, "80"), weighted(6, "85")),
+                                accent = LyteAccent.Indigo,
+                                glyph = LyteExerciseGlyph.BenchPress,
                             ),
                             WorkoutPreviewExerciseUiModel(
                                 number = 2,
                                 name = "Жим гантелей на наклонной",
                                 sets = listOf(weighted(10, "24"), weighted(10, "26"), weighted(8, "26")),
+                                accent = LyteAccent.Teal,
+                                glyph = LyteExerciseGlyph.DumbbellPress,
                             ),
                             WorkoutPreviewExerciseUiModel(
                                 number = 3,
                                 name = "Отжимания на брусьях",
                                 sets = listOf(bodyweight(12), bodyweight(12), bodyweight(10)),
+                                accent = LyteAccent.Amber,
+                                glyph = LyteExerciseGlyph.Rack,
                             ),
                         ),
                     ),

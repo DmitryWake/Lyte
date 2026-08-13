@@ -1,6 +1,10 @@
 package com.nikolaevskii.lyte.feature.workout.presentation.viewmodel
 
 import com.nikolaevskii.lyte.core.navigation.model.LyteNavOptions
+import com.nikolaevskii.lyte.core.design.icon.LyteExerciseGlyph
+import com.nikolaevskii.lyte.core.design.theme.LyteAccent
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutItemEntity
 import com.nikolaevskii.lyte.feature.workout.WorkoutDetailsRoute
 import com.nikolaevskii.lyte.feature.workout.presentation.model.WorkoutProgramUiModel
@@ -37,13 +41,33 @@ class WorkoutListViewModelTest {
 
     @Test
     fun loadsWorkoutsOnInit() = runTest(testDispatcher) {
-        val repository = FakeWorkoutRepository(initialItems = listOf(program(id = "w1", name = "Push Day", exerciseCount = 5)))
+        val repository = FakeWorkoutRepository(
+            initialItems = listOf(
+                program(
+                    id = "w1",
+                    name = "Push Day",
+                    exerciseCount = 5,
+                    accent = ExerciseAccent.Indigo,
+                    glyph = ExerciseGlyph.BenchPress,
+                ),
+            ),
+        )
         val viewModel = WorkoutListViewModel(workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
 
         runCurrent()
 
         assertEquals(
-            WorkoutListUiState.Content(listOf(uiModel(id = "w1", name = "Push Day", exerciseCount = 5))),
+            WorkoutListUiState.Content(
+                listOf(
+                    uiModel(
+                        id = "w1",
+                        name = "Push Day",
+                        exerciseCount = 5,
+                        accent = LyteAccent.Indigo,
+                        glyph = LyteExerciseGlyph.BenchPress,
+                    ),
+                ),
+            ),
             viewModel.uiState.value,
         )
     }
@@ -160,9 +184,34 @@ class WorkoutListViewModelTest {
         assertEquals(stateBefore, viewModel.uiState.value)
     }
 
-    private fun program(id: String, name: String, exerciseCount: Int): WorkoutItemEntity =
-        WorkoutItemEntity(id = id, name = name, description = null, exerciseCount = exerciseCount)
+    private fun program(
+        id: String,
+        name: String,
+        exerciseCount: Int,
+        accent: ExerciseAccent = ExerciseAccent.Default,
+        glyph: ExerciseGlyph = ExerciseGlyph.Default,
+    ): WorkoutItemEntity =
+        WorkoutItemEntity(
+            id = id,
+            name = name,
+            description = null,
+            exerciseCount = exerciseCount,
+            accent = accent,
+            glyph = glyph,
+        )
 
-    private fun uiModel(id: String, name: String, exerciseCount: Int): WorkoutProgramUiModel =
-        WorkoutProgramUiModel(id = id, name = name, exerciseCount = exerciseCount)
+    private fun uiModel(
+        id: String,
+        name: String,
+        exerciseCount: Int,
+        accent: LyteAccent = LyteAccent.Default,
+        glyph: LyteExerciseGlyph = LyteExerciseGlyph.Default,
+    ): WorkoutProgramUiModel =
+        WorkoutProgramUiModel(
+            id = id,
+            name = name,
+            exerciseCount = exerciseCount,
+            accent = accent,
+            glyph = glyph,
+        )
 }

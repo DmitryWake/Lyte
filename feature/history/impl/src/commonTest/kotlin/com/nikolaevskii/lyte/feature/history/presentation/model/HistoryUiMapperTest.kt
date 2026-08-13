@@ -1,5 +1,9 @@
 package com.nikolaevskii.lyte.feature.history.presentation.model
 
+import com.nikolaevskii.lyte.core.design.icon.LyteExerciseGlyph
+import com.nikolaevskii.lyte.core.design.theme.LyteAccent
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
 import com.nikolaevskii.lyte.feature.history.TEST_TIME_ZONE
 import com.nikolaevskii.lyte.feature.history.finishedSession
 import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionItemEntity
@@ -34,6 +38,36 @@ class HistoryUiMapperTest {
         assertEquals(16, push.totalSetCount)
         // Внутри месяца порядок тоже по убыванию finishedAt: 30 июня раньше 28 июня.
         assertEquals(listOf(30, 28), groups[1].sessions.map { it.dayOfMonth })
+    }
+
+    @Test
+    fun mapsProgramMarkFromSessionSnapshot() {
+        val sessions = listOf(
+            finishedSession(
+                "1",
+                "Push Day",
+                LocalDateTime(2026, Month.JULY, 2, 18, 24),
+                durationMinutes = 52,
+                completedSetCount = 15,
+                totalSetCount = 16,
+                accent = ExerciseAccent.Indigo,
+                glyph = ExerciseGlyph.BenchPress,
+            ),
+            // Сессия без маркера в снапшоте: дефолт домена доезжает как дефолт дизайн-системы.
+            finishedSession(
+                "2",
+                "Утренняя",
+                LocalDateTime(2026, Month.JULY, 1, 8, 0),
+                durationMinutes = 30,
+                completedSetCount = 6,
+                totalSetCount = 6,
+            ),
+        )
+
+        val july = sessions.toMonthGroups(TEST_TIME_ZONE).single()
+
+        assertEquals(listOf(LyteAccent.Indigo, LyteAccent.Slate), july.sessions.map { it.accent })
+        assertEquals(listOf(LyteExerciseGlyph.BenchPress, LyteExerciseGlyph.Squat), july.sessions.map { it.glyph })
     }
 
     @Test

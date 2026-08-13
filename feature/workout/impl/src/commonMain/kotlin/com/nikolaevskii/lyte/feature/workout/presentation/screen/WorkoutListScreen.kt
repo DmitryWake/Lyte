@@ -27,7 +27,9 @@ import com.nikolaevskii.lyte.core.design.component.iconbutton.LyteIconButton
 import com.nikolaevskii.lyte.core.design.component.navigation.LyteBottomNavigationBarHeight
 import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBar
 import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBarSize
+import com.nikolaevskii.lyte.core.design.icon.LyteExerciseGlyph
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
+import com.nikolaevskii.lyte.core.design.theme.LyteAccent
 import com.nikolaevskii.lyte.feature.workout.generated.resources.Res
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_list_delete_error
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_list_delete_a11y
@@ -148,6 +150,8 @@ private fun WorkoutProgramList(
                     program.exerciseCount,
                     program.exerciseCount,
                 ),
+                accent = program.accent,
+                glyph = program.glyph,
                 onClick = { onIntent(WorkoutListIntent.OnProgramClicked(program.id)) },
                 trailing = {
                     LyteIconButton(
@@ -177,9 +181,27 @@ private fun WorkoutListContentPreview() {
         WorkoutListContent(
             state = WorkoutListUiState.Content(
                 programs = listOf(
-                    WorkoutProgramUiModel(id = "1", name = "Push Day", exerciseCount = 5),
-                    WorkoutProgramUiModel(id = "2", name = "Pull Day", exerciseCount = 4),
-                    WorkoutProgramUiModel(id = "3", name = "Leg Day", exerciseCount = 3),
+                    WorkoutProgramUiModel(
+                        id = "1",
+                        name = "Push Day",
+                        exerciseCount = 5,
+                        accent = LyteAccent.Indigo,
+                        glyph = LyteExerciseGlyph.BenchPress,
+                    ),
+                    WorkoutProgramUiModel(
+                        id = "2",
+                        name = "Pull Day",
+                        exerciseCount = 4,
+                        accent = LyteAccent.Coral,
+                        glyph = LyteExerciseGlyph.PullUp,
+                    ),
+                    WorkoutProgramUiModel(
+                        id = "3",
+                        name = "Leg Day",
+                        exerciseCount = 3,
+                        accent = LyteAccent.Lime,
+                        glyph = LyteExerciseGlyph.Squat,
+                    ),
                 ),
             ),
             onIntent = {},

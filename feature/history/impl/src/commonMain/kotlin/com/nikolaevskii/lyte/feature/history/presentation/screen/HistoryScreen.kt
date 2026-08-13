@@ -24,7 +24,10 @@ import com.nikolaevskii.lyte.core.design.component.navigation.LyteBottomNavigati
 import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBar
 import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBarSize
 import com.nikolaevskii.lyte.core.design.component.overline.LyteOverline
+import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTrackMode
+import com.nikolaevskii.lyte.core.design.icon.LyteExerciseGlyph
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
+import com.nikolaevskii.lyte.core.design.theme.LyteAccent
 import com.nikolaevskii.lyte.feature.history.generated.resources.Res
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_date
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_empty_hint
@@ -32,7 +35,7 @@ import com.nikolaevskii.lyte.feature.history.generated.resources.history_empty_m
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_error
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_month_names
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_month_names_short
-import com.nikolaevskii.lyte.feature.history.generated.resources.history_session_summary
+import com.nikolaevskii.lyte.feature.history.generated.resources.history_session_duration
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_title
 import com.nikolaevskii.lyte.feature.history.presentation.model.HistoryMonthGroupUiModel
 import com.nikolaevskii.lyte.feature.history.presentation.model.HistorySessionUiModel
@@ -132,18 +135,21 @@ private fun HistorySessionList(
             items(items = group.sessions, key = { session -> session.id }) { session ->
                 LyteSessionCard(
                     title = session.programName,
-                    trailingLabel = stringResource(
+                    subtitle = stringResource(
                         Res.string.history_date,
                         session.dayOfMonth,
                         monthNamesShort[session.monthNumber - 1],
                     ),
-                    subtitle = stringResource(
-                        Res.string.history_session_summary,
-                        session.durationMinutes,
-                        session.completedSetCount,
-                        session.totalSetCount,
-                    ),
+                    duration = stringResource(Res.string.history_session_duration, session.durationMinutes),
+                    accent = session.accent,
+                    glyph = session.glyph,
                     onClick = { onIntent(HistoryIntent.OnSessionClicked(session.id)) },
+                    // Исходы подходов сессии ещё не считаются, поэтому трек показывает «сколько
+                    // подходов позади» — тона появятся вместе с переработкой экрана Истории.
+                    track = LyteProgressTrackMode.Progress(
+                        total = session.totalSetCount,
+                        done = session.completedSetCount,
+                    ),
                 )
             }
         }
@@ -170,6 +176,8 @@ private fun HistoryContentPreview() {
                                 durationMinutes = 52,
                                 completedSetCount = 15,
                                 totalSetCount = 16,
+                                accent = LyteAccent.Indigo,
+                                glyph = LyteExerciseGlyph.BenchPress,
                             ),
                         ),
                     ),
@@ -186,6 +194,8 @@ private fun HistoryContentPreview() {
                                 durationMinutes = 58,
                                 completedSetCount = 17,
                                 totalSetCount = 17,
+                                accent = LyteAccent.Coral,
+                                glyph = LyteExerciseGlyph.PullUp,
                             ),
                             HistorySessionUiModel(
                                 id = "3",
@@ -196,6 +206,8 @@ private fun HistoryContentPreview() {
                                 durationMinutes = 61,
                                 completedSetCount = 13,
                                 totalSetCount = 14,
+                                accent = LyteAccent.Lime,
+                                glyph = LyteExerciseGlyph.Squat,
                             ),
                         ),
                     ),

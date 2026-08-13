@@ -30,7 +30,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.nikolaevskii.lyte.core.design.format.formatWeight
 import com.nikolaevskii.lyte.core.design.LyteTheme
 import com.nikolaevskii.lyte.core.design.component.button.LyteButton
 import com.nikolaevskii.lyte.core.design.component.button.LyteButtonSize
@@ -41,6 +40,8 @@ import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBar
 import com.nikolaevskii.lyte.core.design.component.overline.LyteOverline
 import com.nikolaevskii.lyte.core.design.component.textfield.LyteTextField
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseWithRepsEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutRepEntity
@@ -51,15 +52,17 @@ import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_name_label
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_save
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_save_error
-import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_set_bodyweight
-import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_set_weight
+import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_set_count
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_title
 import com.nikolaevskii.lyte.feature.workout.presentation.model.WorkoutDetailsEditor
+import com.nikolaevskii.lyte.feature.workout.presentation.model.toLyteAccent
+import com.nikolaevskii.lyte.feature.workout.presentation.model.toLyteGlyph
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutDetailsUiState.WorkoutDetailsContent
 import com.nikolaevskii.lyte.feature.workout.presentation.model.WorkoutExerciseUiModel
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutDetailsIntent
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutDetailsUiState
 import com.nikolaevskii.lyte.feature.workout.presentation.viewmodel.WorkoutDetailsViewModel
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -230,9 +233,13 @@ private fun WorkoutDetailsForm(
         }
         itemsIndexed(items = editing.exercises, key = { _, item -> item.key }) { index, item ->
             val isDragging = item.key == draggingKey
+            val setCount = item.exercise.reps.size
             LyteExerciseCard(
                 title = item.exercise.exercise.name,
-                setLabels = item.exercise.reps.map { rep -> formatSetLabel(rep) },
+                accent = item.exercise.exercise.accent.toLyteAccent(),
+                glyph = item.exercise.exercise.glyph.toLyteGlyph(),
+                setCount = setCount,
+                setsLabel = pluralStringResource(Res.plurals.workout_details_set_count, setCount, setCount),
                 variant = LyteExerciseCardVariant.Editor(
                     onEdit = { onIntent(WorkoutDetailsIntent.OnEditSetsClicked(index)) },
                     onRemove = { onIntent(WorkoutDetailsIntent.OnRemoveExerciseClicked(index)) },
@@ -296,17 +303,6 @@ private fun WorkoutDetailsForm(
 }
 
 @Composable
-private fun formatSetLabel(rep: WorkoutRepEntity): String {
-    val weight = rep.weight
-    return if (weight != null && weight > 0.0) {
-        stringResource(Res.string.workout_details_set_weight, rep.count, formatWeight(weight))
-    } else {
-        stringResource(Res.string.workout_details_set_bodyweight, rep.count)
-    }
-}
-
-
-@Composable
 @Preview
 private fun WorkoutDetailsContentPreview() {
     LyteTheme {
@@ -317,9 +313,27 @@ private fun WorkoutDetailsContentPreview() {
                     name = "Push Day",
                     description = null,
                     exercises = listOf(
-                        previewExercise(key = "1", name = "Жим лёжа", plan = listOf(8 to 70.0, 8 to 80.0, 6 to 85.0)),
-                        previewExercise(key = "2", name = "Жим гантелей на наклонной", plan = listOf(10 to 24.0, 10 to 26.0, 8 to 26.0)),
-                        previewExercise(key = "3", name = "Отжимания на брусьях", plan = listOf(12 to null, 12 to null, 10 to null)),
+                        previewExercise(
+                            key = "1",
+                            name = "Жим лёжа",
+                            accent = ExerciseAccent.Indigo,
+                            glyph = ExerciseGlyph.BenchPress,
+                            plan = listOf(8 to 70.0, 8 to 80.0, 6 to 85.0),
+                        ),
+                        previewExercise(
+                            key = "2",
+                            name = "Жим гантелей на наклонной",
+                            accent = ExerciseAccent.Teal,
+                            glyph = ExerciseGlyph.DumbbellPress,
+                            plan = listOf(10 to 24.0, 10 to 26.0, 8 to 26.0),
+                        ),
+                        previewExercise(
+                            key = "3",
+                            name = "Отжимания на брусьях",
+                            accent = ExerciseAccent.Amber,
+                            glyph = ExerciseGlyph.Rack,
+                            plan = listOf(12 to null, 12 to null, 10 to null),
+                        ),
                     ),
                 ),
             ),
@@ -339,11 +353,17 @@ private fun WorkoutDetailsContentLoadingPreview() {
     }
 }
 
-private fun previewExercise(key: String, name: String, plan: List<Pair<Int, Double?>>): WorkoutExerciseUiModel =
+private fun previewExercise(
+    key: String,
+    name: String,
+    accent: ExerciseAccent,
+    glyph: ExerciseGlyph,
+    plan: List<Pair<Int, Double?>>,
+): WorkoutExerciseUiModel =
     WorkoutExerciseUiModel(
         key = key,
         exercise = WorkoutExerciseWithRepsEntity(
-            exercise = WorkoutExerciseEntity(id = key, name = name),
+            exercise = WorkoutExerciseEntity(id = key, name = name, accent = accent, glyph = glyph),
             reps = plan.map { (count, weight) -> WorkoutRepEntity(count = count, weight = weight) },
         ),
     )
