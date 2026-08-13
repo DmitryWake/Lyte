@@ -1,5 +1,7 @@
 package com.nikolaevskii.lyte.core.design.component.feedback
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.defaultMinSize
@@ -15,9 +17,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.nikolaevskii.lyte.core.design.LyteTheme
 import com.nikolaevskii.lyte.core.design.component.button.LyteButton
 import com.nikolaevskii.lyte.core.design.component.button.LyteButtonSize
@@ -33,6 +37,7 @@ private val EmptyStateMessageMaxWidth = 280.dp
 private val EmptyStateHintSpacing = 8.dp
 private val EmptyStateHintMaxWidth = 260.dp
 private val EmptyStateActionSpacing = 28.dp
+private val EmptyStateMessageTracking = (-0.3).sp
 
 /** Полноэкранное пустое состояние: иконка-метка, заголовок, подсказка, одно действие. */
 @Composable
@@ -46,6 +51,8 @@ fun LyteEmptyState(
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
+        // По центру отведённой высоты, а не по её верхнему краю: блок короче своего минимума.
+        verticalArrangement = Arrangement.Center,
         modifier = modifier
             .defaultMinSize(minHeight = EmptyStateMinHeight)
             .padding(horizontal = EmptyStatePaddingHorizontal, vertical = EmptyStatePaddingVertical),
@@ -66,7 +73,10 @@ fun LyteEmptyState(
         }
         Text(
             text = message,
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.headlineSmall.copy(
+                fontWeight = FontWeight.Bold,
+                letterSpacing = EmptyStateMessageTracking,
+            ),
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = EmptyStateMessageSpacing).widthIn(max = EmptyStateMessageMaxWidth),
@@ -95,11 +105,31 @@ fun LyteEmptyState(
 @Composable
 private fun LyteEmptyStatePreview() {
     LyteTheme {
-        LyteEmptyState(
-            message = "Создайте первую программу",
-            hint = "Программы помогут не забыть план тренировки",
-            actionLabel = "Добавить программу",
-            onAction = {},
-        )
+        // Своего фона у пустого состояния нет — оно занимает область экрана, поэтому превью
+        // подкладывает поверхность само: иначе в тёмной теме светлый текст лежит на светлом холсте.
+        Box(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
+            LyteEmptyState(
+                message = "Создайте первую программу",
+                icon = LyteIcons.ClipboardList,
+                hint = "Программа — это список упражнений и подходов, по которому идёт тренировка.",
+                actionLabel = "Новая программа",
+                onAction = {},
+            )
+        }
+    }
+}
+
+/** Без действия — так пустое состояние выглядит в истории (5.1) и в списке программ (3.1). */
+@Preview
+@Composable
+private fun LyteEmptyStateWithoutActionPreview() {
+    LyteTheme {
+        Box(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
+            LyteEmptyState(
+                message = "Здесь появятся ваши тренировки",
+                icon = LyteIcons.History,
+                hint = "Итоги сохраняются автоматически после каждой сессии.",
+            )
+        }
     }
 }

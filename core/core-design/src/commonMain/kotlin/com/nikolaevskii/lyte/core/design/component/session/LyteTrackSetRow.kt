@@ -33,6 +33,7 @@ import com.nikolaevskii.lyte.core.design.component.overline.LyteOverline
 import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTone
 import com.nikolaevskii.lyte.core.design.component.stepper.LyteStepper
 import com.nikolaevskii.lyte.core.design.component.stepper.LyteStepperSize
+import com.nikolaevskii.lyte.core.design.format.lyteSetValueLabel
 import com.nikolaevskii.lyte.core.design.generated.resources.Res
 import com.nikolaevskii.lyte.core.design.generated.resources.diff_weight
 import com.nikolaevskii.lyte.core.design.generated.resources.set_caption_reps
@@ -186,7 +187,7 @@ private fun RestingSetRow(
 private fun RestingSetValue(state: LyteTrackSetState.Resting, foreground: Color) {
     when (state.tone) {
         LyteProgressTone.Met, LyteProgressTone.Positive, LyteProgressTone.Negative -> Text(
-            text = setValueLabel(reps = state.reps, weight = state.weight),
+            text = lyteSetValueLabel(reps = state.reps, weight = state.weight),
             style = MaterialTheme.typography.labelLarge
                 .copy(
                     fontSize = TrackSetValueTextSize,
@@ -278,7 +279,7 @@ private fun CurrentSetCard(
                         value = state.reps.toDouble(),
                         onValueChange = { onRepsChange(it.roundToInt()) },
                         step = state.repsStep.toDouble(),
-                        size = LyteStepperSize.Small,
+                        size = LyteStepperSize.Medium,
                         allowDecimal = false,
                         fillMaxWidth = true,
                     )
@@ -289,7 +290,7 @@ private fun CurrentSetCard(
                         onValueChange = onWeightChange,
                         step = state.weightStep,
                         unit = stringResource(Res.string.diff_weight),
-                        size = LyteStepperSize.Small,
+                        size = LyteStepperSize.Medium,
                         fillMaxWidth = true,
                     )
                 }

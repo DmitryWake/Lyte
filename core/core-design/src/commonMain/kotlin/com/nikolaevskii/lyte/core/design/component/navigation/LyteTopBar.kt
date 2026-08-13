@@ -1,5 +1,6 @@
 package com.nikolaevskii.lyte.core.design.component.navigation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,6 +32,7 @@ import com.nikolaevskii.lyte.core.design.LyteTheme
 import com.nikolaevskii.lyte.core.design.component.iconbutton.LyteIconButton
 import com.nikolaevskii.lyte.core.design.generated.resources.Res
 import com.nikolaevskii.lyte.core.design.generated.resources.a11y_back
+import com.nikolaevskii.lyte.core.design.generated.resources.a11y_remove
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
 import org.jetbrains.compose.resources.stringResource
 
@@ -165,11 +167,39 @@ private fun LyteTopBarSmallPreview() {
 @Composable
 private fun LyteTopBarLargePreview() {
     LyteTheme {
-        LyteTopBar(
-            title = "Программы",
-            size = LyteTopBarSize.Large,
-            onBack = {},
-            subtitle = "3 активные программы",
-        )
+        // Крупный заголовок рисуется прямо на фоне экрана и своей заливки не имеет — превью
+        // подкладывает поверхность само, иначе в тёмной теме светлый тайтл лежит на светлом холсте.
+        Box(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
+            LyteTopBar(
+                title = "Программы",
+                size = LyteTopBarSize.Large,
+                onBack = {},
+                subtitle = "3 активные программы",
+            )
+        }
+    }
+}
+
+/** Заголовок с действием справа — так выглядят детали сессии (5.2) с удалением тренировки. */
+@Preview
+@Composable
+private fun LyteTopBarLargeWithTrailingPreview() {
+    LyteTheme {
+        Box(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
+            LyteTopBar(
+                title = "Push Day",
+                size = LyteTopBarSize.Large,
+                onBack = {},
+                subtitle = "6 августа 2026 · начало 19:02",
+                trailing = {
+                    LyteIconButton(
+                        icon = LyteIcons.Delete,
+                        contentDescription = stringResource(Res.string.a11y_remove),
+                        onClick = {},
+                        size = TopBarLargeBackSize,
+                    )
+                },
+            )
+        }
     }
 }

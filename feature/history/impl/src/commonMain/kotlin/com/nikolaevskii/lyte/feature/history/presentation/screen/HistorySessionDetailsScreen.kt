@@ -24,12 +24,12 @@ import com.nikolaevskii.lyte.core.design.component.badge.LyteBadge
 import com.nikolaevskii.lyte.core.design.component.badge.LyteBadgeSize
 import com.nikolaevskii.lyte.core.design.component.badge.LyteBadgeTone
 import com.nikolaevskii.lyte.core.design.component.feedback.LyteDiffRow
-import com.nikolaevskii.lyte.core.design.component.feedback.LyteDiffTone
 import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBar
 import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBarSize
+import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTone
+import com.nikolaevskii.lyte.core.design.model.LyteSetValue
 import com.nikolaevskii.lyte.core.design.theme.withTabularNums
 import com.nikolaevskii.lyte.feature.history.generated.resources.Res
-import com.nikolaevskii.lyte.feature.history.generated.resources.history_bodyweight
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_details_error
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_details_meta
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_details_sets
@@ -39,7 +39,6 @@ import com.nikolaevskii.lyte.feature.history.generated.resources.history_month_n
 import com.nikolaevskii.lyte.feature.history.presentation.model.HistoryDiffRowUiModel
 import com.nikolaevskii.lyte.feature.history.presentation.model.HistoryExerciseGroupUiModel
 import com.nikolaevskii.lyte.feature.history.presentation.model.HistorySessionDetailsUiModel
-import com.nikolaevskii.lyte.feature.history.presentation.model.HistorySetValueUiModel
 import com.nikolaevskii.lyte.feature.history.presentation.model.mvi.HistorySessionDetailsIntent
 import com.nikolaevskii.lyte.feature.history.presentation.model.mvi.HistorySessionDetailsUiState
 import com.nikolaevskii.lyte.feature.history.presentation.viewmodel.HistorySessionDetailsViewModel
@@ -131,8 +130,8 @@ private fun HistorySessionDetailsList(
                 LyteDiffRow(
                     index = row.index,
                     tone = row.tone,
-                    target = row.target.notation(),
-                    actual = row.actual?.notation(),
+                    target = row.target,
+                    actual = row.actual,
                     note = row.note,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -175,14 +174,6 @@ private fun HistorySessionMetaRow(
 }
 
 @Composable
-private fun HistorySetValueUiModel.notation(): String = when (this) {
-    // «8×80» — LyteDiffRow сам добавит единицы «повт»/«кг».
-    is HistorySetValueUiModel.Weighted -> "$reps×$weight"
-    // Свой вес: единицу добавляем сами, LyteDiffRow отрендерит строку как есть.
-    is HistorySetValueUiModel.Bodyweight -> stringResource(Res.string.history_bodyweight, reps)
-}
-
-@Composable
 @Preview
 private fun HistorySessionDetailsContentPreview() {
     LyteTheme {
@@ -203,18 +194,18 @@ private fun HistorySessionDetailsContentPreview() {
                             exerciseId = "e1",
                             exerciseName = "Жим лёжа",
                             rows = listOf(
-                                diffRow("s1", 1, LyteDiffTone.Met, weighted(8, "80"), weighted(8, "80")),
-                                diffRow("s2", 2, LyteDiffTone.Positive, weighted(8, "80"), weighted(9, "80")),
-                                diffRow("s3", 3, LyteDiffTone.Negative, weighted(8, "80"), weighted(6, "80"), note = "тяжело"),
-                                diffRow("s4", 4, LyteDiffTone.Skipped, weighted(8, "80"), actual = null),
+                                diffRow("s1", 1, LyteProgressTone.Met, weighted(8, 80.0), weighted(8, 80.0)),
+                                diffRow("s2", 2, LyteProgressTone.Positive, weighted(8, 80.0), weighted(9, 82.5)),
+                                diffRow("s3", 3, LyteProgressTone.Negative, weighted(8, 80.0), weighted(6, 80.0), note = "тяжело"),
+                                diffRow("s4", 4, LyteProgressTone.Skipped, weighted(8, 80.0), actual = null),
                             ),
                         ),
                         HistoryExerciseGroupUiModel(
                             exerciseId = "e2",
                             exerciseName = "Отжимания на брусьях",
                             rows = listOf(
-                                diffRow("s5", 1, LyteDiffTone.Met, bodyweight(12), bodyweight(12)),
-                                diffRow("s6", 2, LyteDiffTone.Met, bodyweight(12), bodyweight(12)),
+                                diffRow("s5", 1, LyteProgressTone.Met, bodyweight(12), bodyweight(12)),
+                                diffRow("s6", 2, LyteProgressTone.Positive, bodyweight(12), bodyweight(15)),
                             ),
                         ),
                     ),
@@ -241,15 +232,15 @@ private fun HistorySessionDetailsContentErrorPreview() {
     }
 }
 
-private fun weighted(reps: Int, weight: String): HistorySetValueUiModel = HistorySetValueUiModel.Weighted(reps, weight)
+private fun weighted(reps: Int, weight: Double): LyteSetValue = LyteSetValue(reps = reps, weight = weight)
 
-private fun bodyweight(reps: Int): HistorySetValueUiModel = HistorySetValueUiModel.Bodyweight(reps)
+private fun bodyweight(reps: Int): LyteSetValue = LyteSetValue(reps = reps)
 
 private fun diffRow(
     id: String,
     index: Int,
-    tone: LyteDiffTone,
-    target: HistorySetValueUiModel,
-    actual: HistorySetValueUiModel?,
+    tone: LyteProgressTone,
+    target: LyteSetValue,
+    actual: LyteSetValue?,
     note: String? = null,
 ): HistoryDiffRowUiModel = HistoryDiffRowUiModel(id = id, index = index, tone = tone, target = target, actual = actual, note = note)

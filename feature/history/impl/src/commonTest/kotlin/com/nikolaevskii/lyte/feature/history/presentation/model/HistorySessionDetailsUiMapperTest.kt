@@ -1,6 +1,7 @@
 package com.nikolaevskii.lyte.feature.history.presentation.model
 
-import com.nikolaevskii.lyte.core.design.component.feedback.LyteDiffTone
+import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTone
+import com.nikolaevskii.lyte.core.design.model.LyteSetValue
 import com.nikolaevskii.lyte.feature.history.TEST_TIME_ZONE
 import com.nikolaevskii.lyte.feature.history.completed
 import com.nikolaevskii.lyte.feature.history.finishedSessionEntity
@@ -70,29 +71,30 @@ class HistorySessionDetailsUiMapperTest {
     fun mapsTonesFromOutcome() {
         val rows = session.toDetailsUiModel(TEST_TIME_ZONE).exercises[0].rows
 
-        assertEquals(LyteDiffTone.Met, rows[0].tone)
-        assertEquals(LyteDiffTone.Positive, rows[1].tone)
-        assertEquals(LyteDiffTone.Negative, rows[2].tone)
-        assertEquals(LyteDiffTone.Skipped, rows[3].tone)
+        assertEquals(LyteProgressTone.Met, rows[0].tone)
+        assertEquals(LyteProgressTone.Positive, rows[1].tone)
+        assertEquals(LyteProgressTone.Negative, rows[2].tone)
+        assertEquals(LyteProgressTone.Skipped, rows[3].tone)
     }
 
     @Test
-    fun mapsWeightedValuesAndFormatsWeight() {
+    fun mapsWeightedValues() {
         val rows = session.toDetailsUiModel(TEST_TIME_ZONE).exercises[0].rows
 
-        // Целый вес — «80», дробный — «82.5».
-        assertEquals(HistorySetValueUiModel.Weighted(reps = 8, weight = "80"), rows[0].target)
-        assertEquals(HistorySetValueUiModel.Weighted(reps = 8, weight = "80"), rows[0].actual)
-        assertEquals(HistorySetValueUiModel.Weighted(reps = 8, weight = "82.5"), rows[1].target)
-        assertEquals(HistorySetValueUiModel.Weighted(reps = 9, weight = "82.5"), rows[1].actual)
+        assertEquals(LyteSetValue(reps = 8, weight = 80.0), rows[0].target)
+        assertEquals(LyteSetValue(reps = 8, weight = 80.0), rows[0].actual)
+        assertEquals(LyteSetValue(reps = 8, weight = 82.5), rows[1].target)
+        assertEquals(LyteSetValue(reps = 9, weight = 82.5), rows[1].actual)
     }
 
+    /** У упражнения своего веса вес именно отсутствует, а не равен нулю — иначе строка диффа
+     * показала бы «12×0 кг». */
     @Test
-    fun mapsBodyweightValues() {
+    fun mapsBodyweightValuesWithoutWeight() {
         val row = session.toDetailsUiModel(TEST_TIME_ZONE).exercises[1].rows.single()
 
-        assertEquals(HistorySetValueUiModel.Bodyweight(reps = 12), row.target)
-        assertEquals(HistorySetValueUiModel.Bodyweight(reps = 12), row.actual)
+        assertEquals(LyteSetValue(reps = 12, weight = null), row.target)
+        assertEquals(LyteSetValue(reps = 12, weight = null), row.actual)
     }
 
     @Test
