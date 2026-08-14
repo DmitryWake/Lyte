@@ -1,5 +1,6 @@
 package com.nikolaevskii.lyte.feature.tracker.presentation.model
 
+import com.nikolaevskii.lyte.core.design.model.LyteSetValue
 import com.nikolaevskii.lyte.core.session.domain.currentSet
 import com.nikolaevskii.lyte.core.session.domain.effectiveCurrentExercise
 import com.nikolaevskii.lyte.core.session.domain.model.SessionExerciseEntity
@@ -10,12 +11,16 @@ import com.nikolaevskii.lyte.core.session.domain.model.SessionSetValueEntity
 import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionEntity
 import com.nikolaevskii.lyte.core.session.domain.util.hasWeight
 import com.nikolaevskii.lyte.core.session.domain.util.outcome
-import com.nikolaevskii.lyte.core.design.format.formatWeight
 
 /**
  * Маппит доменную сессию в готовую к отрисовке [ActiveSessionUiModel]: эффективное текущее
- * упражнение/подход (правила — `SessionProgression`), статусы плашек из [outcome], счётчики и строки
- * шторки переключения. Чистая функция без ресурсов — локализованные единицы подставляет UI-слой.
+ * упражнение/подход (правила — `SessionProgression`), статусы строк подходов из [outcome], счётчики и
+ * строки шторки переключения. Чистая функция без ресурсов — единицы («повт», «кг») подставляет
+ * дизайн-система по [LyteSetValue].
+ *
+ * Ориентира «В прошлый раз» здесь нет намеренно: фактов предыдущей сессии домен не хранит
+ * (`SessionSetEntity` знает только цель и факт текущей), а выдумывать их нельзя. Строка появится
+ * вместе с источником данных — запросом фактов того же упражнения из последней завершённой сессии.
  */
 internal fun WorkoutSessionEntity.toActiveSessionUiModel(): ActiveSessionUiModel {
     val currentExercise = effectiveCurrentExercise()
@@ -42,21 +47,20 @@ private fun WorkoutSessionEntity.toCurrentUiModel(exercise: SessionExerciseEntit
         exerciseIndex = exercises.indexOfFirst { candidate -> candidate.id == exercise.id } + 1,
         exerciseCount = exercises.size,
         exerciseName = exercise.exercise.name,
-        plaques = exercise.sets.mapIndexed { index, set ->
-            set.toPlaque(number = index + 1, isCurrent = index == currentSetIndex)
+        sets = exercise.sets.mapIndexed { index, set ->
+            set.toSetUiModel(number = index + 1, isCurrent = index == currentSetIndex)
         },
-        currentPlaqueIndex = currentSetIndex,
-        setIndex = currentSetIndex + 1,
+        currentSetIndex = currentSetIndex,
         setCount = exercise.sets.size,
         currentSetId = currentSet.id,
         targetReps = currentSet.target.count,
         targetWeight = currentSet.target.weight.takeIf { currentSet.target.hasWeight },
-        target = currentSet.target.toValueUiModel(),
+        target = currentSet.target.toSetValue(),
         note = currentSet.note,
     )
 }
 
-private fun SessionSetEntity.toPlaque(number: Int, isCurrent: Boolean): ActiveSessionSetPlaqueUiModel {
+private fun SessionSetEntity.toSetUiModel(number: Int, isCurrent: Boolean): ActiveSessionSetUiModel {
     val status = when {
         isCurrent -> ActiveSessionSetStatus.Current
         else -> when (outcome()) {
@@ -68,14 +72,14 @@ private fun SessionSetEntity.toPlaque(number: Int, isCurrent: Boolean): ActiveSe
         }
     }
     val value = when (status) {
-        ActiveSessionSetStatus.Current, ActiveSessionSetStatus.Todo -> target.toValueUiModel()
+        ActiveSessionSetStatus.Current, ActiveSessionSetStatus.Todo -> target.toSetValue()
 
         ActiveSessionSetStatus.Hit, ActiveSessionSetStatus.Exceeded, ActiveSessionSetStatus.Missed ->
-            (result as SessionSetResultEntity.Completed).actual.toValueUiModel()
+            (result as SessionSetResultEntity.Completed).actual.toSetValue()
 
         ActiveSessionSetStatus.Skipped -> null
     }
-    return ActiveSessionSetPlaqueUiModel(index = number, status = status, value = value)
+    return ActiveSessionSetUiModel(index = number, status = status, value = value, note = note)
 }
 
 private fun SessionExerciseEntity.toSwitcherRow(isCurrent: Boolean): ActiveSessionSwitcherRowUiModel {
@@ -94,7 +98,7 @@ private fun SessionExerciseEntity.toSwitcherRow(isCurrent: Boolean): ActiveSessi
         setCount = sets.size,
         currentSetIndex = if (isCurrent) sets.indexOfFirst { set -> set.result == null } + 1 else null,
         targetPills = if (status == ActiveSessionSwitcherStatus.Pending) {
-            sets.map { set -> set.target.toValueUiModel() }
+            sets.map { set -> set.target.toSetValue() }
         } else {
             emptyList()
         },
@@ -102,8 +106,5 @@ private fun SessionExerciseEntity.toSwitcherRow(isCurrent: Boolean): ActiveSessi
     )
 }
 
-private fun SessionSetValueEntity.toValueUiModel(): ActiveSessionSetValueUiModel = if (hasWeight) {
-    ActiveSessionSetValueUiModel.Weighted(reps = count, weight = formatWeight(checkNotNull(weight)))
-} else {
-    ActiveSessionSetValueUiModel.Bodyweight(reps = count)
-}
+private fun SessionSetValueEntity.toSetValue(): LyteSetValue =
+    LyteSetValue(reps = count, weight = weight.takeIf { hasWeight })
