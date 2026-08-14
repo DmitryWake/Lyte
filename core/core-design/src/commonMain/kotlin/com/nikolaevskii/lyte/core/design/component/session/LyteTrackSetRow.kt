@@ -86,6 +86,12 @@ private val TrackSetStepperGap = 12.dp
 private val TrackSetStepperCaptionWidth = 40.dp
 private val TrackSetContentTopGap = 16.dp
 
+/**
+ * Пол повторов — тот же, что у планирования подхода (`SetEditRowMinReps`): подход на ноль повторов
+ * это пропуск, а для пропуска на экране есть отдельная кнопка.
+ */
+private const val TrackSetRepsMin = 1.0
+
 private val TrackSetPreviewGap = 6.dp
 private val TrackSetPreviewPadding = 16.dp
 
@@ -281,6 +287,7 @@ private fun CurrentSetCard(
                         value = state.reps.toDouble(),
                         onValueChange = { onRepsChange(it.roundToInt()) },
                         step = state.repsStep.toDouble(),
+                        min = TrackSetRepsMin,
                         size = LyteStepperSize.Medium,
                         allowDecimal = false,
                         fillMaxWidth = true,
