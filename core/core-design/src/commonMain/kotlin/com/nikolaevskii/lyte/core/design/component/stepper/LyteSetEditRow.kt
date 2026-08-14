@@ -87,7 +87,7 @@ fun LyteSetEditRow(
                         onValueChange = { onRepsChange(it.roundToInt()) },
                         step = SetEditRowRepsStep,
                         min = SetEditRowMinReps,
-                        size = LyteStepperSize.Small,
+                        size = LyteStepperSize.Medium,
                         allowDecimal = false,
                         fillMaxWidth = true,
                     )
@@ -97,7 +97,7 @@ fun LyteSetEditRow(
                         value = weight,
                         onValueChange = onWeightChange,
                         step = SetEditRowWeightStep,
-                        size = LyteStepperSize.Small,
+                        size = LyteStepperSize.Medium,
                         fillMaxWidth = true,
                     )
                 }

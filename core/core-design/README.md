@@ -30,7 +30,9 @@
   - `LyteTheme.motion` — токены движения: `durationShort/Medium/Long` (150/250/400, `Int` мс —
     ложатся прямо в `tween()`) и `easingStandard/Emphasized/Decelerate/Accelerate` (`Easing`).
     Анимации компонентов и экранов берут значения отсюда, а не подбирают свои: переходы быстрые
-    и без пружин.
+    и без пружин. Рядом с ними (`theme/PressScale.kt`) лежит `Modifier.lytePressScale(…)` —
+    общее правило нажатия, собранное из этих токенов (см. «Нюансы»); он не компонент, поэтому
+    живёт при токенах, как и `TextStyle.withTabularNums()` при типографике.
 - `MaterialTheme.colorScheme` / `.typography` / `.shapes` — уже настроены; отдельно доставать токены
   Lyte для базовых M3-ролей не нужно, они и есть источник правды после `LyteTheme { … }`.
 
@@ -85,6 +87,13 @@ Lucide — `implementation`-only внутри `core-design`, подключат�
 
 - `com.nikolaevskii.lyte.core.design.format.formatWeight(weight: Double): String` — единый формат веса (целый — «60», дробный — «62.5»). Одна реализация на все фичи, чтобы правило отображения жило в одном месте.
 
+### Модели
+
+- `com.nikolaevskii.lyte.core.design.model.LyteSetValue(reps: Int, weight: Double?)` — значение
+  одного подхода. `weight = null` — упражнение своего веса: это «веса нет», а не «вес 0», и
+  показывать «12×0 кг» нельзя. Числами, а не строкой «12×62,5»: по паре значений компоненты считают
+  расхождение плана и факта и сами подставляют единицы.
+
 ### Компоненты
 
 Каждый — стейтлес `@Composable` на M3-примитивах (где дизайн позволяет), с собственным `@Preview`.
@@ -103,9 +112,9 @@ Lucide — `implementation`-only внутри `core-design`, подключат�
 | `component.mark` | `LyteExerciseMark` (круг-маркер: цвет + знак движения; размеры макета — 36/38/52dp) |
 | `component.progress` | `LyteProgressTrack` (`LyteProgressTrackMode.Tones`/`Plan`/`Progress`, тона — `LyteProgressTone`) |
 | `component.picker` | `LyteAccentPicker` (шесть цветов), `LyteExerciseIconPicker` (сетка 5×2 знаков) |
-| `component.stepper` | `LyteStepper` (± контрол + ручной tap-to-edit ввод; ввод ограничен: ≤5 цифр целой части и ≤2 знаков после запятой, при `allowDecimal=false` — целочисленный режим для повторов без дробной части, `fillMaxWidth` — для колонок), `LyteSetEditRow` (строка редактирования одного планового подхода программы: заголовок-параметр `title`, удаление, степперы повторов/веса — планирование, не привязано к состоянию активной сессии в отличие от `LyteTrackSetRow`) |
+| `component.stepper` | `LyteStepper` (size Large/Medium; ± контрол + ручной tap-to-edit ввод; ввод ограничен: ≤5 цифр целой части и ≤2 знаков после запятой, при `allowDecimal=false` — целочисленный режим для повторов без дробной части, `fillMaxWidth` — для колонок), `LyteSetEditRow` (строка редактирования одного планового подхода программы: заголовок-параметр `title`, удаление, степперы повторов/веса — планирование, не привязано к состоянию активной сессии в отличие от `LyteTrackSetRow`) |
 | `component.card` | `LyteProgramCard` (маркер + один факт + `trailing`), `LyteExerciseCard` (маркер + трек плана; действия задаёт `variant`: `LyteExerciseCardVariant.Editor` — drag-хэндл + edit/remove, `LyteExerciseCardVariant.ReadOnly` — превью программы), `LyteSessionCard` (маркер + геро-число + трек), `LyteListRow` (ведущий элемент — `LyteListRowLeading.Mark`/`Icon`) |
-| `component.feedback` | `LyteDiffRow` (тона Met/Positive/Negative/Neutral/Skipped), `LyteDialog`, `LyteEmptyState` |
+| `component.feedback` | `LyteDiffRow` (результат подхода: факт + дельта-чип, тон — `LyteProgressTone`), `LyteDialog`, `LyteEmptyState` |
 | `component.navigation` | `LyteTopBar` (size Small/Large), `LyteBottomNavigationBar` (+ `LyteBottomNavigationBarHeight` — резерв под него для контента, см. «Нюансы») |
 | `component.overlay` | `LyteBottomSheet` (слоты `title`/`subtitle`/`topContent`/`content`/`bottomBar` + `LyteBottomSheetHeight`, см. ниже), `LyteRestTimerOverlay` |
 | `component.datadisplay` | `LyteSessionStopwatch` |
@@ -230,6 +239,29 @@ Column {
 подходом, который человек всё-таки сделал, читается как наказание. По той же причине спокойная
 строка не пишет слово «Подход» — позиция в списке и так говорит, какой это подход, а отказ от слова
 и есть то, что позволяет семи отработанным подходам поместиться на экране рядом с фокус-карточкой.
+
+### Результат подхода в истории
+
+**`LyteDiffRow(index, tone, target, actual, note)`** — та же пятёрка исходов, но постфактум, в
+деталях завершённой сессии. Значения — `LyteSetValue(reps, weight)`, числами, а не готовой строкой:
+по паре «цель — факт» компонент сам считает расхождение и сам подставляет единицы («повт», «кг») —
+они его собственный «хром», а не доменный текст фичи. `weight = null` — упражнение своего веса, и
+строка покажет «12 повт», а не «12×0 кг».
+
+Факт назван **один раз и крупно** («12×62,5 кг»), а сравнение с целью выражено чипом-дельтой
+(«+2 повт · +2,5 кг»). Цель не дублируется числами: её роль играет тон строки. **У подхода ровно в
+цель чипа нет вовсе** — сообщать нечего. В v1 строка выписывала обе стороны целиком («10 повт · 60 кг
+→ 12 повт · 62,5 кг») — шесть элементов в строке и пятнадцать строк на экране.
+
+Заметка — свободный текст, написанный между подходами, поэтому её длина не ограничена: она **всегда**
+идёт отдельной строкой под числами и никогда не обрезается. Одна форма у каждой строки — заметка не
+спорит с чипом за ширину, строки списка остаются параллельными, и написанное человеком читается
+целиком.
+
+Тон — `LyteProgressTone`, общий для трека, строки подхода и этой строки: **собственного словаря
+исходов у компонентов нет**. `Skipped` рисует «пропущено» вместо чисел; `Todo` в завершённой сессии
+не встречается, но из словаря не выкидывается и выглядит ровно как «ещё не выполнен» на экране
+тренировки.
 
 **`LyteExerciseSetList(sets, …)`** — композиция экрана тренировки целиком: все подходы упражнения по
 порядку, фокус-карточка среди них. Решает то, чего не может обычный список: карточка — единственный
@@ -407,6 +439,17 @@ implementation(projects.core.coreDesign)
   `WorkoutListScreen` в `feature:workout:impl`).
 - **`LyteBadge` — не M3 `Badge`.** M3 `Badge` — точка-уведомление; `LyteBadge` — пилюля для
   метаданных (счётчики), поэтому реализована кастомно поверх `Surface`.
+- **Нажатие — уменьшение контрола поверх M3-овского state layer.** Кнопка, икон-кнопка и чип жмутся
+  до 0.97, кнопки ± степпера — до 0.94 и вдобавок перекидывают заливку в `primary`/`onPrimary`
+  (одноручный тап вслепую должен дать подтверждение). Длительность и кривая — из
+  `LyteTheme.motion`; общий модификатор — `Modifier.lytePressScale(interactionSource)`.
+  Своя реализация, а не средство M3: `Indication` (штатная точка расширения отклика) недоступна —
+  `Button`/`FilterChip`/`IconButton` принимают только `interactionSource`, а подмена
+  `LocalIndication` их не достаёт, они зовут `ripple()` явно; штатный отклик M3 Expressive (морф
+  формы) на `full`-пилюлях не виден.
+- **Выключенная `LyteButton` гасится целиком до alpha 0.38**, а не подменяет цветовые роли: так
+  задано в дизайн-системе. Поэтому M3-дефолты выключенных ролей приравнены к обычным — иначе
+  кнопка тускнела бы дважды.
 - **`androidLibrary { androidResources { enable = true } }` обязателен** для любого core/feature
   KMP-модуля, у которого есть свой `composeResources/` (как здесь). Без этого флага плагин
   `com.android.kotlin.multiplatform.library` не регистрирует Android-задачи упаковки ресурсов

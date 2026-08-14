@@ -1,11 +1,13 @@
 package com.nikolaevskii.lyte.core.design.component.stepper
 
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,7 +36,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -51,18 +52,23 @@ import com.nikolaevskii.lyte.core.design.LyteTheme
 import com.nikolaevskii.lyte.core.design.generated.resources.Res
 import com.nikolaevskii.lyte.core.design.generated.resources.stepper_edit
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
+import com.nikolaevskii.lyte.core.design.theme.LytePressScaleStrong
+import com.nikolaevskii.lyte.core.design.theme.lytePressScale
 import kotlin.math.round
 import org.jetbrains.compose.resources.stringResource
 
-enum class LyteStepperSize { Large, Small }
+/** Размеры по словарю ДС: [Large] — герой формы, [Medium] — контрол в 48dp (минимальная зона касания). */
+enum class LyteStepperSize { Large, Medium }
 
 private val StepperButtonSizeLarge = 56.dp
-private val StepperButtonSizeSmall = 48.dp
+private val StepperButtonSizeMedium = 48.dp
 private val StepperWidthLarge = 248.dp
-private val StepperWidthSmall = 196.dp
+private val StepperWidthMedium = 196.dp
 private val StepperIconSize = 24.dp
-private const val StepperPressScale = 0.94f
 private const val StepperDisabledAlpha = 0.38f
+
+/** Единица измерения — половина кегля числа (`0.5em` в макете), а не отдельный шаг типографики. */
+private const val StepperUnitFontScale = 0.5f
 private const val StepperMaxIntegerDigits = 5
 private const val StepperMaxDecimalDigits = 2
 private val StepperDecimalInputRegex = Regex("\\d{0,$StepperMaxIntegerDigits}([.,]\\d{0,$StepperMaxDecimalDigits})?")
@@ -88,8 +94,8 @@ fun LyteStepper(
     fillMaxWidth: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
-    val buttonSize = if (size == LyteStepperSize.Large) StepperButtonSizeLarge else StepperButtonSizeSmall
-    val width = if (size == LyteStepperSize.Large) StepperWidthLarge else StepperWidthSmall
+    val buttonSize = if (size == LyteStepperSize.Large) StepperButtonSizeLarge else StepperButtonSizeMedium
+    val width = if (size == LyteStepperSize.Large) StepperWidthLarge else StepperWidthMedium
     val widthModifier = if (fillMaxWidth) Modifier.fillMaxWidth() else Modifier.width(width)
     val numericStyle = if (size == LyteStepperSize.Large) LyteTheme.numericTypography.large else LyteTheme.numericTypography.medium
 
@@ -179,18 +185,24 @@ private fun StepperValueDisplay(
 ) {
     val editLabel = stringResource(Res.string.stepper_edit)
     Row(
-        verticalAlignment = Alignment.Bottom,
         modifier = Modifier
             .semantics { contentDescription = editLabel }
             .clickable(onClick = onClick),
     ) {
-        Text(text = formatStepperValue(value), style = style, color = MaterialTheme.colorScheme.onSurface)
+        Text(
+            text = formatStepperValue(value),
+            style = style,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.alignByBaseline(),
+        )
         unit?.let {
+            // Единица наследует начертание числа и садится на его базовую линию — в макете это
+            // инлайновый span в 0.5em, а не самостоятельный шаг типографики.
             Text(
                 text = it,
-                style = MaterialTheme.typography.labelSmall,
+                style = style.copy(fontSize = style.fontSize * StepperUnitFontScale),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 4.dp, bottom = 6.dp),
+                modifier = Modifier.alignByBaseline().padding(start = 4.dp),
             )
         }
     }
@@ -206,16 +218,26 @@ private fun StepperCircleButton(
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     val pressedAndEnabled = pressed && enabled
-    val scale by animateFloatAsState(if (pressedAndEnabled) StepperPressScale else 1f, label = "stepperButtonScale")
-    val containerColor = if (pressedAndEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh
-    val contentColor = if (pressedAndEnabled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+    val motion = LyteTheme.motion
+    val colorSpec = tween<Color>(durationMillis = motion.durationShort, easing = motion.easingStandard)
+    // Заливка перекидывается в primary/onPrimary: одноручный тап вслепую должен дать подтверждение.
+    val containerColor by animateColorAsState(
+        targetValue = if (pressedAndEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh,
+        animationSpec = colorSpec,
+        label = "stepperButtonContainer",
+    )
+    val contentColor by animateColorAsState(
+        targetValue = if (pressedAndEnabled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+        animationSpec = colorSpec,
+        label = "stepperButtonContent",
+    )
 
     Surface(
         onClick = onClick,
         enabled = enabled,
         modifier = Modifier
+            .lytePressScale(interactionSource = interactionSource, pressedScale = LytePressScaleStrong, enabled = enabled)
             .size(size)
-            .graphicsLayer { scaleX = scale; scaleY = scale }
             .alpha(if (enabled) 1f else StepperDisabledAlpha),
         shape = CircleShape,
         color = containerColor,
@@ -255,8 +277,13 @@ internal fun isStepperInputAccepted(text: String, allowDecimal: Boolean): Boolea
 @Composable
 private fun LyteStepperPreview() {
     LyteTheme {
-        Row(modifier = Modifier.padding(16.dp)) {
-            LyteStepper(value = 60.0, onValueChange = {}, unit = "кг")
+        Column(
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.padding(16.dp),
+        ) {
+            LyteStepper(value = 62.5, onValueChange = {}, unit = "кг")
+            LyteStepper(value = 10.0, onValueChange = {}, min = 10.0, allowDecimal = false)
+            LyteStepper(value = 62.5, onValueChange = {}, unit = "кг", size = LyteStepperSize.Medium)
         }
     }
 }

@@ -11,7 +11,6 @@
     <string name="history_details_meta">%1$d %2$s · начало %3$s</string>
     <string name="history_duration">%1$d мин</string>
     <string name="history_details_sets">%1$d/%2$d</string>
-    <string name="history_bodyweight">%1$d повт</string>
     <string-array name="history_month_names">
         <item>Январь</item>
         <item>Февраль</item>

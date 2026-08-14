@@ -1,7 +1,7 @@
 package com.nikolaevskii.lyte.feature.history.presentation.model
 
-import com.nikolaevskii.lyte.core.design.format.formatWeight
-import com.nikolaevskii.lyte.core.design.component.feedback.LyteDiffTone
+import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTone
+import com.nikolaevskii.lyte.core.design.model.LyteSetValue
 import com.nikolaevskii.lyte.core.session.domain.model.SessionExerciseEntity
 import com.nikolaevskii.lyte.core.session.domain.model.SessionSetEntity
 import com.nikolaevskii.lyte.core.session.domain.model.SessionSetOutcomeEntity
@@ -50,23 +50,20 @@ private fun SessionSetEntity.toDiffRowUiModel(number: Int): HistoryDiffRowUiMode
     HistoryDiffRowUiModel(
         id = id,
         index = number,
-        tone = outcome().toDiffTone(),
-        target = target.toSetValueUiModel(),
-        actual = (result as? SessionSetResultEntity.Completed)?.actual?.toSetValueUiModel(),
+        tone = outcome().toProgressTone(),
+        target = target.toSetValue(),
+        actual = (result as? SessionSetResultEntity.Completed)?.actual?.toSetValue(),
         note = note.takeIf { text -> text.isNotBlank() },
     )
 
-private fun SessionSetOutcomeEntity?.toDiffTone(): LyteDiffTone = when (this) {
-    SessionSetOutcomeEntity.MET -> LyteDiffTone.Met
-    SessionSetOutcomeEntity.EXCEEDED -> LyteDiffTone.Positive
-    SessionSetOutcomeEntity.MISSED -> LyteDiffTone.Negative
+private fun SessionSetOutcomeEntity?.toProgressTone(): LyteProgressTone = when (this) {
+    SessionSetOutcomeEntity.MET -> LyteProgressTone.Met
+    SessionSetOutcomeEntity.EXCEEDED -> LyteProgressTone.Positive
+    SessionSetOutcomeEntity.MISSED -> LyteProgressTone.Negative
     // SKIPPED и невыполненный (null, в завершённой сессии не встречается) — «пропущено».
-    SessionSetOutcomeEntity.SKIPPED, null -> LyteDiffTone.Skipped
+    SessionSetOutcomeEntity.SKIPPED, null -> LyteProgressTone.Skipped
 }
 
-private fun SessionSetValueEntity.toSetValueUiModel(): HistorySetValueUiModel =
-    if (hasWeight) {
-        HistorySetValueUiModel.Weighted(reps = count, weight = formatWeight(checkNotNull(weight)))
-    } else {
-        HistorySetValueUiModel.Bodyweight(reps = count)
-    }
+/** Вес `null` — упражнение своего веса: строка диффа покажет «12 повт», а не «12×0 кг». */
+private fun SessionSetValueEntity.toSetValue(): LyteSetValue =
+    LyteSetValue(reps = count, weight = weight.takeIf { hasWeight })
