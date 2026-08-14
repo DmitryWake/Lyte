@@ -49,11 +49,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.nikolaevskii.lyte.core.design.LyteTheme
-import com.nikolaevskii.lyte.core.design.component.interaction.LytePressScaleStrong
-import com.nikolaevskii.lyte.core.design.component.interaction.lytePressScale
 import com.nikolaevskii.lyte.core.design.generated.resources.Res
 import com.nikolaevskii.lyte.core.design.generated.resources.stepper_edit
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
+import com.nikolaevskii.lyte.core.design.theme.LytePressScaleStrong
+import com.nikolaevskii.lyte.core.design.theme.lytePressScale
 import kotlin.math.round
 import org.jetbrains.compose.resources.stringResource
 

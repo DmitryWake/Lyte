@@ -17,8 +17,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.nikolaevskii.lyte.core.design.LyteTheme
-import com.nikolaevskii.lyte.core.design.component.interaction.lytePressScale
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
+import com.nikolaevskii.lyte.core.design.theme.lytePressScale
 
 private val ChipHeight = 38.dp
 private val ChipIconSize = 18.dp

@@ -31,8 +31,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nikolaevskii.lyte.core.design.LyteTheme
-import com.nikolaevskii.lyte.core.design.component.interaction.lytePressScale
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
+import com.nikolaevskii.lyte.core.design.theme.lytePressScale
 
 enum class LyteButtonVariant { Filled, Tonal, Outlined, Text }
 

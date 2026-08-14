@@ -494,8 +494,10 @@ README `core-design` обновлён.
 
 **Статус: сделано** (ветка `claude/design-v2-migration-q91hkz`).
 
-**Что сделано.** Нажатие стало общим: `component/interaction/PressScale.kt` —
-`Modifier.lytePressScale(interactionSource)` на токенах движения; кнопка, икон-кнопка и чип жмутся
+**Что сделано.** Нажатие стало общим: `theme/PressScale.kt` —
+`Modifier.lytePressScale(interactionSource)` на токенах движения (лежит при токенах, а не в
+`component/`: это не компонент, а правило системы — как `withTabularNums()` при типографике);
+кнопка, икон-кнопка и чип жмутся
 до 0.97, кнопки ± степпера — до 0.94 и вдобавок перекидывают заливку в `primary`/`onPrimary`
 (раньше цвет переключался мгновенно, а масштаб шёл пружиной мимо `LyteTheme.motion`). Выключенная
 `LyteButton` гасится целиком до alpha 0.38, как в бандле; M3-дефолты выключенных ролей приравнены к

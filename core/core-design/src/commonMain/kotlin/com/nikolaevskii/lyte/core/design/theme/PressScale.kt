@@ -1,4 +1,4 @@
-package com.nikolaevskii.lyte.core.design.component.interaction
+package com.nikolaevskii.lyte.core.design.theme
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween

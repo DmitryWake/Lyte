@@ -30,7 +30,9 @@
   - `LyteTheme.motion` — токены движения: `durationShort/Medium/Long` (150/250/400, `Int` мс —
     ложатся прямо в `tween()`) и `easingStandard/Emphasized/Decelerate/Accelerate` (`Easing`).
     Анимации компонентов и экранов берут значения отсюда, а не подбирают свои: переходы быстрые
-    и без пружин.
+    и без пружин. Рядом с ними (`theme/PressScale.kt`) лежит `Modifier.lytePressScale(…)` —
+    общее правило нажатия, собранное из этих токенов (см. «Нюансы»); он не компонент, поэтому
+    живёт при токенах, как и `TextStyle.withTabularNums()` при типографике.
 - `MaterialTheme.colorScheme` / `.typography` / `.shapes` — уже настроены; отдельно доставать токены
   Lyte для базовых M3-ролей не нужно, они и есть источник правды после `LyteTheme { … }`.
 
