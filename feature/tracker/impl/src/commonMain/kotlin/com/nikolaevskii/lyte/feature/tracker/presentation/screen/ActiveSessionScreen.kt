@@ -38,9 +38,7 @@ import com.nikolaevskii.lyte.core.design.component.datadisplay.LyteStopwatchSize
 import com.nikolaevskii.lyte.core.design.component.feedback.LyteDialog
 import com.nikolaevskii.lyte.core.design.component.iconbutton.LyteIconButton
 import com.nikolaevskii.lyte.core.design.component.overline.LyteOverline
-import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTone
 import com.nikolaevskii.lyte.core.design.component.session.LyteExerciseSetList
-import com.nikolaevskii.lyte.core.design.component.session.LyteTrackSetState
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
 import com.nikolaevskii.lyte.core.design.model.LyteSetValue
 import com.nikolaevskii.lyte.core.design.theme.withTabularNums
@@ -66,9 +64,12 @@ import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_summary_set_count
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_to_landing
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionCurrentUiModel
+import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionLastSetLabel
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionOverlayUiModel
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionSetStatus
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionSetUiModel
+import com.nikolaevskii.lyte.feature.tracker.presentation.model.lastSetLabel
+import com.nikolaevskii.lyte.feature.tracker.presentation.model.toTrackSetStates
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionIntent
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionUiState
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionUiState.ActiveSessionContent
@@ -115,9 +116,6 @@ private val AllDoneContentPaddingHorizontal = 32.dp
 private val AllDoneActionPaddingBottom = 30.dp
 private val ErrorContentPaddingHorizontal = 32.dp
 private val ErrorContentGap = 12.dp
-
-private const val RepsStepperStep = 1
-private const val WeightStepperStep = 2.5
 
 // Общий `@Preview` в commonMain не принимает device/widthDp — даём превью телефонный размер сами.
 private val PreviewDeviceWidth = 411.dp
@@ -203,8 +201,8 @@ private fun ActiveSessionTrackingContent(
     onIntent: (ActiveSessionIntent) -> Unit,
 ) {
     val current = content.current
-    val lastSetLabel = current.lastSetLabel()
-    val footer: (@Composable () -> Unit)? = lastSetLabel?.let { label ->
+    val lastSetText = content.lastSetLabel?.let { label -> lastSetLabelText(label) }
+    val footer: (@Composable () -> Unit)? = lastSetText?.let { text ->
         {
             Box(
                 contentAlignment = Alignment.Center,
@@ -212,7 +210,7 @@ private fun ActiveSessionTrackingContent(
                     .fillMaxWidth()
                     .padding(top = FooterPaddingTop, bottom = FooterPaddingBottom),
             ) {
-                LyteOverline(text = label)
+                LyteOverline(text = text)
             }
         }
     }
@@ -223,7 +221,7 @@ private fun ActiveSessionTrackingContent(
         // Список получает ограниченную по высоте область: от её нижнего края считается якорь
         // фокус-карточки. Без `weight` он не сработает — список станет обычной колонкой.
         LyteExerciseSetList(
-            sets = current.toTrackSetStates(draftReps = content.draftReps, draftWeight = content.draftWeight),
+            sets = content.trackSets,
             onRepsChange = { reps -> onIntent(ActiveSessionIntent.OnDraftRepsChanged(reps)) },
             onWeightChange = { weight -> onIntent(ActiveSessionIntent.OnDraftWeightChanged(weight)) },
             currentContent = { CurrentSetNote(note = current.note, onIntent = onIntent) },
@@ -263,48 +261,11 @@ private fun ActiveSessionTrackingContent(
     }
 }
 
-/**
- * Подходы упражнения для списка: текущий — фокус-карточка с драфтами степперов, остальные —
- * спокойные строки со своим исходом. Ориентир «В прошлый раз» не передаётся: фактов предыдущей
- * сессии домен не хранит (см. KDoc `toActiveSessionUiModel`).
- */
-private fun ActiveSessionCurrentUiModel.toTrackSetStates(
-    draftReps: Int,
-    draftWeight: Double,
-): List<LyteTrackSetState> = sets.map { set ->
-    if (set.status == ActiveSessionSetStatus.Current) {
-        LyteTrackSetState.Current(
-            total = setCount,
-            reps = draftReps,
-            weight = draftWeight.takeIf { targetWeight != null },
-            target = target,
-            repsStep = RepsStepperStep,
-            weightStep = WeightStepperStep,
-        )
-    } else {
-        LyteTrackSetState.Resting(tone = set.status.toTone(), value = set.value, note = set.note.takeIf { it.isNotEmpty() })
-    }
-}
-
-/**
- * Подпись хвоста списка: показывается, только когда текущий подход последний в упражнении. Что
- * дальше — другое упражнение или конец тренировки — решает позиция упражнения в сессии.
- */
+/** Единственное, что от подписи хвоста остаётся экрану: выбор уже сделан маппером. */
 @Composable
-private fun ActiveSessionCurrentUiModel.lastSetLabel(): String? = when {
-    currentSetIndex != sets.lastIndex -> null
-    exerciseIndex == exerciseCount -> stringResource(Res.string.active_session_last_set)
-    else -> stringResource(Res.string.active_session_last_set_in_exercise)
-}
-
-/** Общий словарь исходов: тот же тон, что в треке сводки и в деталях завершённой сессии. */
-private fun ActiveSessionSetStatus.toTone(): LyteProgressTone = when (this) {
-    ActiveSessionSetStatus.Hit -> LyteProgressTone.Met
-    ActiveSessionSetStatus.Exceeded -> LyteProgressTone.Positive
-    ActiveSessionSetStatus.Missed -> LyteProgressTone.Negative
-    ActiveSessionSetStatus.Skipped -> LyteProgressTone.Skipped
-    // Текущий подход рисуется фокус-карточкой и до тона не доходит; Todo — будущий подход.
-    ActiveSessionSetStatus.Todo, ActiveSessionSetStatus.Current -> LyteProgressTone.Todo
+private fun lastSetLabelText(label: ActiveSessionLastSetLabel): String = when (label) {
+    ActiveSessionLastSetLabel.LastInSession -> stringResource(Res.string.active_session_last_set)
+    ActiveSessionLastSetLabel.LastInExercise -> stringResource(Res.string.active_session_last_set_in_exercise)
 }
 
 @Composable
@@ -680,34 +641,28 @@ private fun previewTracking(
     note: String = "",
 ): ActiveSessionContent.Tracking {
     val target = LyteSetValue(reps = 10, weight = 62.5)
-    return ActiveSessionContent.Tracking(
-        current = ActiveSessionCurrentUiModel(
-            exerciseId = "e2",
-            exerciseIndex = 2,
-            exerciseCount = 5,
-            exerciseName = "Жим гантелей на наклонной",
-            sets = List(setCount) { index ->
-                ActiveSessionSetUiModel(
-                    index = index + 1,
-                    status = previewStatus(index = index, currentIndex = currentIndex),
-                    value = previewValue(index = index, currentIndex = currentIndex, target = target),
-                    note = if (index == 1 && index < currentIndex) "Тяжело, форма поплыла" else "",
-                )
-            },
-            currentSetIndex = currentIndex,
-            setCount = setCount,
-            currentSetId = "set${currentIndex + 1}",
-            targetReps = 10,
-            targetWeight = 62.5,
-            target = target,
-            note = note,
-        ),
-        switcherRows = emptyList(),
-        draftReps = 10,
-        draftWeight = 62.5,
-        overlay = ActiveSessionOverlayUiModel.None,
-        hasMutationError = false,
+    val current = ActiveSessionCurrentUiModel(
+        exerciseId = "e2",
+        exerciseIndex = 2,
+        exerciseCount = 5,
+        exerciseName = "Жим гантелей на наклонной",
+        sets = List(setCount) { index ->
+            ActiveSessionSetUiModel(
+                index = index + 1,
+                status = previewStatus(index = index, currentIndex = currentIndex),
+                value = previewValue(index = index, currentIndex = currentIndex, target = target),
+                note = if (index == 1 && index < currentIndex) "Тяжело, форма поплыла" else "",
+            )
+        },
+        currentSetIndex = currentIndex,
+        setCount = setCount,
+        currentSetId = "set${currentIndex + 1}",
+        targetReps = 10,
+        targetWeight = 62.5,
+        target = target,
+        note = note,
     )
+    return current.toTrackingContent(draftReps = 10, draftWeight = 62.5)
 }
 
 private fun previewStatus(index: Int, currentIndex: Int): ActiveSessionSetStatus = when {
@@ -725,38 +680,47 @@ private fun previewValue(index: Int, currentIndex: Int, target: LyteSetValue): L
     else -> null
 }
 
-private fun previewBodyweightTracking(): ActiveSessionContent.Tracking = ActiveSessionContent.Tracking(
-    current = ActiveSessionCurrentUiModel(
-        exerciseId = "e3",
-        exerciseIndex = 3,
-        exerciseCount = 5,
-        exerciseName = "Отжимания на брусьях",
-        sets = listOf(
-            ActiveSessionSetUiModel(index = 1, status = ActiveSessionSetStatus.Skipped, value = null, note = ""),
-            ActiveSessionSetUiModel(
-                index = 2,
-                status = ActiveSessionSetStatus.Current,
-                value = LyteSetValue(reps = 12),
-                note = "",
-            ),
-            ActiveSessionSetUiModel(
-                index = 3,
-                status = ActiveSessionSetStatus.Todo,
-                value = LyteSetValue(reps = 10),
-                note = "",
-            ),
+/** Цель — свой вес, но степпер веса на месте и стоит на нуле: им и добавляют пояс. */
+private fun previewBodyweightTracking(): ActiveSessionContent.Tracking = ActiveSessionCurrentUiModel(
+    exerciseId = "e3",
+    exerciseIndex = 3,
+    exerciseCount = 5,
+    exerciseName = "Отжимания на брусьях",
+    sets = listOf(
+        ActiveSessionSetUiModel(index = 1, status = ActiveSessionSetStatus.Skipped, value = null, note = ""),
+        ActiveSessionSetUiModel(
+            index = 2,
+            status = ActiveSessionSetStatus.Current,
+            value = LyteSetValue(reps = 12),
+            note = "",
         ),
-        currentSetIndex = 1,
-        setCount = 3,
-        currentSetId = "set2",
-        targetReps = 12,
-        targetWeight = null,
-        target = LyteSetValue(reps = 12),
-        note = "Наклон вперёд, локти уже",
+        ActiveSessionSetUiModel(
+            index = 3,
+            status = ActiveSessionSetStatus.Todo,
+            value = LyteSetValue(reps = 10),
+            note = "",
+        ),
     ),
+    currentSetIndex = 1,
+    setCount = 3,
+    currentSetId = "set2",
+    targetReps = 12,
+    targetWeight = null,
+    target = LyteSetValue(reps = 12),
+    note = "Наклон вперёд, локти уже",
+).toTrackingContent(draftReps = 12, draftWeight = 0.0)
+
+/** Собирает превьюшный `Tracking` тем же маппером, что и ViewModel, — иначе превью врало бы. */
+private fun ActiveSessionCurrentUiModel.toTrackingContent(
+    draftReps: Int,
+    draftWeight: Double,
+): ActiveSessionContent.Tracking = ActiveSessionContent.Tracking(
+    current = this,
+    trackSets = toTrackSetStates(draftReps = draftReps, draftWeight = draftWeight),
+    lastSetLabel = lastSetLabel(),
     switcherRows = emptyList(),
-    draftReps = 12,
-    draftWeight = 0.0,
+    draftReps = draftReps,
+    draftWeight = draftWeight,
     overlay = ActiveSessionOverlayUiModel.None,
     hasMutationError = false,
 )

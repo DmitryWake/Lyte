@@ -13,7 +13,9 @@ import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionOve
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionIntent
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionUiState
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionUiState.ActiveSessionContent
+import com.nikolaevskii.lyte.feature.tracker.presentation.model.lastSetLabel
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.toActiveSessionUiModel
+import com.nikolaevskii.lyte.feature.tracker.presentation.model.toTrackSetStates
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.coroutines.CancellationException
@@ -46,8 +48,8 @@ class ActiveSessionViewModel(
         when (intent) {
             ActiveSessionIntent.OnRetryClicked -> launch { loadSession() }
             ActiveSessionIntent.OnBackToLandingClicked -> navigateToLanding()
-            is ActiveSessionIntent.OnDraftRepsChanged -> updateTracking { copy(draftReps = intent.reps) }
-            is ActiveSessionIntent.OnDraftWeightChanged -> updateTracking { copy(draftWeight = intent.weight) }
+            is ActiveSessionIntent.OnDraftRepsChanged -> updateTracking { withDrafts(reps = intent.reps) }
+            is ActiveSessionIntent.OnDraftWeightChanged -> updateTracking { withDrafts(weight = intent.weight) }
             ActiveSessionIntent.OnCompleteSetClicked -> completeCurrentSet()
             ActiveSessionIntent.OnSkipSetClicked -> skipCurrentSet()
             ActiveSessionIntent.OnOpenExerciseSheetClicked -> {
@@ -125,11 +127,16 @@ class ActiveSessionViewModel(
             val content = if (current != null) {
                 val previous = content as? ActiveSessionContent.Tracking
                 val sameSet = previous != null && previous.current.currentSetId == current.currentSetId
+                val draftReps = if (sameSet) previous.draftReps else current.targetReps
+                val draftWeight =
+                    if (sameSet) previous.draftWeight else (current.targetWeight ?: DEFAULT_DRAFT_WEIGHT)
                 ActiveSessionContent.Tracking(
                     current = current,
+                    trackSets = current.toTrackSetStates(draftReps = draftReps, draftWeight = draftWeight),
+                    lastSetLabel = current.lastSetLabel(),
                     switcherRows = model.switcherRows,
-                    draftReps = if (sameSet) previous.draftReps else current.targetReps,
-                    draftWeight = if (sameSet) previous.draftWeight else (current.targetWeight ?: DEFAULT_DRAFT_WEIGHT),
+                    draftReps = draftReps,
+                    draftWeight = draftWeight,
                     overlay = ActiveSessionOverlayUiModel.None,
                     hasMutationError = false,
                 )
@@ -147,8 +154,9 @@ class ActiveSessionViewModel(
     private fun completeCurrentSet() {
         val tracking = uiStateValue.content as? ActiveSessionContent.Tracking ?: return
         val current = tracking.current
-        // Для bodyweight-подхода вес в факт не пишем — черновик веса для него не редактируется.
-        val weight = tracking.draftWeight.takeIf { current.targetWeight != null }
+        // Вес берём из черновика независимо от того, был ли он у цели: к подходу своего веса можно
+        // добавить пояс, и такой факт обязан сохраниться. Ноль — это «без веса», он и уходит как null.
+        val weight = tracking.draftWeight.takeIf { draft -> draft > NO_WEIGHT }
         mutate {
             workoutSessionRepository.completeSet(setId = current.currentSetId, count = tracking.draftReps, weight = weight)
         }
@@ -271,7 +279,10 @@ class ActiveSessionViewModel(
     private companion object {
         const val MILLIS_PER_SECOND = 1_000L
 
-        /** Черновик веса для bodyweight-подходов: степпер веса скрыт, значение в факт не уходит. */
+        /** Черновик веса, когда у цели веса нет: степпер стоит на нуле, пока его не подняли. */
         const val DEFAULT_DRAFT_WEIGHT = 0.0
+
+        /** Граница «веса нет»: ноль в факт уходит как `null`, иначе подход покажет «12×0 кг». */
+        const val NO_WEIGHT = 0.0
     }
 }

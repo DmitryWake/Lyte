@@ -1,10 +1,13 @@
 package com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi
 
+import com.nikolaevskii.lyte.core.design.component.session.LyteTrackSetState
 import com.nikolaevskii.lyte.core.mvi.UiIntent
 import com.nikolaevskii.lyte.core.mvi.UiState
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionCurrentUiModel
+import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionLastSetLabel
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionOverlayUiModel
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionSwitcherRowUiModel
+import com.nikolaevskii.lyte.feature.tracker.presentation.model.toTrackSetStates
 import kotlin.time.Instant
 
 /**
@@ -35,15 +38,34 @@ data class ActiveSessionUiState(
          * Трекинг текущего подхода. [current] гарантированно есть (есть незакрытый подход).
          * [draftReps]/[draftWeight] — черновик степперов; [hasMutationError] — баннер о неудачной записи
          * (сессия при этом остаётся рабочей).
+         *
+         * [trackSets] — те же подходы, но уже в виде состояний компонента списка, и [lastSetLabel] —
+         * выбор подписи его хвоста. Оба считает маппер (`toTrackSetStates`/`lastSetLabel`), а не
+         * экран: экрану остаётся отрисовать готовое и подставить строковый ресурс. Хранимые поля, а
+         * не вычисляемые свойства: список пересобирается только при смене подхода или драфта, и
+         * Compose не должен получать новый инстанс на каждую рекомпозицию.
          */
         data class Tracking(
             val current: ActiveSessionCurrentUiModel,
+            val trackSets: List<LyteTrackSetState>,
+            val lastSetLabel: ActiveSessionLastSetLabel?,
             val switcherRows: List<ActiveSessionSwitcherRowUiModel>,
             val draftReps: Int,
             val draftWeight: Double,
             val overlay: ActiveSessionOverlayUiModel,
             val hasMutationError: Boolean,
-        ) : ActiveSessionContent
+        ) : ActiveSessionContent {
+
+            /**
+             * Правит черновик степпера и пересобирает [trackSets] под него — иначе фокус-карточка
+             * показывала бы прежнее число. Единственный путь смены драфтов.
+             */
+            fun withDrafts(reps: Int = draftReps, weight: Double = draftWeight): Tracking = copy(
+                trackSets = current.toTrackSetStates(draftReps = reps, draftWeight = weight),
+                draftReps = reps,
+                draftWeight = weight,
+            )
+        }
 
         /** Все подходы разрешены: экран-итог со сводкой и кнопкой финализации. */
         data class AllDone(

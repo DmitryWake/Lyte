@@ -293,18 +293,17 @@ private fun CurrentSetCard(
                         fillMaxWidth = true,
                     )
                 }
-                // Свой вес — не «вес 0»: у такого подхода веса нет, и степпера для него тоже нет.
-                state.weight?.let { weight ->
-                    StepperRow(caption = stringResource(Res.string.set_caption_weight_name)) {
-                        LyteStepper(
-                            value = weight,
-                            onValueChange = onWeightChange,
-                            step = state.weightStep,
-                            unit = stringResource(Res.string.diff_weight),
-                            size = LyteStepperSize.Medium,
-                            fillMaxWidth = true,
-                        )
-                    }
+                // Степпер веса есть всегда, в том числе у цели «свой вес»: иначе к подтягиваниям
+                // нечем добавить пояс. Ноль — это «пока без веса», а не «веса не бывает».
+                StepperRow(caption = stringResource(Res.string.set_caption_weight_name)) {
+                    LyteStepper(
+                        value = state.weight,
+                        onValueChange = onWeightChange,
+                        step = state.weightStep,
+                        unit = stringResource(Res.string.diff_weight),
+                        size = LyteStepperSize.Medium,
+                        fillMaxWidth = true,
+                    )
                 }
             }
             content?.let {
@@ -504,10 +503,10 @@ private fun LyteTrackSetRowCurrentPreview() {
                 ),
                 modifier = Modifier.fillMaxWidth(),
             )
-            // Свой вес: степпера веса нет вовсе — карточка короче на целую строку.
+            // Цель «свой вес»: степпер веса всё равно на месте и стоит на нуле — им и добавляют пояс.
             LyteTrackSetRow(
                 number = 1,
-                state = LyteTrackSetState.Current(total = 3, reps = 12, target = LyteSetValue(reps = 12)),
+                state = LyteTrackSetState.Current(total = 3, reps = 12, weight = 0.0, target = LyteSetValue(reps = 12)),
                 modifier = Modifier.fillMaxWidth(),
             )
         }

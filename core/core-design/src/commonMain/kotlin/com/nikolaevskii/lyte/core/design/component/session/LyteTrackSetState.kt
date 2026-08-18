@@ -40,13 +40,14 @@ sealed interface LyteTrackSetState {
      * [target] и [last] — ориентиры «Цель» и «В прошлый раз», `null` — строка не показывается.
      * Заметку или чип под степперы кладёт вызывающая сторона слотом `content`.
      *
-     * [weight] `null` — упражнение своего веса: степпер веса не показывается вовсе, как и в модели
-     * подхода ([LyteSetValue.weight]). Это не «вес 0», а «веса нет».
+     * [weight] — вес подхода, и он есть всегда, даже когда цель — свой вес: 0 здесь значит «пока без
+     * веса», а не «веса не бывает». Иначе к подтягиваниям нечем добавить пояс. Тем, что вес нулевой,
+     * распоряжается уже отображение значения ([LyteSetValue.weight] `null` → «12 повт»).
      */
     data class Current(
         val total: Int,
         val reps: Int,
-        val weight: Double? = null,
+        val weight: Double,
         val target: LyteSetValue? = null,
         val last: LyteSetValue? = null,
         val repsStep: Int = 1,
