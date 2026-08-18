@@ -194,6 +194,32 @@ class ActiveSessionViewModelTest {
     }
 
     @Test
+    fun addedWeightOnBodyweightSetIsSaved() = activeSessionTest {
+        val session = workoutSession(
+            exercises = listOf(
+                sessionExercise(
+                    id = "e1",
+                    name = "Подтягивания",
+                    sets = listOf(sessionSet(id = "s1", targetCount = 8, targetWeight = null))
+                ),
+            ),
+        )
+        val repository = repository(session)
+        val viewModel = viewModel(repository = repository)
+        runCurrent()
+
+        // У цели веса нет, но пояс на подходе был — вес обязан доехать до факта.
+        viewModel.onIntent(ActiveSessionIntent.OnDraftWeightChanged(10.0))
+        viewModel.onIntent(ActiveSessionIntent.OnCompleteSetClicked)
+        runCurrent()
+
+        assertEquals(
+            listOf(Triple<String, Int, Double?>("s1", 8, 10.0)),
+            repository.completeSetCalls
+        )
+    }
+
+    @Test
     fun skipMarksSetSkipped() = activeSessionTest {
         val repository = repository(twoSetSession())
         val viewModel = viewModel(repository = repository)

@@ -1,5 +1,7 @@
 package com.nikolaevskii.lyte.feature.tracker.presentation.model
 
+import com.nikolaevskii.lyte.core.design.model.LyteSetValue
+
 /** Статус строки в шторке «Упражнения сессии». */
 enum class ActiveSessionSwitcherStatus { Current, Done, Pending }
 
@@ -16,6 +18,6 @@ data class ActiveSessionSwitcherRowUiModel(
     val doneCount: Int,
     val setCount: Int,
     val currentSetIndex: Int?,
-    val targetPills: List<ActiveSessionSetValueUiModel>,
+    val targetPills: List<LyteSetValue>,
     val isSelectable: Boolean,
 )

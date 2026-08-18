@@ -54,12 +54,11 @@ Lucide — `implementation`-only внутри `core-design`, подключат�
 `ChevronRight`, `ChevronLeft`, `GripVertical`, `OverflowMenu`, `Sparkles` (зарезервирована для
 ИИ-поверхностей — не использовать как обычную иконку), `Delete`, `Edit`, `List` (шторка упражнений
 сессии), `SearchX` (пустой результат поиска), `ListChecks`, `Circle`, `CircleDot`, `CircleCheck`,
-`CircleArrowUp`, `CircleArrowDown` (превысил/недобрал цель), `CircleX`, `CircleMinus`
+`CircleArrowUp`, `CircleArrowDown` (превысил/недобрал цель), `CircleMinus`
 (кружки-статусы подходов).
 
-Словарь держит только то, что реально рисуется. `CircleX` и `OverflowMenu` в дизайне v2 не
-используются, но пока живы их call-site'ы: крестик уходит вместе с переписанным `LyteTrackSetRow`
-(RD-09), кебаб-меню — вместе со списком программ (RD-13).
+Словарь держит только то, что реально рисуется. `OverflowMenu` в дизайне v2 не используется, но у
+него пока жив call-site: кебаб-меню уходит вместе со списком программ (RD-13).
 
 #### Пиктограммы движений
 
@@ -86,6 +85,11 @@ Lucide — `implementation`-only внутри `core-design`, подключат�
 ### Форматирование
 
 - `com.nikolaevskii.lyte.core.design.format.formatWeight(weight: Double): String` — единый формат веса (целый — «60», дробный — «62.5»). Одна реализация на все фичи, чтобы правило отображения жило в одном месте.
+- `com.nikolaevskii.lyte.core.design.format.lyteSetValueLabel(value: LyteSetValue): String`
+  (`@Composable`) — единый формат значения подхода: «10×60 кг» при заданном весе, «10 повт» при своём.
+  Публичная, потому что фича обязана писать это значение там, где его рисует не компонент ДС
+  (например, пилюли целей в шторке упражнений сессии) — второму форматтеру того же значения в системе
+  места нет.
 
 ### Модели
 
@@ -118,7 +122,7 @@ Lucide — `implementation`-only внутри `core-design`, подключат�
 | `component.navigation` | `LyteTopBar` (size Small/Large), `LyteBottomNavigationBar` (+ `LyteBottomNavigationBarHeight` — резерв под него для контента, см. «Нюансы») |
 | `component.overlay` | `LyteBottomSheet` (слоты `title`/`subtitle`/`topContent`/`content`/`bottomBar` + `LyteBottomSheetHeight`, см. ниже), `LyteRestTimerOverlay` |
 | `component.datadisplay` | `LyteSessionStopwatch` |
-| `component.session` | `LyteTrackSetRow` (подход на экране тренировки: спокойная строка или фокус-карточка — `LyteTrackSetState`), `LyteExerciseSetList` (все подходы упражнения с якорем фокус-карточки), `LyteSetDots`, `LyteSetOverview` (`currentIndex` — автопрокрутка к плашке текущего подхода), `LyteExerciseStrip` |
+| `component.session` | `LyteTrackSetRow` (подход на экране тренировки: спокойная строка или фокус-карточка — `LyteTrackSetState`), `LyteExerciseSetList` (все подходы упражнения с якорем фокус-карточки), `LyteSetDots`, `LyteExerciseStrip` |
 
 `LyteDialog` / `LyteBottomSheet` / `LyteRestTimerOverlay` не принимают флаг видимости — видимостью
 управляет вызывающая сторона самим фактом композиции (`if (showDialog) { LyteDialog(...) }`), как
@@ -222,8 +226,21 @@ Column {
 
 | Арм | Вид | Что несёт |
 |---|---|---|
-| `Resting(tone, reps, weight, target, note)` | спокойная строка 36dp, залитая тоном | исход подхода и заметку одной строкой |
+| `Resting(tone, value, note)` | спокойная строка 36dp, залитая тоном | исход подхода и заметку одной строкой |
 | `Current(total, reps, weight, target, last, шаги)` | фокус-карточка: обводка `primary` 2dp + тень | степперы повторов и веса, ориентиры «Цель» / «В прошлый раз», слот `content` под заметку или чип |
+
+Значения — `LyteSetValue(reps, weight)`, как и в `LyteDiffRow`: числами, а не готовой строкой, чтобы
+единицы («повт», «кг») подставлял компонент, а не фича. У `Resting` это **одно** поле `value`, а не
+пара «факт + цель»: по тону всегда валидно ровно одно из них, и второе поле означало бы невозможные
+комбинации. У `Current.weight` `null` не бывает: степпер веса стоит в карточке всегда, в том числе
+когда цель — свой вес. Ноль там значит «пока без веса», а не «веса не бывает», иначе к подтягиваниям
+нечем было бы добавить пояс. Тем, что вес нулевой, распоряжается отображение значения:
+`LyteSetValue.weight = null` — и строка пишет «12 повт», а не «12×0 кг».
+
+У степпера повторов пол в **1**, как и при планировании подхода в `LyteSetEditRow`: подход на ноль
+повторов — это пропуск, а не результат, и для пропуска на экране тренировки есть отдельная кнопка.
+Минимум задан самим компонентом, а не параметром `LyteTrackSetState`: это правило системы, и второй
+способ его задать разошёлся бы с `LyteSetEditRow`. У веса минимум обычный, 0.
 
 Тон спокойной строки — тот же `LyteProgressTone`, что и у трека: собственного словаря у строки нет,
 иначе один и тот же исход разъехался бы по виду между экраном тренировки и деталями сессии. Тон
@@ -231,9 +248,9 @@ Column {
 
 | Тон | Иконка | Значение справа |
 |---|---|---|
-| `Met` / `Positive` / `Negative` | галочка / стрелка вверх / стрелка вниз | факт из `reps` и `weight` |
-| `Skipped` | минус | «пропущен» |
-| `Todo` | пустой круг | «цель …» из `target` |
+| `Met` / `Positive` / `Negative` | галочка / стрелка вверх / стрелка вниз | факт из `value` |
+| `Skipped` | минус | «пропущен» (`value` не читается) |
+| `Todo` | пустой круг | «цель …» из `value` |
 
 **Крестика нет ни в одном состоянии**: недобор до цели — это направление, а не провал, и ✗ рядом с
 подходом, который человек всё-таки сделал, читается как наказание. По той же причине спокойная

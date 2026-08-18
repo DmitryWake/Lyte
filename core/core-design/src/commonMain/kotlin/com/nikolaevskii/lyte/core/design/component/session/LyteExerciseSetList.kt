@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import com.nikolaevskii.lyte.core.design.LyteTheme
 import com.nikolaevskii.lyte.core.design.component.overline.LyteOverline
 import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTone
+import com.nikolaevskii.lyte.core.design.model.LyteSetValue
 import kotlin.math.roundToInt
 
 /** Низ фокус-карточки всегда на этом расстоянии от низа области — палец попадает в одно место. */
@@ -226,17 +227,25 @@ private fun previewLongSets(currentIndex: Int): List<LyteTrackSetState> = List(s
             total = 8,
             reps = 10,
             weight = 62.5,
-            target = "10×62.5 кг",
-            last = "10×60 кг",
+            target = LyteSetValue(reps = 10, weight = 62.5),
+            last = LyteSetValue(reps = 10, weight = 60.0),
         )
 
         index > currentIndex -> LyteTrackSetState.Resting(
             tone = LyteProgressTone.Todo,
-            target = "10×62.5 кг",
+            value = LyteSetValue(reps = 10, weight = 62.5),
         )
 
-        index % 3 == 0 -> LyteTrackSetState.Resting(tone = LyteProgressTone.Positive, reps = 12, weight = 62.5)
-        index % 3 == 1 -> LyteTrackSetState.Resting(tone = LyteProgressTone.Met, reps = 10, weight = 62.5)
+        index % 3 == 0 -> LyteTrackSetState.Resting(
+            tone = LyteProgressTone.Positive,
+            value = LyteSetValue(reps = 12, weight = 62.5),
+        )
+
+        index % 3 == 1 -> LyteTrackSetState.Resting(
+            tone = LyteProgressTone.Met,
+            value = LyteSetValue(reps = 10, weight = 62.5),
+        )
+
         else -> LyteTrackSetState.Resting(tone = LyteProgressTone.Skipped)
     }
 }
@@ -246,9 +255,15 @@ private fun previewLongSets(currentIndex: Int): List<LyteTrackSetState> = List(s
 private fun LyteExerciseSetListShortPreview() {
     SetListPreviewSurface(
         sets = listOf(
-            LyteTrackSetState.Resting(tone = LyteProgressTone.Met, reps = 10, weight = 60.0),
-            LyteTrackSetState.Current(total = 3, reps = 10, weight = 62.5, target = "10×62.5 кг", last = "10×60 кг"),
-            LyteTrackSetState.Resting(tone = LyteProgressTone.Todo, target = "10×62.5 кг"),
+            LyteTrackSetState.Resting(tone = LyteProgressTone.Met, value = LyteSetValue(reps = 10, weight = 60.0)),
+            LyteTrackSetState.Current(
+                total = 3,
+                reps = 10,
+                weight = 62.5,
+                target = LyteSetValue(reps = 10, weight = 62.5),
+                last = LyteSetValue(reps = 10, weight = 60.0),
+            ),
+            LyteTrackSetState.Resting(tone = LyteProgressTone.Todo, value = LyteSetValue(reps = 10, weight = 62.5)),
         ),
     )
 }

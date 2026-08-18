@@ -38,17 +38,10 @@
     </plurals>
 
     <string name="active_session_exercise_position">Упражнение %1$d из %2$d</string>
-    <string name="active_session_set_position">Подход %1$d из %2$d</string>
-    <string name="active_session_set_value_weighted">%1$d×%2$s кг</string>
-    <string name="active_session_set_value_bodyweight">%1$d повт</string>
-    <string name="active_session_overview_caption_number">№%1$d</string>
-    <string name="active_session_overview_caption_current">Сейчас</string>
-    <string name="active_session_overview_value_skipped">—</string>
-    <string name="active_session_stepper_reps">Повторения</string>
-    <string name="active_session_stepper_weight">Вес</string>
-    <string name="active_session_stepper_weight_unit">кг</string>
-    <string name="active_session_target">Цель: %1$s</string>
-    <string name="active_session_add_note">Добавить заметку</string>
+    <!-- Хвост списка подходов: показывается, только когда текущий подход последний в упражнении. -->
+    <string name="active_session_last_set">Последний подход</string>
+    <string name="active_session_last_set_in_exercise">Последний подход в упражнении</string>
+    <string name="active_session_add_note">Заметка</string>
     <string name="active_session_note_sheet_title">Заметка к подходу</string>
     <string name="active_session_note_placeholder">Комментарий…</string>
     <string name="active_session_note_save">Готово</string>

@@ -45,6 +45,7 @@ import com.nikolaevskii.lyte.core.design.generated.resources.set_reference_targe
 import com.nikolaevskii.lyte.core.design.generated.resources.set_skipped
 import com.nikolaevskii.lyte.core.design.generated.resources.set_target
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
+import com.nikolaevskii.lyte.core.design.model.LyteSetValue
 import com.nikolaevskii.lyte.core.design.theme.withTabularNums
 import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.stringResource
@@ -84,6 +85,12 @@ private val TrackSetStepperRowGap = 10.dp
 private val TrackSetStepperGap = 12.dp
 private val TrackSetStepperCaptionWidth = 40.dp
 private val TrackSetContentTopGap = 16.dp
+
+/**
+ * Пол повторов — тот же, что у планирования подхода (`SetEditRowMinReps`): подход на ноль повторов
+ * это пропуск, а для пропуска на экране есть отдельная кнопка.
+ */
+private const val TrackSetRepsMin = 1.0
 
 private val TrackSetPreviewGap = 6.dp
 private val TrackSetPreviewPadding = 16.dp
@@ -185,9 +192,10 @@ private fun RestingSetRow(
 
 @Composable
 private fun RestingSetValue(state: LyteTrackSetState.Resting, foreground: Color) {
+    val label = state.value?.let { value -> lyteSetValueLabel(value) }.orEmpty()
     when (state.tone) {
         LyteProgressTone.Met, LyteProgressTone.Positive, LyteProgressTone.Negative -> Text(
-            text = lyteSetValueLabel(reps = state.reps, weight = state.weight),
+            text = label,
             style = MaterialTheme.typography.labelLarge
                 .copy(
                     fontSize = TrackSetValueTextSize,
@@ -212,7 +220,7 @@ private fun RestingSetValue(state: LyteTrackSetState.Resting, foreground: Color)
         )
 
         LyteProgressTone.Todo -> Text(
-            text = stringResource(Res.string.set_target, state.target.orEmpty()),
+            text = stringResource(Res.string.set_target, label),
             style = MaterialTheme.typography.labelLarge
                 .copy(fontSize = TrackSetTargetTextSize, lineHeight = TrackSetRestingLineHeight)
                 .withTabularNums(),
@@ -279,11 +287,14 @@ private fun CurrentSetCard(
                         value = state.reps.toDouble(),
                         onValueChange = { onRepsChange(it.roundToInt()) },
                         step = state.repsStep.toDouble(),
+                        min = TrackSetRepsMin,
                         size = LyteStepperSize.Medium,
                         allowDecimal = false,
                         fillMaxWidth = true,
                     )
                 }
+                // Степпер веса есть всегда, в том числе у цели «свой вес»: иначе к подтягиваниям
+                // нечем добавить пояс. Ноль — это «пока без веса», а не «веса не бывает».
                 StepperRow(caption = stringResource(Res.string.set_caption_weight_name)) {
                     LyteStepper(
                         value = state.weight,
@@ -307,7 +318,7 @@ private fun CurrentSetCard(
  * раз …»: склейка переносилась по словам и переставала читаться.
  */
 @Composable
-private fun CurrentSetReferences(target: String?, last: String?) {
+private fun CurrentSetReferences(target: LyteSetValue?, last: LyteSetValue?) {
     if (target == null && last == null) {
         return
     }
@@ -315,11 +326,11 @@ private fun CurrentSetReferences(target: String?, last: String?) {
         verticalArrangement = Arrangement.spacedBy(TrackSetReferenceRowGap),
         modifier = Modifier.padding(top = TrackSetReferenceTopGap, start = TrackSetReferenceIndent),
     ) {
-        target?.let {
-            ReferenceRow(label = stringResource(Res.string.set_reference_target), value = it)
+        target?.let { value ->
+            ReferenceRow(label = stringResource(Res.string.set_reference_target), value = lyteSetValueLabel(value))
         }
-        last?.let {
-            ReferenceRow(label = stringResource(Res.string.set_reference_last), value = it)
+        last?.let { value ->
+            ReferenceRow(label = stringResource(Res.string.set_reference_last), value = lyteSetValueLabel(value))
         }
     }
 }
@@ -423,20 +434,25 @@ private fun LyteTrackSetRowRestingPreview() {
         ) {
             LyteTrackSetRow(
                 number = 1,
-                state = LyteTrackSetState.Resting(tone = LyteProgressTone.Met, reps = 10, weight = 60.0),
+                state = LyteTrackSetState.Resting(
+                    tone = LyteProgressTone.Met,
+                    value = LyteSetValue(reps = 10, weight = 60.0),
+                ),
                 modifier = Modifier.fillMaxWidth(),
             )
             LyteTrackSetRow(
                 number = 2,
-                state = LyteTrackSetState.Resting(tone = LyteProgressTone.Positive, reps = 12, weight = 60.0),
+                state = LyteTrackSetState.Resting(
+                    tone = LyteProgressTone.Positive,
+                    value = LyteSetValue(reps = 12, weight = 60.0),
+                ),
                 modifier = Modifier.fillMaxWidth(),
             )
             LyteTrackSetRow(
                 number = 3,
                 state = LyteTrackSetState.Resting(
                     tone = LyteProgressTone.Negative,
-                    reps = 8,
-                    weight = 62.5,
+                    value = LyteSetValue(reps = 8, weight = 62.5),
                     note = "Локоть увёл вправо — снизил вес на последнем повторе",
                 ),
                 modifier = Modifier.fillMaxWidth(),
@@ -448,7 +464,18 @@ private fun LyteTrackSetRowRestingPreview() {
             )
             LyteTrackSetRow(
                 number = 5,
-                state = LyteTrackSetState.Resting(tone = LyteProgressTone.Todo, target = "10×62.5 кг"),
+                state = LyteTrackSetState.Resting(
+                    tone = LyteProgressTone.Todo,
+                    value = LyteSetValue(reps = 10, weight = 62.5),
+                ),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            LyteTrackSetRow(
+                number = 6,
+                state = LyteTrackSetState.Resting(
+                    tone = LyteProgressTone.Met,
+                    value = LyteSetValue(reps = 12),
+                ),
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -471,14 +498,15 @@ private fun LyteTrackSetRowCurrentPreview() {
                     total = 5,
                     reps = 10,
                     weight = 62.5,
-                    target = "10×62.5 кг",
-                    last = "10×60 кг",
+                    target = LyteSetValue(reps = 10, weight = 62.5),
+                    last = LyteSetValue(reps = 10, weight = 60.0),
                 ),
                 modifier = Modifier.fillMaxWidth(),
             )
+            // Цель «свой вес»: степпер веса всё равно на месте и стоит на нуле — им и добавляют пояс.
             LyteTrackSetRow(
                 number = 1,
-                state = LyteTrackSetState.Current(total = 3, reps = 12, weight = 0.0, target = "12 повт"),
+                state = LyteTrackSetState.Current(total = 3, reps = 12, weight = 0.0, target = LyteSetValue(reps = 12)),
                 modifier = Modifier.fillMaxWidth(),
             )
         }

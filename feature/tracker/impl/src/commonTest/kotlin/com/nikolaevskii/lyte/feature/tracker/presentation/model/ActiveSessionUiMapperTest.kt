@@ -1,5 +1,6 @@
 package com.nikolaevskii.lyte.feature.tracker.presentation.model
 
+import com.nikolaevskii.lyte.core.design.model.LyteSetValue
 import com.nikolaevskii.lyte.feature.tracker.completed
 import com.nikolaevskii.lyte.core.session.domain.model.SessionSetResultEntity
 import com.nikolaevskii.lyte.feature.tracker.sessionExercise
@@ -36,15 +37,14 @@ class ActiveSessionUiMapperTest {
         assertEquals(2, current.exerciseCount)
         assertEquals("Жим лёжа", current.exerciseName)
         assertEquals("s2", current.currentSetId)
-        assertEquals(2, current.setIndex)
         assertEquals(3, current.setCount)
-        assertEquals(1, current.currentPlaqueIndex)
+        assertEquals(1, current.currentSetIndex)
         assertEquals(8, current.targetReps)
         assertEquals(80.0, current.targetWeight)
     }
 
     @Test
-    fun plaqueStatusesReflectOutcomeAndCurrent() {
+    fun setStatusesReflectOutcomeAndCurrent() {
         val session = workoutSession(
             exercises = listOf(
                 sessionExercise(
@@ -62,7 +62,7 @@ class ActiveSessionUiMapperTest {
             ),
         )
 
-        val plaques = requireNotNull(session.toActiveSessionUiModel().current).plaques
+        val sets = requireNotNull(session.toActiveSessionUiModel().current).sets
 
         assertEquals(
             listOf(
@@ -73,12 +73,12 @@ class ActiveSessionUiMapperTest {
                 ActiveSessionSetStatus.Current,
                 ActiveSessionSetStatus.Todo,
             ),
-            plaques.map { plaque -> plaque.status },
+            sets.map { set -> set.status },
         )
     }
 
     @Test
-    fun plaqueValueUsesActualForDoneTargetForPendingNullForSkipped() {
+    fun setValueUsesActualForDoneTargetForPendingNullForSkipped() {
         val session = workoutSession(
             exercises = listOf(
                 sessionExercise(
@@ -93,12 +93,39 @@ class ActiveSessionUiMapperTest {
             ),
         )
 
-        val plaques = requireNotNull(session.toActiveSessionUiModel().current).plaques
+        val sets = requireNotNull(session.toActiveSessionUiModel().current).sets
 
         // Выполненный — факт (9×82.5), пропущенный — прочерк (null), текущий — цель (6×85).
-        assertEquals(ActiveSessionSetValueUiModel.Weighted(reps = 9, weight = "82.5"), plaques[0].value)
-        assertNull(plaques[1].value)
-        assertEquals(ActiveSessionSetValueUiModel.Weighted(reps = 6, weight = "85"), plaques[2].value)
+        assertEquals(LyteSetValue(reps = 9, weight = 82.5), sets[0].value)
+        assertNull(sets[1].value)
+        assertEquals(LyteSetValue(reps = 6, weight = 85.0), sets[2].value)
+    }
+
+    @Test
+    fun setNoteReachesRow() {
+        val session = workoutSession(
+            exercises = listOf(
+                sessionExercise(
+                    id = "e1",
+                    name = "Жим",
+                    sets = listOf(
+                        sessionSet(
+                            id = "s1",
+                            targetCount = 8,
+                            targetWeight = 80.0,
+                            result = completed(count = 8, weight = 80.0),
+                            note = "Пояс затянул туго",
+                        ),
+                        sessionSet(id = "s2", targetCount = 8, targetWeight = 80.0),
+                    ),
+                ),
+            ),
+        )
+
+        val sets = requireNotNull(session.toActiveSessionUiModel().current).sets
+
+        assertEquals("Пояс затянул туго", sets[0].note)
+        assertEquals("", sets[1].note)
     }
 
     @Test
@@ -141,9 +168,9 @@ class ActiveSessionUiMapperTest {
         val current = requireNotNull(session.toActiveSessionUiModel().current)
 
         assertNull(current.targetWeight)
-        assertEquals(ActiveSessionSetValueUiModel.Bodyweight(reps = 12), current.target)
-        // Вес-0 тоже bodyweight: второй подход без веса в плашке.
-        assertEquals(ActiveSessionSetValueUiModel.Bodyweight(reps = 12), current.plaques[1].value)
+        assertEquals(LyteSetValue(reps = 12), current.target)
+        // Вес-0 тоже bodyweight: второй подход без веса в строке.
+        assertEquals(LyteSetValue(reps = 12, weight = null), current.sets[1].value)
     }
 
     @Test
@@ -208,7 +235,7 @@ class ActiveSessionUiMapperTest {
 
         val pending = rows[2]
         assertEquals(ActiveSessionSwitcherStatus.Pending, pending.status)
-        assertEquals(listOf(ActiveSessionSetValueUiModel.Bodyweight(reps = 12)), pending.targetPills)
+        assertEquals(listOf(LyteSetValue(reps = 12)), pending.targetPills)
         assertEquals(true, pending.isSelectable)
     }
 

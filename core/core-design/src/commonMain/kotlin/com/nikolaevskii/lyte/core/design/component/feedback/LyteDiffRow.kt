@@ -138,7 +138,10 @@ private fun DiffRowFact(
 ) {
     when {
         tone == LyteProgressTone.Todo -> Text(
-            text = stringResource(Res.string.set_target, lyteSetValueLabel(reps = target?.reps ?: 0, weight = target?.weight)),
+            text = stringResource(
+                Res.string.set_target,
+                target?.let { value -> lyteSetValueLabel(value) }.orEmpty(),
+            ),
             style = MaterialTheme.typography.bodyMedium.copy(fontSize = DiffSkippedTextSize).withTabularNums(),
             color = foreground,
             modifier = modifier,

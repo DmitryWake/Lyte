@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -39,11 +38,9 @@ import com.nikolaevskii.lyte.core.design.component.datadisplay.LyteStopwatchSize
 import com.nikolaevskii.lyte.core.design.component.feedback.LyteDialog
 import com.nikolaevskii.lyte.core.design.component.iconbutton.LyteIconButton
 import com.nikolaevskii.lyte.core.design.component.overline.LyteOverline
-import com.nikolaevskii.lyte.core.design.component.session.LyteSetOverview
-import com.nikolaevskii.lyte.core.design.component.session.LyteSetOverviewItem
-import com.nikolaevskii.lyte.core.design.component.session.LyteSetOverviewTone
-import com.nikolaevskii.lyte.core.design.component.stepper.LyteStepper
+import com.nikolaevskii.lyte.core.design.component.session.LyteExerciseSetList
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
+import com.nikolaevskii.lyte.core.design.model.LyteSetValue
 import com.nikolaevskii.lyte.core.design.theme.withTabularNums
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.Res
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_add_note
@@ -59,69 +56,55 @@ import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_exercise_position
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_exercises_cd
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_finish
+import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_last_set
+import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_last_set_in_exercise
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_mutation_error
-import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_overview_caption_current
-import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_overview_caption_number
-import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_overview_value_skipped
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_retry
-import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_set_position
-import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_set_value_bodyweight
-import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_set_value_weighted
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_skip_set
-import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_stepper_reps
-import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_stepper_weight
-import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_stepper_weight_unit
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_summary_set_count
-import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_target
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_to_landing
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionCurrentUiModel
+import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionLastSetLabel
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionOverlayUiModel
-import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionSetPlaqueUiModel
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionSetStatus
-import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionSetValueUiModel
+import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionSetUiModel
+import com.nikolaevskii.lyte.feature.tracker.presentation.model.lastSetLabel
+import com.nikolaevskii.lyte.feature.tracker.presentation.model.toTrackSetStates
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionIntent
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionUiState
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionUiState.ActiveSessionContent
 import com.nikolaevskii.lyte.feature.tracker.presentation.viewmodel.ActiveSessionViewModel
-import kotlin.math.roundToInt
 import kotlin.time.Instant
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
-// Метрики — из дизайн-прототипа (спека 4.3, вариант «Фокус»).
+// Метрики — из дизайн-прототипа (спека 4.3, `LyteScreen.dc.html:91–183`).
 private val HeaderPaddingTop = 6.dp
 private val HeaderPaddingHorizontal = 16.dp
-private val TitleBlockSpacing = 16.dp
-private val TitlePaddingTop = 6.dp
+private val TitleBlockPaddingTop = 6.dp
+private val TitleBlockPaddingBottom = 8.dp
 private val TitlePaddingHorizontal = 32.dp
-private val TitleFontSize = 26.sp
-private val TitleLineHeight = 32.sp
+private val TitlePaddingTop = 6.dp
+private val TitleFontSize = 24.sp
+private val TitleLineHeight = 29.sp
 private val TitleLetterSpacing = (-0.4).sp
-private val OverviewSpacing = 16.dp
-private val SetCardSpacing = 14.dp
-private val SetCardPaddingHorizontal = 20.dp
-private val SetCardPadding = 20.dp
-private val SetCardHeaderIconSize = 16.dp
-private val SetCardHeaderIconGap = 8.dp
-private val SetCardHeaderTextSize = 14.sp
-private val SetCardSteppersSpacing = 22.dp
-private val SetCardStepperLabelGap = 6.dp
-private val SetCardWeightSpacing = 18.dp
-private val SetCardTargetSpacing = 20.dp
-private val TargetPillPaddingHorizontal = 16.dp
-private val TargetPillPaddingVertical = 7.dp
-private val TargetPillTextSize = 13.sp
-private val NoteRowSpacing = 12.dp
-private val NotePillPaddingHorizontal = 16.dp
-private val NotePillPaddingVertical = 8.dp
-private val NotePillIconSize = 15.dp
-private val NotePillTextSize = 14.sp
-private val NotePillTextMaxWidth = 250.dp
+private const val TitleMaxLines = 3
+private val SetListPaddingHorizontal = 20.dp
+private val NoteBlockPaddingHorizontal = 12.dp
+private val NoteBlockPaddingVertical = 10.dp
+private val NoteBlockGap = 8.dp
+private val NoteBlockIconSize = 15.dp
+private val NoteBlockIconPaddingTop = 1.dp
+private val NoteBlockTextSize = 12.5.sp
+private val NoteBlockLineHeight = 17.sp
+private val FooterPaddingTop = 10.dp
+private val FooterPaddingBottom = 2.dp
+private val ActionsPaddingTop = 10.dp
 private val ActionsPaddingHorizontal = 20.dp
 private val ActionsPaddingBottom = 26.dp
-private val ActionsGap = 4.dp
+private val ActionsGap = 2.dp
 private val BannerSpacing = 8.dp
 private val AllDoneStopwatchPaddingTop = 6.dp
 private val AllDoneBadgeSize = 120.dp
@@ -133,10 +116,6 @@ private val AllDoneContentPaddingHorizontal = 32.dp
 private val AllDoneActionPaddingBottom = 30.dp
 private val ErrorContentPaddingHorizontal = 32.dp
 private val ErrorContentGap = 12.dp
-
-private const val RepsStepperStep = 1.0
-private const val RepsStepperMin = 1.0
-private const val WeightStepperStep = 2.5
 
 // Общий `@Preview` в commonMain не принимает device/widthDp — даём превью телефонный размер сами.
 private val PreviewDeviceWidth = 411.dp
@@ -215,16 +194,6 @@ private fun ActiveSessionOverlay(
     }
 }
 
-/** Локализованная подпись значения подхода: единицы подставляются здесь, формат веса — из модели. */
-@Composable
-internal fun activeSessionSetValueLabel(value: ActiveSessionSetValueUiModel): String = when (value) {
-    is ActiveSessionSetValueUiModel.Weighted ->
-        stringResource(Res.string.active_session_set_value_weighted, value.reps, value.weight)
-
-    is ActiveSessionSetValueUiModel.Bodyweight ->
-        stringResource(Res.string.active_session_set_value_bodyweight, value.reps)
-}
-
 @Composable
 private fun ActiveSessionTrackingContent(
     content: ActiveSessionContent.Tracking,
@@ -232,37 +201,35 @@ private fun ActiveSessionTrackingContent(
     onIntent: (ActiveSessionIntent) -> Unit,
 ) {
     val current = content.current
+    val lastSetText = content.lastSetLabel?.let { label -> lastSetLabelText(label) }
+    val footer: (@Composable () -> Unit)? = lastSetText?.let { text ->
+        {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = FooterPaddingTop, bottom = FooterPaddingBottom),
+            ) {
+                LyteOverline(text = text)
+            }
+        }
+    }
     Column(modifier = Modifier.fillMaxSize()) {
         SessionHeader(elapsedSeconds = elapsedSeconds, onIntent = onIntent)
-
-        Spacer(modifier = Modifier.height(TitleBlockSpacing))
         ExerciseTitle(current = current)
 
-        Spacer(modifier = Modifier.height(OverviewSpacing))
-        LyteSetOverview(
-            sets = current.plaques.map { plaque -> plaque.toOverviewItem() },
-            currentIndex = current.currentPlaqueIndex,
-        )
-
-        Spacer(modifier = Modifier.height(SetCardSpacing))
-        CurrentSetCard(
-            current = current,
-            draftReps = content.draftReps,
-            draftWeight = content.draftWeight,
-            onIntent = onIntent,
+        // Список получает ограниченную по высоте область: от её нижнего края считается якорь
+        // фокус-карточки. Без `weight` он не сработает — список станет обычной колонкой.
+        LyteExerciseSetList(
+            sets = content.trackSets,
+            onRepsChange = { reps -> onIntent(ActiveSessionIntent.OnDraftRepsChanged(reps)) },
+            onWeightChange = { weight -> onIntent(ActiveSessionIntent.OnDraftWeightChanged(weight)) },
+            currentContent = { CurrentSetNote(note = current.note, onIntent = onIntent) },
+            footer = footer,
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = SetCardPaddingHorizontal),
+                .weight(1f)
+                .padding(horizontal = SetListPaddingHorizontal),
         )
-
-        Spacer(modifier = Modifier.height(NoteRowSpacing))
-        NoteRow(
-            note = current.note,
-            onIntent = onIntent,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-        )
-
-        Spacer(modifier = Modifier.weight(1f))
 
         if (content.hasMutationError) {
             MutationErrorBanner(modifier = Modifier.align(Alignment.CenterHorizontally))
@@ -272,6 +239,7 @@ private fun ActiveSessionTrackingContent(
         Column(
             verticalArrangement = Arrangement.spacedBy(ActionsGap),
             modifier = Modifier.padding(
+                top = ActionsPaddingTop,
                 start = ActionsPaddingHorizontal,
                 end = ActionsPaddingHorizontal,
                 bottom = ActionsPaddingBottom,
@@ -293,6 +261,13 @@ private fun ActiveSessionTrackingContent(
     }
 }
 
+/** Единственное, что от подписи хвоста остаётся экрану: выбор уже сделан маппером. */
+@Composable
+private fun lastSetLabelText(label: ActiveSessionLastSetLabel): String = when (label) {
+    ActiveSessionLastSetLabel.LastInSession -> stringResource(Res.string.active_session_last_set)
+    ActiveSessionLastSetLabel.LastInExercise -> stringResource(Res.string.active_session_last_set_in_exercise)
+}
+
 @Composable
 private fun SessionHeader(
     elapsedSeconds: Int,
@@ -306,7 +281,7 @@ private fun SessionHeader(
             .padding(top = HeaderPaddingTop, start = HeaderPaddingHorizontal, end = HeaderPaddingHorizontal),
     ) {
         LyteIconButton(
-            icon = LyteIcons.ListChecks,
+            icon = LyteIcons.List,
             contentDescription = stringResource(Res.string.active_session_exercises_cd),
             onClick = { onIntent(ActiveSessionIntent.OnOpenExerciseSheetClicked) },
         )
@@ -328,7 +303,9 @@ private fun ExerciseTitle(
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = TitleBlockPaddingTop, bottom = TitleBlockPaddingBottom),
     ) {
         LyteOverline(
             text = stringResource(
@@ -347,179 +324,63 @@ private fun ExerciseTitle(
             ),
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
+            maxLines = TitleMaxLines,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(top = TitlePaddingTop, start = TitlePaddingHorizontal, end = TitlePaddingHorizontal),
         )
     }
 }
 
+/**
+ * Заметка внизу фокус-карточки: написанная — блоком с полным текстом (заметку между подходами не
+ * обрезают), пустая — чипом-приглашением. Оба варианта ведут в ту же шторку.
+ */
 @Composable
-private fun ActiveSessionSetPlaqueUiModel.toOverviewItem(): LyteSetOverviewItem = LyteSetOverviewItem(
-    caption = if (status == ActiveSessionSetStatus.Current) {
-        stringResource(Res.string.active_session_overview_caption_current)
-    } else {
-        stringResource(Res.string.active_session_overview_caption_number, index)
-    },
-    value = value?.let { setValue -> activeSessionSetValueLabel(setValue) }
-        ?: stringResource(Res.string.active_session_overview_value_skipped),
-    tone = when (status) {
-        ActiveSessionSetStatus.Current -> LyteSetOverviewTone.Current
-        ActiveSessionSetStatus.Hit -> LyteSetOverviewTone.Hit
-        ActiveSessionSetStatus.Exceeded -> LyteSetOverviewTone.Exceed
-        ActiveSessionSetStatus.Missed -> LyteSetOverviewTone.Miss
-        ActiveSessionSetStatus.Skipped -> LyteSetOverviewTone.Skip
-        ActiveSessionSetStatus.Todo -> LyteSetOverviewTone.Todo
-    },
-)
-
-@Composable
-private fun CurrentSetCard(
-    current: ActiveSessionCurrentUiModel,
-    draftReps: Int,
-    draftWeight: Double,
-    onIntent: (ActiveSessionIntent) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        shape = MaterialTheme.shapes.extraLarge,
-        color = MaterialTheme.colorScheme.surfaceContainerLowest,
-        shadowElevation = LyteTheme.elevation.level1,
-        modifier = modifier,
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(SetCardPadding),
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(SetCardHeaderIconGap),
-            ) {
-                Icon(
-                    imageVector = LyteIcons.CircleDot,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(SetCardHeaderIconSize),
-                )
-                Text(
-                    text = stringResource(Res.string.active_session_set_position, current.setIndex, current.setCount),
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontSize = SetCardHeaderTextSize,
-                        fontWeight = FontWeight.Bold,
-                    ).withTabularNums(),
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-
-            Spacer(modifier = Modifier.height(SetCardSteppersSpacing))
-            LyteOverline(text = stringResource(Res.string.active_session_stepper_reps))
-            Spacer(modifier = Modifier.height(SetCardStepperLabelGap))
-            LyteStepper(
-                value = draftReps.toDouble(),
-                onValueChange = { value -> onIntent(ActiveSessionIntent.OnDraftRepsChanged(value.roundToInt())) },
-                step = RepsStepperStep,
-                min = RepsStepperMin,
-                allowDecimal = false,
-            )
-
-            if (current.targetWeight != null) {
-                Spacer(modifier = Modifier.height(SetCardWeightSpacing))
-                LyteOverline(text = stringResource(Res.string.active_session_stepper_weight))
-                Spacer(modifier = Modifier.height(SetCardStepperLabelGap))
-                LyteStepper(
-                    value = draftWeight,
-                    onValueChange = { value -> onIntent(ActiveSessionIntent.OnDraftWeightChanged(value)) },
-                    step = WeightStepperStep,
-                    unit = stringResource(Res.string.active_session_stepper_weight_unit),
-                )
-            }
-
-            Spacer(modifier = Modifier.height(SetCardTargetSpacing))
-            TargetPill(label = stringResource(Res.string.active_session_target, activeSessionSetValueLabel(current.target)))
-        }
-    }
-}
-
-@Composable
-private fun TargetPill(
-    label: String,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        shape = LyteTheme.extendedShapes.full,
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        modifier = modifier,
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge.copy(
-                fontSize = TargetPillTextSize,
-                fontWeight = FontWeight.Medium,
-            ).withTabularNums(),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = TargetPillPaddingHorizontal, vertical = TargetPillPaddingVertical),
-        )
-    }
-}
-
-@Composable
-private fun NoteRow(
+private fun CurrentSetNote(
     note: String,
     onIntent: (ActiveSessionIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (note.isEmpty()) {
-        LyteChip(
-            text = stringResource(Res.string.active_session_add_note),
-            selected = false,
-            onClick = { onIntent(ActiveSessionIntent.OnOpenNoteSheetClicked) },
-            icon = LyteIcons.Edit,
-            modifier = modifier,
-        )
+        Box(contentAlignment = Alignment.Center, modifier = modifier.fillMaxWidth()) {
+            LyteChip(
+                text = stringResource(Res.string.active_session_add_note),
+                selected = false,
+                onClick = { onIntent(ActiveSessionIntent.OnOpenNoteSheetClicked) },
+                icon = LyteIcons.Edit,
+            )
+        }
     } else {
-        NotePill(
-            note = note,
+        Surface(
             onClick = { onIntent(ActiveSessionIntent.OnOpenNoteSheetClicked) },
-            modifier = modifier,
-        )
-    }
-}
-
-/** Пилюля с текстом сохранённой заметки: в отличие от чипа, текст обрезается многоточием. */
-@Composable
-private fun NotePill(
-    note: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        onClick = onClick,
-        shape = LyteTheme.extendedShapes.full,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        modifier = modifier,
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(SetCardHeaderIconGap),
-            modifier = Modifier.padding(horizontal = NotePillPaddingHorizontal, vertical = NotePillPaddingVertical),
+            shape = MaterialTheme.shapes.large,
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            modifier = modifier.fillMaxWidth(),
         ) {
-            Icon(
-                imageVector = LyteIcons.Edit,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(NotePillIconSize),
-            )
-            Text(
-                text = note,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontSize = NotePillTextSize,
-                    fontWeight = FontWeight.Medium,
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(NoteBlockGap),
+                modifier = Modifier.padding(
+                    horizontal = NoteBlockPaddingHorizontal,
+                    vertical = NoteBlockPaddingVertical,
                 ),
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.widthIn(max = NotePillTextMaxWidth),
-            )
+            ) {
+                Icon(
+                    imageVector = LyteIcons.Edit,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .padding(top = NoteBlockIconPaddingTop)
+                        .size(NoteBlockIconSize),
+                )
+                Text(
+                    text = note,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontSize = NoteBlockTextSize,
+                        lineHeight = NoteBlockLineHeight,
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }
@@ -650,155 +511,216 @@ private fun ActiveSessionErrorContent(
 @Composable
 @Preview
 private fun ActiveSessionContentPreview() {
-    LyteTheme {
-        Box(modifier = Modifier.size(width = PreviewDeviceWidth, height = PreviewDeviceHeight)) {
-            ActiveSessionContent(
-                state = ActiveSessionUiState(
-                    content = previewTracking(),
-                    startedAt = Instant.fromEpochMilliseconds(0),
-                    elapsedSeconds = 1224,
+    ActiveSessionPreviewDevice {
+        ActiveSessionContent(
+            state = trackingState(content = previewTracking(currentIndex = 1, setCount = 3), elapsedSeconds = 1224),
+            onIntent = {},
+        )
+    }
+}
+
+@Composable
+@Preview
+private fun ActiveSessionContentFirstSetPreview() {
+    ActiveSessionPreviewDevice {
+        ActiveSessionContent(
+            state = trackingState(content = previewTracking(currentIndex = 0, setCount = 8), elapsedSeconds = 92),
+            onIntent = {},
+        )
+    }
+}
+
+@Composable
+@Preview
+private fun ActiveSessionContentMiddleSetPreview() {
+    ActiveSessionPreviewDevice {
+        ActiveSessionContent(
+            state = trackingState(content = previewTracking(currentIndex = 4, setCount = 8), elapsedSeconds = 1544),
+            onIntent = {},
+        )
+    }
+}
+
+@Composable
+@Preview
+private fun ActiveSessionContentLastSetPreview() {
+    ActiveSessionPreviewDevice {
+        ActiveSessionContent(
+            state = trackingState(content = previewTracking(currentIndex = 7, setCount = 8), elapsedSeconds = 2960),
+            onIntent = {},
+        )
+    }
+}
+
+@Composable
+@Preview
+private fun ActiveSessionContentNotePreview() {
+    ActiveSessionPreviewDevice {
+        ActiveSessionContent(
+            state = trackingState(
+                content = previewTracking(
+                    currentIndex = 2,
+                    setCount = 4,
+                    note = "Пояс затянул туго — на следующем подходе ослабить и добавить 2.5 кг",
                 ),
-                onIntent = {},
-            )
-        }
+                elapsedSeconds = 1120,
+            ),
+            onIntent = {},
+        )
     }
 }
 
 @Composable
 @Preview
 private fun ActiveSessionContentBodyweightPreview() {
-    LyteTheme {
-        Box(modifier = Modifier.size(width = PreviewDeviceWidth, height = PreviewDeviceHeight)) {
-            ActiveSessionContent(
-                state = ActiveSessionUiState(
-                    content = previewBodyweightTracking(),
-                    startedAt = Instant.fromEpochMilliseconds(0),
-                    elapsedSeconds = 754,
-                ),
-                onIntent = {},
-            )
-        }
+    ActiveSessionPreviewDevice {
+        ActiveSessionContent(
+            state = trackingState(content = previewBodyweightTracking(), elapsedSeconds = 754),
+            onIntent = {},
+        )
     }
 }
 
 @Composable
 @Preview
 private fun ActiveSessionContentAllDonePreview() {
-    LyteTheme {
-        Box(modifier = Modifier.size(width = PreviewDeviceWidth, height = PreviewDeviceHeight)) {
-            ActiveSessionContent(
-                state = ActiveSessionUiState(
-                    content = ActiveSessionContent.AllDone(
-                        programName = "Push Day",
-                        completedCount = 15,
-                        totalCount = 16,
-                    ),
-                    startedAt = Instant.fromEpochMilliseconds(0),
-                    elapsedSeconds = 3161,
+    ActiveSessionPreviewDevice {
+        ActiveSessionContent(
+            state = ActiveSessionUiState(
+                content = ActiveSessionContent.AllDone(
+                    programName = "Push Day",
+                    completedCount = 15,
+                    totalCount = 16,
                 ),
-                onIntent = {},
-            )
-        }
+                startedAt = Instant.fromEpochMilliseconds(0),
+                elapsedSeconds = 3161,
+            ),
+            onIntent = {},
+        )
     }
 }
 
 @Composable
 @Preview
 private fun ActiveSessionContentLoadingPreview() {
-    LyteTheme {
-        Box(modifier = Modifier.size(width = PreviewDeviceWidth, height = PreviewDeviceHeight)) {
-            ActiveSessionContent(state = ActiveSessionUiState(), onIntent = {})
-        }
+    ActiveSessionPreviewDevice {
+        ActiveSessionContent(state = ActiveSessionUiState(), onIntent = {})
     }
 }
 
 @Composable
 @Preview
 private fun ActiveSessionContentErrorPreview() {
+    ActiveSessionPreviewDevice {
+        ActiveSessionContent(
+            state = ActiveSessionUiState(content = ActiveSessionContent.Error),
+            onIntent = {},
+        )
+    }
+}
+
+@Composable
+private fun ActiveSessionPreviewDevice(content: @Composable () -> Unit) {
     LyteTheme {
         Box(modifier = Modifier.size(width = PreviewDeviceWidth, height = PreviewDeviceHeight)) {
-            ActiveSessionContent(
-                state = ActiveSessionUiState(content = ActiveSessionContent.Error),
-                onIntent = {},
-            )
+            content()
         }
     }
 }
 
-private fun previewTracking(): ActiveSessionContent.Tracking = ActiveSessionContent.Tracking(
-    current = ActiveSessionCurrentUiModel(
+private fun trackingState(content: ActiveSessionContent, elapsedSeconds: Int): ActiveSessionUiState =
+    ActiveSessionUiState(
+        content = content,
+        startedAt = Instant.fromEpochMilliseconds(0),
+        elapsedSeconds = elapsedSeconds,
+    )
+
+private fun previewTracking(
+    currentIndex: Int,
+    setCount: Int,
+    note: String = "",
+): ActiveSessionContent.Tracking {
+    val target = LyteSetValue(reps = 10, weight = 62.5)
+    val current = ActiveSessionCurrentUiModel(
         exerciseId = "e2",
         exerciseIndex = 2,
         exerciseCount = 5,
         exerciseName = "Жим гантелей на наклонной",
-        plaques = listOf(
-            ActiveSessionSetPlaqueUiModel(
-                index = 1,
-                status = ActiveSessionSetStatus.Exceeded,
-                value = ActiveSessionSetValueUiModel.Weighted(reps = 12, weight = "24"),
-            ),
-            ActiveSessionSetPlaqueUiModel(
-                index = 2,
-                status = ActiveSessionSetStatus.Current,
-                value = ActiveSessionSetValueUiModel.Weighted(reps = 10, weight = "26"),
-            ),
-            ActiveSessionSetPlaqueUiModel(
-                index = 3,
-                status = ActiveSessionSetStatus.Todo,
-                value = ActiveSessionSetValueUiModel.Weighted(reps = 10, weight = "26"),
-            ),
-        ),
-        currentPlaqueIndex = 1,
-        setIndex = 2,
-        setCount = 3,
-        currentSetId = "set2",
+        sets = List(setCount) { index ->
+            ActiveSessionSetUiModel(
+                index = index + 1,
+                status = previewStatus(index = index, currentIndex = currentIndex),
+                value = previewValue(index = index, currentIndex = currentIndex, target = target),
+                note = if (index == 1 && index < currentIndex) "Тяжело, форма поплыла" else "",
+            )
+        },
+        currentSetIndex = currentIndex,
+        setCount = setCount,
+        currentSetId = "set${currentIndex + 1}",
         targetReps = 10,
-        targetWeight = 26.0,
-        target = ActiveSessionSetValueUiModel.Weighted(reps = 10, weight = "26"),
-        note = "",
-    ),
-    switcherRows = emptyList(),
-    draftReps = 10,
-    draftWeight = 26.0,
-    overlay = ActiveSessionOverlayUiModel.None,
-    hasMutationError = false,
-)
+        targetWeight = 62.5,
+        target = target,
+        note = note,
+    )
+    return current.toTrackingContent(draftReps = 10, draftWeight = 62.5)
+}
 
-private fun previewBodyweightTracking(): ActiveSessionContent.Tracking = ActiveSessionContent.Tracking(
-    current = ActiveSessionCurrentUiModel(
-        exerciseId = "e3",
-        exerciseIndex = 3,
-        exerciseCount = 5,
-        exerciseName = "Отжимания на брусьях",
-        plaques = listOf(
-            ActiveSessionSetPlaqueUiModel(
-                index = 1,
-                status = ActiveSessionSetStatus.Skipped,
-                value = null,
-            ),
-            ActiveSessionSetPlaqueUiModel(
-                index = 2,
-                status = ActiveSessionSetStatus.Current,
-                value = ActiveSessionSetValueUiModel.Bodyweight(reps = 12),
-            ),
-            ActiveSessionSetPlaqueUiModel(
-                index = 3,
-                status = ActiveSessionSetStatus.Todo,
-                value = ActiveSessionSetValueUiModel.Bodyweight(reps = 10),
-            ),
+private fun previewStatus(index: Int, currentIndex: Int): ActiveSessionSetStatus = when {
+    index == currentIndex -> ActiveSessionSetStatus.Current
+    index > currentIndex -> ActiveSessionSetStatus.Todo
+    index % 3 == 0 -> ActiveSessionSetStatus.Exceeded
+    index % 3 == 1 -> ActiveSessionSetStatus.Hit
+    else -> ActiveSessionSetStatus.Skipped
+}
+
+private fun previewValue(index: Int, currentIndex: Int, target: LyteSetValue): LyteSetValue? = when {
+    index >= currentIndex -> target
+    index % 3 == 0 -> LyteSetValue(reps = 12, weight = 62.5)
+    index % 3 == 1 -> LyteSetValue(reps = 10, weight = 62.5)
+    else -> null
+}
+
+/** Цель — свой вес, но степпер веса на месте и стоит на нуле: им и добавляют пояс. */
+private fun previewBodyweightTracking(): ActiveSessionContent.Tracking = ActiveSessionCurrentUiModel(
+    exerciseId = "e3",
+    exerciseIndex = 3,
+    exerciseCount = 5,
+    exerciseName = "Отжимания на брусьях",
+    sets = listOf(
+        ActiveSessionSetUiModel(index = 1, status = ActiveSessionSetStatus.Skipped, value = null, note = ""),
+        ActiveSessionSetUiModel(
+            index = 2,
+            status = ActiveSessionSetStatus.Current,
+            value = LyteSetValue(reps = 12),
+            note = "",
         ),
-        currentPlaqueIndex = 1,
-        setIndex = 2,
-        setCount = 3,
-        currentSetId = "set2",
-        targetReps = 12,
-        targetWeight = null,
-        target = ActiveSessionSetValueUiModel.Bodyweight(reps = 12),
-        note = "Наклон вперёд, локти уже",
+        ActiveSessionSetUiModel(
+            index = 3,
+            status = ActiveSessionSetStatus.Todo,
+            value = LyteSetValue(reps = 10),
+            note = "",
+        ),
     ),
+    currentSetIndex = 1,
+    setCount = 3,
+    currentSetId = "set2",
+    targetReps = 12,
+    targetWeight = null,
+    target = LyteSetValue(reps = 12),
+    note = "Наклон вперёд, локти уже",
+).toTrackingContent(draftReps = 12, draftWeight = 0.0)
+
+/** Собирает превьюшный `Tracking` тем же маппером, что и ViewModel, — иначе превью врало бы. */
+private fun ActiveSessionCurrentUiModel.toTrackingContent(
+    draftReps: Int,
+    draftWeight: Double,
+): ActiveSessionContent.Tracking = ActiveSessionContent.Tracking(
+    current = this,
+    trackSets = toTrackSetStates(draftReps = draftReps, draftWeight = draftWeight),
+    lastSetLabel = lastSetLabel(),
     switcherRows = emptyList(),
-    draftReps = 12,
-    draftWeight = 0.0,
+    draftReps = draftReps,
+    draftWeight = draftWeight,
     overlay = ActiveSessionOverlayUiModel.None,
     hasMutationError = false,
 )

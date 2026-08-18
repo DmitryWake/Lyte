@@ -28,7 +28,9 @@ import com.nikolaevskii.lyte.core.design.component.button.LyteButton
 import com.nikolaevskii.lyte.core.design.component.overlay.LyteBottomSheet
 import com.nikolaevskii.lyte.core.design.component.overlay.LyteBottomSheetHeight
 import com.nikolaevskii.lyte.core.design.component.textfield.LyteTextField
+import com.nikolaevskii.lyte.core.design.format.lyteSetValueLabel
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
+import com.nikolaevskii.lyte.core.design.model.LyteSetValue
 import com.nikolaevskii.lyte.core.design.theme.withTabularNums
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.Res
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_exercises_sheet_title
@@ -39,7 +41,6 @@ import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_switcher_done
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_switcher_done_subtitle
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_switcher_now
-import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionSetValueUiModel
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionSwitcherRowUiModel
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionSwitcherStatus
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionIntent
@@ -214,13 +215,13 @@ private fun SwitcherSubtitle(text: String, color: Color) {
 }
 
 @Composable
-private fun SwitcherTargetPill(value: ActiveSessionSetValueUiModel) {
+private fun SwitcherTargetPill(value: LyteSetValue) {
     Surface(
         shape = LyteTheme.extendedShapes.full,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
         Text(
-            text = activeSessionSetValueLabel(value),
+            text = lyteSetValueLabel(value),
             style = MaterialTheme.typography.labelMedium.copy(
                 fontSize = SwitcherPillTextSize,
                 fontWeight = FontWeight.SemiBold,
@@ -315,9 +316,9 @@ private fun SwitcherRowPreview() {
                     setCount = 3,
                     currentSetIndex = null,
                     targetPills = listOf(
-                        ActiveSessionSetValueUiModel.Bodyweight(reps = 12),
-                        ActiveSessionSetValueUiModel.Bodyweight(reps = 12),
-                        ActiveSessionSetValueUiModel.Bodyweight(reps = 10),
+                        LyteSetValue(reps = 12),
+                        LyteSetValue(reps = 12),
+                        LyteSetValue(reps = 10),
                     ),
                     isSelectable = true,
                 ),
