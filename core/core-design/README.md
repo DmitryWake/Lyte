@@ -39,7 +39,8 @@
 ### Шрифты
 
 **Space Grotesk** (400/500/600/700 — весь UI-текст и цифры) и **Inter Tight** (700 — только
-вордмарк «Lyte», через `lyteWordmarkFontFamily()`). Оба — OFL, забандлены в `composeResources/font/`.
+вордмарк «Lyte», через `lyteWordmarkFontFamily()`; сам знак рисует `LyteWordmark`, напрямую семейство
+брать не нужно). Оба — OFL, забандлены в `composeResources/font/`.
 `lyteFontFamily()` / `lyteTypography()` / `lyteNumericTypography()` — `@Composable`-билдеры; обычно
 не нужны напрямую, уже прошиты в `LyteTheme`.
 
@@ -106,6 +107,7 @@ Lucide — `implementation`-only внутри `core-design`, подключат�
 
 | Пакет | Компоненты |
 |---|---|
+| `component.brand` | `LyteWordmark` (знак «Lyte.»: кегль задаёт вызывающий, `dotAlpha` — для «дышащей» точки сплэша) |
 | `component.button` | `LyteButton` (variant Filled/Tonal/Outlined/Text × accent Primary/Secondary/Tertiary/Error × size Large/Medium/Small) |
 | `component.iconbutton` | `LyteIconButton` |
 | `component.chip` | `LyteChip` |

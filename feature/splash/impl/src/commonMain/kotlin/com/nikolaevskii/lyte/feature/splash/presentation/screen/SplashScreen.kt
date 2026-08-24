@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -30,28 +29,23 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nikolaevskii.lyte.core.design.LyteTheme
+import com.nikolaevskii.lyte.core.design.component.brand.LyteWordmark
 import com.nikolaevskii.lyte.core.design.component.button.LyteButton
-import com.nikolaevskii.lyte.core.design.theme.lyteWordmarkFontFamily
 import com.nikolaevskii.lyte.feature.splash.presentation.constant.SplashConstant.SPLASH_EXIT_DURATION_MS
 import com.nikolaevskii.lyte.feature.splash.generated.resources.Res
 import com.nikolaevskii.lyte.feature.splash.generated.resources.splash_error_message
 import com.nikolaevskii.lyte.feature.splash.generated.resources.splash_retry
-import com.nikolaevskii.lyte.feature.splash.generated.resources.splash_wordmark
-import com.nikolaevskii.lyte.feature.splash.generated.resources.splash_wordmark_accent
 import com.nikolaevskii.lyte.feature.splash.presentation.model.mvi.SplashIntent
 import com.nikolaevskii.lyte.feature.splash.presentation.model.mvi.SplashUiState
 import com.nikolaevskii.lyte.feature.splash.presentation.viewmodel.SplashViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
-private val WordmarkLetterSpacing = (-0.5).sp
 private val ErrorWordmarkFontSize = 40.sp
 
 // Кегль вордмарка на сплэше — адаптивный: держим долю ширины экрана (а не фиксированный sp,
@@ -155,7 +149,7 @@ private fun SplashBrandContent(isExiting: Boolean) {
 
         val exitScale = lerp(FullAlpha, ExitEndScale, exit.value)
 
-        Wordmark(
+        LyteWordmark(
             fontSize = fontSize,
             dotAlpha = dotAlpha,
             modifier = Modifier.graphicsLayer {
@@ -177,7 +171,7 @@ private fun SplashErrorContent(
         verticalArrangement = Arrangement.Center,
         modifier = modifier,
     ) {
-        Wordmark(fontSize = ErrorWordmarkFontSize, dotAlpha = FullAlpha)
+        LyteWordmark(fontSize = ErrorWordmarkFontSize, dotAlpha = FullAlpha)
 
         Spacer(modifier = Modifier.height(LyteTheme.spacing.s8))
 
@@ -193,35 +187,6 @@ private fun SplashErrorContent(
         LyteButton(
             text = stringResource(Res.string.splash_retry),
             onClick = { onIntent(SplashIntent.Retry) },
-        )
-    }
-}
-
-/** Вордмарк «Lyte» (onSurface) + акцентная точка «.» (primary) на общей базовой линии. */
-@Composable
-private fun Wordmark(
-    fontSize: TextUnit,
-    dotAlpha: Float,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        verticalAlignment = Alignment.Bottom,
-        modifier = modifier,
-    ) {
-        Text(
-            text = stringResource(Res.string.splash_wordmark),
-            fontFamily = lyteWordmarkFontFamily(),
-            fontSize = fontSize,
-            letterSpacing = WordmarkLetterSpacing,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-        Text(
-            text = stringResource(Res.string.splash_wordmark_accent),
-            modifier = Modifier.graphicsLayer { alpha = dotAlpha },
-            fontFamily = lyteWordmarkFontFamily(),
-            fontSize = fontSize,
-            letterSpacing = WordmarkLetterSpacing,
-            color = MaterialTheme.colorScheme.primary,
         )
     }
 }

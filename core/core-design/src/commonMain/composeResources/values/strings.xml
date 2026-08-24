@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="wordmark">Lyte</string>
+    <string name="wordmark_accent">.</string>
     <string name="rest_title">Отдых</string>
     <string name="rest_add_30">+30 сек</string>
     <string name="rest_skip">Пропустить</string>

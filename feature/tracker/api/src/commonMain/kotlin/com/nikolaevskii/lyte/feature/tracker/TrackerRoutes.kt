@@ -9,13 +9,9 @@ import kotlinx.serialization.Serializable
 @Serializable
 data object TrackerTabGraph
 
-/** Корень вкладки: экран «нет активной сессии» с переходом к выбору программы. */
+/** Корень вкладки: экран «нет активной сессии»; выбор программы открывается на нём шторкой. */
 @Serializable
 data object TrackerLandingRoute
-
-/** Выбор программы для тренировки. Не стартовый экран вкладки, поэтому bottom-bar на нём скрыт. */
-@Serializable
-data object WorkoutPickerRoute
 
 /**
  * Превью выбранной программы перед стартом сессии (спека 4.2): состав и план подходов + кнопка
