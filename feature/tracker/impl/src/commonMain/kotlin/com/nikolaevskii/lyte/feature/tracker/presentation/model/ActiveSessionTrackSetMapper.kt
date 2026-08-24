@@ -51,8 +51,12 @@ internal fun ActiveSessionCurrentUiModel.lastSetLabel(): ActiveSessionLastSetLab
     else -> ActiveSessionLastSetLabel.LastInExercise
 }
 
-/** Общий словарь исходов: тот же тон, что в треке сводки и в деталях завершённой сессии. */
-private fun ActiveSessionSetStatus.toTone(): LyteProgressTone = when (this) {
+/**
+ * Общий словарь исходов: тот же тон, что в треке сводки и в деталях завершённой сессии. Не приватный —
+ * по нему же собирается трек всей сессии на экране-итоге (`toActiveSessionUiModel`), и второй копии
+ * этого `when` в фиче быть не должно.
+ */
+internal fun ActiveSessionSetStatus.toTone(): LyteProgressTone = when (this) {
     ActiveSessionSetStatus.Hit -> LyteProgressTone.Met
     ActiveSessionSetStatus.Exceeded -> LyteProgressTone.Positive
     ActiveSessionSetStatus.Missed -> LyteProgressTone.Negative

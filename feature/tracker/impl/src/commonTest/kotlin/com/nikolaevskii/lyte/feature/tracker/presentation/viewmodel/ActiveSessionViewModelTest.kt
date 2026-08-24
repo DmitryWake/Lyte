@@ -1,6 +1,7 @@
 package com.nikolaevskii.lyte.feature.tracker.presentation.viewmodel
 
 import androidx.lifecycle.viewModelScope
+import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTone
 import com.nikolaevskii.lyte.core.navigation.model.LyteNavOptions
 import com.nikolaevskii.lyte.core.navigation.model.NavCommand
 import com.nikolaevskii.lyte.feature.history.HistorySessionDetailsRoute
@@ -8,6 +9,7 @@ import com.nikolaevskii.lyte.feature.history.HistoryTabGraph
 import com.nikolaevskii.lyte.feature.tracker.ActiveSessionRoute
 import com.nikolaevskii.lyte.feature.tracker.TrackerLandingRoute
 import com.nikolaevskii.lyte.feature.tracker.completed
+import com.nikolaevskii.lyte.core.session.domain.model.SessionSetResultEntity
 import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionEntity
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionOverlayUiModel
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionIntent
@@ -349,7 +351,8 @@ class ActiveSessionViewModelTest {
                             targetCount = 10,
                             targetWeight = 60.0,
                             result = completed(count = 10, weight = 60.0)
-                        )
+                        ),
+                        sessionSet(id = "s2", targetCount = 10, targetWeight = 60.0, result = SessionSetResultEntity.Skipped),
                     ),
                 ),
             ),
@@ -358,8 +361,13 @@ class ActiveSessionViewModelTest {
         val navigator = FakeLyteNavigator()
         val viewModel = viewModel(repository = repository, navigator = navigator)
         runCurrent()
-        // Все подходы разрешены — экран-итог.
-        assertTrue(viewModel.uiState.value.content is ActiveSessionContent.AllDone)
+        // Все подходы разрешены — экран-итог, и он несёт сводку сессии целиком.
+        val content = viewModel.uiState.value.content
+        assertTrue(content is ActiveSessionContent.AllDone)
+        assertEquals("Push Day", content.programName)
+        assertEquals(1, content.completedCount)
+        assertEquals(2, content.totalCount)
+        assertEquals(listOf(LyteProgressTone.Met, LyteProgressTone.Skipped), content.setTones)
 
         viewModel.onIntent(ActiveSessionIntent.OnFinishClicked)
         runCurrent()

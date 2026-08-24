@@ -145,6 +145,7 @@ class ActiveSessionViewModel(
                     programName = model.programName,
                     completedCount = model.completedCount,
                     totalCount = model.totalCount,
+                    setTones = model.setTones,
                 )
             }
             copy(content = content, startedAt = model.startedAt, elapsedSeconds = elapsedSecondsFrom(model.startedAt))
