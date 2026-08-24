@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -38,13 +39,15 @@ import com.nikolaevskii.lyte.core.design.component.datadisplay.LyteStopwatchSize
 import com.nikolaevskii.lyte.core.design.component.feedback.LyteDialog
 import com.nikolaevskii.lyte.core.design.component.iconbutton.LyteIconButton
 import com.nikolaevskii.lyte.core.design.component.overline.LyteOverline
+import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTone
+import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTrack
+import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTrackMode
 import com.nikolaevskii.lyte.core.design.component.session.LyteExerciseSetList
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
 import com.nikolaevskii.lyte.core.design.model.LyteSetValue
 import com.nikolaevskii.lyte.core.design.theme.withTabularNums
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.Res
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_add_note
-import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_all_done_summary
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_all_done_title
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_complete_set
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_end_early_cancel
@@ -55,11 +58,11 @@ import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_error
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_exercise_position
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_exercises_cd
-import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_finish
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_last_set
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_last_set_in_exercise
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_mutation_error
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_retry
+import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_save_workout
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_skip_set
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_summary_set_count
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_to_landing
@@ -106,13 +109,17 @@ private val ActionsPaddingHorizontal = 20.dp
 private val ActionsPaddingBottom = 26.dp
 private val ActionsGap = 2.dp
 private val BannerSpacing = 8.dp
-private val AllDoneStopwatchPaddingTop = 6.dp
+private val AllDoneStopwatchPaddingTop = 10.dp
 private val AllDoneBadgeSize = 120.dp
 private val AllDoneIconSize = 56.dp
 private val AllDoneBadgeSpacing = 30.dp
 private val AllDoneTitleLetterSpacing = (-0.3).sp
-private val AllDoneSummarySpacing = 8.dp
-private val AllDoneContentPaddingHorizontal = 32.dp
+private val AllDoneProgramSpacing = 8.dp
+private val AllDoneTrackSpacing = 20.dp
+// Потолок ширины из макета: во всю ширину экрана короткая сессия читалась бы парой широких плашек.
+private val AllDoneTrackMaxWidth = 220.dp
+private val AllDoneSummarySpacing = 10.dp
+private val AllDoneContentPaddingHorizontal = 40.dp
 private val AllDoneActionPaddingBottom = 30.dp
 private val ErrorContentPaddingHorizontal = 32.dp
 private val ErrorContentGap = 12.dp
@@ -444,17 +451,33 @@ private fun ActiveSessionAllDoneContent(
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
             )
+            Spacer(modifier = Modifier.height(AllDoneProgramSpacing))
+            Text(
+                text = content.programName,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(modifier = Modifier.height(AllDoneTrackSpacing))
+            LyteProgressTrack(
+                mode = LyteProgressTrackMode.Tones(tones = content.setTones),
+                // Сначала потолок, потом заполнение: иначе `fillMaxWidth` придёт с минимумом во всю
+                // ширину и ограничение перестанет работать.
+                modifier = Modifier
+                    .widthIn(max = AllDoneTrackMaxWidth)
+                    .fillMaxWidth(),
+            )
             Spacer(modifier = Modifier.height(AllDoneSummarySpacing))
             Text(
                 text = allDoneSummary(content = content),
-                style = MaterialTheme.typography.bodyMedium.withTabularNums(),
+                style = MaterialTheme.typography.bodySmall.withTabularNums(),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
         }
 
         LyteButton(
-            text = stringResource(Res.string.active_session_finish),
+            text = stringResource(Res.string.active_session_save_workout),
             onClick = { onIntent(ActiveSessionIntent.OnFinishClicked) },
             size = LyteButtonSize.Large,
             fullWidth = true,
@@ -467,17 +490,13 @@ private fun ActiveSessionAllDoneContent(
     }
 }
 
-/** Сводка итога: «Push Day · выполнено 15 из 16 подходов» (выполненные — без пропущенных). */
+/** Сводка итога: «15 из 16 подходов выполнено» — выполненные считаются без пропущенных. */
 @Composable
-private fun allDoneSummary(content: ActiveSessionContent.AllDone): String = stringResource(
-    Res.string.active_session_all_done_summary,
-    content.programName,
-    pluralStringResource(
-        Res.plurals.active_session_summary_set_count,
-        content.totalCount,
-        content.completedCount,
-        content.totalCount,
-    ),
+private fun allDoneSummary(content: ActiveSessionContent.AllDone): String = pluralStringResource(
+    Res.plurals.active_session_summary_set_count,
+    content.totalCount,
+    content.completedCount,
+    content.totalCount,
 )
 
 @Composable
@@ -591,9 +610,36 @@ private fun ActiveSessionContentAllDonePreview() {
                     programName = "Push Day",
                     completedCount = 15,
                     totalCount = 16,
+                    setTones = previewAllDoneTones(),
                 ),
                 startedAt = Instant.fromEpochMilliseconds(0),
                 elapsedSeconds = 3161,
+            ),
+            onIntent = {},
+        )
+    }
+}
+
+/** Короткая сессия: у трека мало сегментов, и потолок ширины виден на глаз. */
+@Composable
+@Preview
+private fun ActiveSessionContentAllDoneShortPreview() {
+    ActiveSessionPreviewDevice {
+        ActiveSessionContent(
+            state = ActiveSessionUiState(
+                content = ActiveSessionContent.AllDone(
+                    programName = "Утренняя разминка",
+                    completedCount = 3,
+                    totalCount = 4,
+                    setTones = listOf(
+                        LyteProgressTone.Met,
+                        LyteProgressTone.Positive,
+                        LyteProgressTone.Negative,
+                        LyteProgressTone.Skipped,
+                    ),
+                ),
+                startedAt = Instant.fromEpochMilliseconds(0),
+                elapsedSeconds = 738,
             ),
             onIntent = {},
         )
@@ -664,6 +710,14 @@ private fun previewTracking(
     )
     return current.toTrackingContent(draftReps = 10, draftWeight = 62.5)
 }
+
+/** Сессия из четырёх упражнений по четыре подхода: один пропущен, остальные с разными исходами. */
+private fun previewAllDoneTones(): List<LyteProgressTone> = listOf(
+    LyteProgressTone.Met, LyteProgressTone.Met, LyteProgressTone.Positive, LyteProgressTone.Met,
+    LyteProgressTone.Met, LyteProgressTone.Positive, LyteProgressTone.Negative, LyteProgressTone.Met,
+    LyteProgressTone.Met, LyteProgressTone.Met, LyteProgressTone.Met, LyteProgressTone.Negative,
+    LyteProgressTone.Positive, LyteProgressTone.Met, LyteProgressTone.Met, LyteProgressTone.Skipped,
+)
 
 private fun previewStatus(index: Int, currentIndex: Int): ActiveSessionSetStatus = when {
     index == currentIndex -> ActiveSessionSetStatus.Current

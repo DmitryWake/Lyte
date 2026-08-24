@@ -1,5 +1,6 @@
 package com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi
 
+import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTone
 import com.nikolaevskii.lyte.core.design.component.session.LyteTrackSetState
 import com.nikolaevskii.lyte.core.mvi.UiIntent
 import com.nikolaevskii.lyte.core.mvi.UiState
@@ -67,11 +68,18 @@ data class ActiveSessionUiState(
             )
         }
 
-        /** Все подходы разрешены: экран-итог со сводкой и кнопкой финализации. */
+        /**
+         * Все подходы разрешены: экран-итог со сводкой и кнопкой сохранения.
+         *
+         * [setTones] — по сегменту на каждый подход сессии, в порядке упражнений; считает маппер, а не
+         * экран (то же правило, что для [Tracking.trackSets]). [completedCount] не выводится из тонов:
+         * это «выполнено без пропущенных», и словом «выполнено» в сводке названо именно оно.
+         */
         data class AllDone(
             val programName: String,
             val completedCount: Int,
             val totalCount: Int,
+            val setTones: List<LyteProgressTone>,
         ) : ActiveSessionContent
     }
 }
@@ -111,7 +119,7 @@ sealed interface ActiveSessionIntent : UiIntent {
     /** Подтверждение досрочного завершения: оставшиеся подходы — пропущенные, уход на лендинг. */
     data object OnEndEarlyConfirmed : ActiveSessionIntent
 
-    /** «Завершить тренировку» на экране «все подходы выполнены». */
+    /** «Сохранить тренировку» на экране-итоге. */
     data object OnFinishClicked : ActiveSessionIntent
 
     /** Закрыть текущий оверлей (тап по скриму, свайп, «Отмена»). */

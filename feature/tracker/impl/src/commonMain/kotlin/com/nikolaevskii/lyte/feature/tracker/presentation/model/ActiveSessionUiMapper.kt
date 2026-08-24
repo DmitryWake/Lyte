@@ -31,6 +31,10 @@ internal fun WorkoutSessionEntity.toActiveSessionUiModel(): ActiveSessionUiModel
         startedAt = startedAt,
         completedCount = allSets.count { set -> set.result is SessionSetResultEntity.Completed },
         totalCount = allSets.size,
+        // Незакрытый подход в треке — это `Todo`: сегмент есть, исхода ещё нет. На экране-итоге таких
+        // не бывает (он показывается, только когда все подходы разрешены), но модель строится и по ходу
+        // сессии, и тон текущего подхода там ничем не отличается от будущего.
+        setTones = allSets.map { set -> set.toStatus(isCurrent = false).toTone() },
         current = currentExercise?.let { exercise -> toCurrentUiModel(exercise) },
         switcherRows = exercises.map { exercise ->
             exercise.toSwitcherRow(isCurrent = exercise.id == currentExercise?.id)
@@ -60,17 +64,20 @@ private fun WorkoutSessionEntity.toCurrentUiModel(exercise: SessionExerciseEntit
     )
 }
 
-private fun SessionSetEntity.toSetUiModel(number: Int, isCurrent: Boolean): ActiveSessionSetUiModel {
-    val status = when {
-        isCurrent -> ActiveSessionSetStatus.Current
-        else -> when (outcome()) {
-            null -> ActiveSessionSetStatus.Todo
-            SessionSetOutcomeEntity.MET -> ActiveSessionSetStatus.Hit
-            SessionSetOutcomeEntity.EXCEEDED -> ActiveSessionSetStatus.Exceeded
-            SessionSetOutcomeEntity.MISSED -> ActiveSessionSetStatus.Missed
-            SessionSetOutcomeEntity.SKIPPED -> ActiveSessionSetStatus.Skipped
-        }
+/** Исход подхода относительно цели (`outcome`) плюс отдельный статус для того, что идёт прямо сейчас. */
+private fun SessionSetEntity.toStatus(isCurrent: Boolean): ActiveSessionSetStatus = when {
+    isCurrent -> ActiveSessionSetStatus.Current
+    else -> when (outcome()) {
+        null -> ActiveSessionSetStatus.Todo
+        SessionSetOutcomeEntity.MET -> ActiveSessionSetStatus.Hit
+        SessionSetOutcomeEntity.EXCEEDED -> ActiveSessionSetStatus.Exceeded
+        SessionSetOutcomeEntity.MISSED -> ActiveSessionSetStatus.Missed
+        SessionSetOutcomeEntity.SKIPPED -> ActiveSessionSetStatus.Skipped
     }
+}
+
+private fun SessionSetEntity.toSetUiModel(number: Int, isCurrent: Boolean): ActiveSessionSetUiModel {
+    val status = toStatus(isCurrent = isCurrent)
     val value = when (status) {
         ActiveSessionSetStatus.Current, ActiveSessionSetStatus.Todo -> target.toSetValue()
 

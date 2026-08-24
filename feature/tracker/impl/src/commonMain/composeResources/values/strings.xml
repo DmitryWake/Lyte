@@ -58,16 +58,15 @@
     <string name="active_session_end_early_description">Невыполненные подходы будут отмечены как пропущенные.</string>
     <string name="active_session_end_early_confirm">Завершить</string>
     <string name="active_session_end_early_cancel">Отмена</string>
-    <string name="active_session_all_done_title">Все подходы выполнены</string>
-    <!-- Сводка на экране-итоге: «Push Day · выполнено 15 из 16 подходов». -->
-    <string name="active_session_all_done_summary">%1$s · выполнено %2$s</string>
+    <string name="active_session_all_done_title">Тренировка завершена</string>
+    <!-- Сводка под треком итога: «15 из 16 подходов выполнено». Форма — по общему числу подходов. -->
     <plurals name="active_session_summary_set_count">
-        <item quantity="one">%1$d из %2$d подхода</item>
-        <item quantity="few">%1$d из %2$d подходов</item>
-        <item quantity="many">%1$d из %2$d подходов</item>
-        <item quantity="other">%1$d из %2$d подходов</item>
+        <item quantity="one">%1$d из %2$d подхода выполнено</item>
+        <item quantity="few">%1$d из %2$d подходов выполнено</item>
+        <item quantity="many">%1$d из %2$d подходов выполнено</item>
+        <item quantity="other">%1$d из %2$d подходов выполнено</item>
     </plurals>
-    <string name="active_session_finish">Завершить тренировку</string>
+    <string name="active_session_save_workout">Сохранить тренировку</string>
     <string name="active_session_error">Не удалось загрузить сессию</string>
     <string name="active_session_mutation_error">Не удалось сохранить изменение</string>
     <string name="active_session_retry">Повторить</string>

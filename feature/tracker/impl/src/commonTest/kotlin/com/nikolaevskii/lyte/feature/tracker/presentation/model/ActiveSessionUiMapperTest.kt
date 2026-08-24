@@ -1,5 +1,6 @@
 package com.nikolaevskii.lyte.feature.tracker.presentation.model
 
+import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTone
 import com.nikolaevskii.lyte.core.design.model.LyteSetValue
 import com.nikolaevskii.lyte.feature.tracker.completed
 import com.nikolaevskii.lyte.core.session.domain.model.SessionSetResultEntity
@@ -151,6 +152,46 @@ class ActiveSessionUiMapperTest {
     }
 
     @Test
+    fun setTonesCoverEverySetOfSessionInExerciseOrder() {
+        val session = workoutSession(
+            exercises = listOf(
+                sessionExercise(
+                    id = "e1",
+                    name = "Жим",
+                    sets = listOf(
+                        sessionSet(id = "s1", targetCount = 8, targetWeight = 80.0, result = completed(count = 8, weight = 80.0)),
+                        sessionSet(id = "s2", targetCount = 8, targetWeight = 80.0, result = completed(count = 9, weight = 80.0)),
+                        sessionSet(id = "s3", targetCount = 8, targetWeight = 80.0, result = completed(count = 6, weight = 80.0)),
+                    ),
+                ),
+                sessionExercise(
+                    id = "e2",
+                    name = "Тяга",
+                    sets = listOf(
+                        sessionSet(id = "s4", targetCount = 10, targetWeight = 60.0, result = SessionSetResultEntity.Skipped),
+                        // Незакрытый подход — сегмент есть, исхода ещё нет.
+                        sessionSet(id = "s5", targetCount = 10, targetWeight = 60.0),
+                    ),
+                ),
+            ),
+        )
+
+        val model = session.toActiveSessionUiModel()
+
+        assertEquals(
+            listOf(
+                LyteProgressTone.Met,
+                LyteProgressTone.Positive,
+                LyteProgressTone.Negative,
+                LyteProgressTone.Skipped,
+                LyteProgressTone.Todo,
+            ),
+            model.setTones,
+        )
+        assertEquals(model.totalCount, model.setTones.size)
+    }
+
+    @Test
     fun bodyweightTargetHasNullWeightAndBodyweightValue() {
         val session = workoutSession(
             exercises = listOf(
@@ -189,6 +230,7 @@ class ActiveSessionUiMapperTest {
 
         assertNull(model.current)
         assertEquals(1, model.completedCount)
+        assertEquals(listOf(LyteProgressTone.Met), model.setTones)
     }
 
     @Test
