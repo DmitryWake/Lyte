@@ -30,16 +30,16 @@ import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBar
 import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBarSize
 import com.nikolaevskii.lyte.core.design.icon.LyteExerciseGlyph
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
+import com.nikolaevskii.lyte.core.design.model.LyteSetValue
 import com.nikolaevskii.lyte.core.design.theme.LyteAccent
+import com.nikolaevskii.lyte.core.mvi.LyteError
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.Res
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_error
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_start_error
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_exercise_count
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_set_count
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_start
-import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_summary
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.WorkoutPreviewExerciseUiModel
-import com.nikolaevskii.lyte.feature.tracker.presentation.model.WorkoutPreviewSetUiModel
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.WorkoutPreviewUiModel
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.WorkoutPreviewIntent
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.WorkoutPreviewUiState
@@ -80,7 +80,15 @@ fun WorkoutPreviewContent(
             LyteTopBar(
                 title = program?.programName.orEmpty(),
                 size = LyteTopBarSize.Large,
-                subtitle = program?.let { programSummary(it) },
+                // Один факт, а не сводка «N упражнений · M подходов»: сколько подходов в каждом
+                // упражнении, показывают треки плана на карточках.
+                subtitle = program?.let { loaded ->
+                    pluralStringResource(
+                        Res.plurals.workout_preview_exercise_count,
+                        loaded.exerciseCount,
+                        loaded.exerciseCount,
+                    )
+                },
                 onBack = { onIntent(WorkoutPreviewIntent.OnBack) },
             )
         },
@@ -112,6 +120,7 @@ fun WorkoutPreviewContent(
                 is WorkoutPreviewUiState.Content -> {
                     WorkoutPreviewExerciseList(
                         exercises = state.program.exercises,
+                        onIntent = onIntent,
                         modifier = Modifier.fillMaxSize(),
                     )
                     if (state.startError != null) {
@@ -124,6 +133,11 @@ fun WorkoutPreviewContent(
                                 .padding(LyteTheme.spacing.s3),
                         )
                     }
+                    // Шторка описания упражнения — оверлей превью, а не отдельный маршрут:
+                    // в стеке вкладки её нет.
+                    state.exerciseInfo?.let { exercise ->
+                        ExerciseInfoSheet(exercise = exercise, onIntent = onIntent)
+                    }
                 }
             }
         }
@@ -133,6 +147,7 @@ fun WorkoutPreviewContent(
 @Composable
 private fun WorkoutPreviewExerciseList(
     exercises: List<WorkoutPreviewExerciseUiModel>,
+    onIntent: (WorkoutPreviewIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -157,6 +172,7 @@ private fun WorkoutPreviewExerciseList(
                     exercise.sets.size,
                     exercise.sets.size,
                 ),
+                onClick = { onIntent(WorkoutPreviewIntent.OnExerciseClicked(exercise.number)) },
             )
         }
     }
@@ -185,50 +201,13 @@ private fun WorkoutPreviewStartBar(
     }
 }
 
-/** Локализованная сводка «N упражнений · M подходов» из уже посчитанных в модели чисел. */
-@Composable
-private fun programSummary(program: WorkoutPreviewUiModel): String = stringResource(
-    Res.string.workout_preview_summary,
-    pluralStringResource(Res.plurals.workout_preview_exercise_count, program.exerciseCount, program.exerciseCount),
-    pluralStringResource(Res.plurals.workout_preview_set_count, program.setCount, program.setCount),
-)
-
 @Composable
 @Preview
 private fun WorkoutPreviewContentPreview() {
     LyteTheme {
         Box(modifier = Modifier.size(width = PreviewDeviceWidth, height = PreviewDeviceHeight)) {
             WorkoutPreviewContent(
-                state = WorkoutPreviewUiState.Content(
-                    program = WorkoutPreviewUiModel(
-                        programName = "Push Day",
-                        exerciseCount = 3,
-                        setCount = 9,
-                        exercises = listOf(
-                            WorkoutPreviewExerciseUiModel(
-                                number = 1,
-                                name = "Жим лёжа",
-                                sets = listOf(weighted(8, "70"), weighted(8, "80"), weighted(6, "85")),
-                                accent = LyteAccent.Indigo,
-                                glyph = LyteExerciseGlyph.BenchPress,
-                            ),
-                            WorkoutPreviewExerciseUiModel(
-                                number = 2,
-                                name = "Жим гантелей на наклонной",
-                                sets = listOf(weighted(10, "24"), weighted(10, "26"), weighted(8, "26")),
-                                accent = LyteAccent.Teal,
-                                glyph = LyteExerciseGlyph.DumbbellPress,
-                            ),
-                            WorkoutPreviewExerciseUiModel(
-                                number = 3,
-                                name = "Отжимания на брусьях",
-                                sets = listOf(bodyweight(12), bodyweight(12), bodyweight(10)),
-                                accent = LyteAccent.Amber,
-                                glyph = LyteExerciseGlyph.Rack,
-                            ),
-                        ),
-                    ),
-                ),
+                state = WorkoutPreviewUiState.Content(program = previewProgram()),
                 onIntent = {},
             )
         }
@@ -248,8 +227,58 @@ private fun WorkoutPreviewContentLoadingPreview() {
     }
 }
 
-private fun weighted(reps: Int, weight: String): WorkoutPreviewSetUiModel =
-    WorkoutPreviewSetUiModel.Weighted(reps = reps, weight = weight)
+@Composable
+@Preview
+private fun WorkoutPreviewContentErrorPreview() {
+    LyteTheme {
+        Box(modifier = Modifier.size(width = PreviewDeviceWidth, height = PreviewDeviceHeight)) {
+            WorkoutPreviewContent(
+                state = WorkoutPreviewUiState.Error(LyteError.Storage),
+                onIntent = {},
+            )
+        }
+    }
+}
 
-private fun bodyweight(reps: Int): WorkoutPreviewSetUiModel =
-    WorkoutPreviewSetUiModel.Bodyweight(reps = reps)
+private fun previewProgram(): WorkoutPreviewUiModel = WorkoutPreviewUiModel(
+    programName = "Push Day",
+    exerciseCount = 3,
+    exercises = listOf(
+        WorkoutPreviewExerciseUiModel(
+            number = 1,
+            name = "Жим лёжа",
+            description = "Штанга, горизонтальная скамья",
+            sets = listOf(
+                LyteSetValue(reps = 8, weight = 70.0),
+                LyteSetValue(reps = 8, weight = 80.0),
+                LyteSetValue(reps = 6, weight = 85.0),
+            ),
+            accent = LyteAccent.Indigo,
+            glyph = LyteExerciseGlyph.BenchPress,
+        ),
+        WorkoutPreviewExerciseUiModel(
+            number = 2,
+            name = "Жим гантелей на наклонной",
+            description = "Угол 30°, гантели",
+            sets = listOf(
+                LyteSetValue(reps = 10, weight = 24.0),
+                LyteSetValue(reps = 10, weight = 26.0),
+                LyteSetValue(reps = 8, weight = 26.0),
+            ),
+            accent = LyteAccent.Teal,
+            glyph = LyteExerciseGlyph.DumbbellPress,
+        ),
+        WorkoutPreviewExerciseUiModel(
+            number = 3,
+            name = "Отжимания на брусьях",
+            description = null,
+            sets = listOf(
+                LyteSetValue(reps = 12),
+                LyteSetValue(reps = 12),
+                LyteSetValue(reps = 10),
+            ),
+            accent = LyteAccent.Amber,
+            glyph = LyteExerciseGlyph.Rack,
+        ),
+    ),
+)

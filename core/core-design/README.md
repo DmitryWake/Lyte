@@ -119,7 +119,7 @@ Lucide — `implementation`-only внутри `core-design`, подключат�
 | `component.progress` | `LyteProgressTrack` (`LyteProgressTrackMode.Tones`/`Plan`/`Progress`, тона — `LyteProgressTone`) |
 | `component.picker` | `LyteAccentPicker` (шесть цветов), `LyteExerciseIconPicker` (сетка 5×2 знаков) |
 | `component.stepper` | `LyteStepper` (size Large/Medium; ± контрол + ручной tap-to-edit ввод; ввод ограничен: ≤5 цифр целой части и ≤2 знаков после запятой, при `allowDecimal=false` — целочисленный режим для повторов без дробной части, `fillMaxWidth` — для колонок), `LyteSetEditRow` (строка редактирования одного планового подхода программы: заголовок-параметр `title`, удаление, степперы повторов/веса — планирование, не привязано к состоянию активной сессии в отличие от `LyteTrackSetRow`) |
-| `component.card` | `LyteProgramCard` (маркер + один факт + `trailing`), `LyteExerciseCard` (маркер + трек плана; действия задаёт `variant`: `LyteExerciseCardVariant.Editor` — drag-хэндл + edit/remove, `LyteExerciseCardVariant.ReadOnly` — превью программы), `LyteSessionCard` (маркер + геро-число + трек), `LyteListRow` (ведущий элемент — `LyteListRowLeading.Mark`/`Icon`) |
+| `component.card` | `LyteProgramCard` (маркер + один факт + `trailing`), `LyteExerciseCard` (маркер + трек плана; действия задаёт `variant`: `LyteExerciseCardVariant.Editor` — drag-хэндл + edit/remove, `LyteExerciseCardVariant.ReadOnly` — превью программы; `onClick` — тап по колонке контента), `LyteSessionCard` (маркер + геро-число + трек), `LyteListRow` (ведущий элемент — `LyteListRowLeading.Mark`/`Icon`) |
 | `component.feedback` | `LyteDiffRow` (результат подхода: факт + дельта-чип, тон — `LyteProgressTone`), `LyteDialog`, `LyteEmptyState` |
 | `component.navigation` | `LyteTopBar` (size Small/Large), `LyteBottomNavigationBar` (+ `LyteBottomNavigationBarHeight` — резерв под него для контента, см. «Нюансы») |
 | `component.overlay` | `LyteBottomSheet` (слоты `title`/`subtitle`/`topContent`/`content`/`bottomBar` + `LyteBottomSheetHeight`, см. ниже), `LyteRestTimerOverlay` |
@@ -458,10 +458,15 @@ implementation(projects.core.coreDesign)
   `WorkoutListScreen` в `feature:workout:impl`).
 - **`LyteBadge` — не M3 `Badge`.** M3 `Badge` — точка-уведомление; `LyteBadge` — пилюля для
   метаданных (счётчики), поэтому реализована кастомно поверх `Surface`.
-- **Нажатие — уменьшение контрола поверх M3-овского state layer.** Кнопка, икон-кнопка и чип жмутся
-  до 0.97, кнопки ± степпера — до 0.94 и вдобавок перекидывают заливку в `primary`/`onPrimary`
-  (одноручный тап вслепую должен дать подтверждение). Длительность и кривая — из
-  `LyteTheme.motion`; общий модификатор — `Modifier.lytePressScale(interactionSource)`.
+- **Нажатие — уменьшение контрола поверх M3-овского state layer.** Кнопка, икон-кнопка, чип и
+  кликабельная `LyteExerciseCard` жмутся до 0.97, кнопки ± степпера — до 0.94 и вдобавок
+  перекидывают заливку в `primary`/`onPrimary` (одноручный тап вслепую должен дать подтверждение).
+  Длительность и кривая — из `LyteTheme.motion`; общий модификатор —
+  `Modifier.lytePressScale(interactionSource)`.
+  Карточка — **отступление от бандла**: там press-состояния есть только у Button/IconButton/Chip/
+  Stepper. Но `LyteExerciseCard` — единственный элемент списка, у которого есть собственный тап
+  (превью программы, 4.2, открывает им шторку описания), а рипла у неё нет; без масштаба тап
+  читался бы как мёртвый. Сжимается вся карточка, кликабельна по-прежнему только колонка контента.
   Своя реализация, а не средство M3: `Indication` (штатная точка расширения отклика) недоступна —
   `Button`/`FilterChip`/`IconButton` принимают только `interactionSource`, а подмена
   `LocalIndication` их не достаёт, они зовут `ripple()` явно; штатный отклик M3 Expressive (морф

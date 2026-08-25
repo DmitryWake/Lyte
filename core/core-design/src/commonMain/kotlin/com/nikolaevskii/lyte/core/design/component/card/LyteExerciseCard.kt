@@ -32,6 +32,7 @@ import com.nikolaevskii.lyte.core.design.generated.resources.a11y_remove_from_pr
 import com.nikolaevskii.lyte.core.design.icon.LyteExerciseGlyph
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
 import com.nikolaevskii.lyte.core.design.theme.LyteAccent
+import com.nikolaevskii.lyte.core.design.theme.lytePressScale
 import org.jetbrains.compose.resources.stringResource
 
 private val ExerciseCardPaddingStart = 8.dp
@@ -83,6 +84,11 @@ private val ExerciseCardSpecimenPadding = 16.dp
  * становятся круглыми, и ряд читается индикатором загрузки, а не планом. Тогда остаётся одна подпись
  * — число подходов она несёт и так, а список карточек не мешает пилюли с точками. Арифметика и
  * обоснование — в [lytePlanTrackWidth].
+ *
+ * [onClick] делает кликабельной только колонку контента: маркер, drag-хэндл и кнопки действий из
+ * тапа исключены, иначе перетаскивание и «удалить» конкурировали бы с переходом. Нажатие при этом
+ * сжимает **всю** карточку: масштабировать одну колонку, оставив маркер и трек на месте, выглядело
+ * бы поломкой вёрстки.
  */
 @Composable
 fun LyteExerciseCard(
@@ -95,8 +101,9 @@ fun LyteExerciseCard(
     onClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
     Surface(
-        modifier = modifier,
+        modifier = modifier.lytePressScale(interactionSource, enabled = onClick != null),
         shape = LyteTheme.extendedShapes.largeIncreased,
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
         shadowElevation = LyteTheme.elevation.level1,
@@ -123,7 +130,7 @@ fun LyteExerciseCard(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .then(clickableContentModifier(onClick)),
+                    .clickableContent(onClick = onClick, interactionSource = interactionSource),
             ) {
                 Text(
                     text = title,
@@ -185,11 +192,17 @@ fun LyteExerciseCard(
     }
 }
 
-@Composable
-private fun clickableContentModifier(onClick: (() -> Unit)?): Modifier {
-    if (onClick == null) return Modifier
-    val interactionSource = remember { MutableInteractionSource() }
-    return Modifier.clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
+/**
+ * Тап без рипла: отклик карточки — сжатие всей поверхности ([lytePressScale] на `Surface`), поэтому
+ * [interactionSource] приходит снаружи — он один на клик и на анимацию нажатия.
+ */
+private fun Modifier.clickableContent(
+    onClick: (() -> Unit)?,
+    interactionSource: MutableInteractionSource,
+): Modifier = if (onClick == null) {
+    this
+} else {
+    clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
 }
 
 @Preview
