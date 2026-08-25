@@ -5,19 +5,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.nikolaevskii.lyte.feature.tracker.ActiveSessionRoute
 import com.nikolaevskii.lyte.feature.tracker.TrackerLandingRoute
-import com.nikolaevskii.lyte.feature.tracker.WorkoutPickerRoute
 import com.nikolaevskii.lyte.feature.tracker.WorkoutPreviewRoute
 import com.nikolaevskii.lyte.feature.tracker.presentation.screen.ActiveSessionScreen
 import com.nikolaevskii.lyte.feature.tracker.presentation.screen.TrackerLandingScreen
-import com.nikolaevskii.lyte.feature.tracker.presentation.screen.WorkoutPickerScreen
 import com.nikolaevskii.lyte.feature.tracker.presentation.screen.WorkoutPreviewScreen
 
 fun NavGraphBuilder.trackerGraph() {
     composable<TrackerLandingRoute> {
         TrackerLandingScreen()
-    }
-    composable<WorkoutPickerRoute> {
-        WorkoutPickerScreen()
     }
     composable<WorkoutPreviewRoute> { entry ->
         WorkoutPreviewScreen(programId = entry.toRoute<WorkoutPreviewRoute>().programId)
