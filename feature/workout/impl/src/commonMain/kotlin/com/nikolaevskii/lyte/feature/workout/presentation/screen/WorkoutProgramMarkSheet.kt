@@ -2,7 +2,10 @@ package com.nikolaevskii.lyte.feature.workout.presentation.screen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -46,6 +49,22 @@ fun WorkoutProgramMarkSheet(
         title = stringResource(Res.string.workout_details_mark_title),
         onDismissRequest = { onIntent(WorkoutDetailsIntent.OnMarkSheetDismissed) },
         height = LyteBottomSheetHeight.WrapContent,
+        bottomBar = {
+            // Кнопка прибита к низу слотом шторки, а не лежит последней в контенте: так же сделаны
+            // «Создать упражнение» в шторке библиотеки и «Готово» в редакторе подходов.
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceContainerLowest,
+                shadowElevation = LyteTheme.elevation.level2,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                LyteButton(
+                    text = stringResource(Res.string.workout_details_done),
+                    onClick = { onIntent(WorkoutDetailsIntent.OnMarkSheetDismissed) },
+                    fullWidth = true,
+                    modifier = Modifier.padding(horizontal = LyteTheme.spacing.s5, vertical = LyteTheme.spacing.s4),
+                )
+            }
+        },
     ) {
         // Слот контента шторки идёт во всю ширину (списки в других шторках так и нужны), поэтому
         // поля формы задаёт вызывающая сторона — тем же отступом, что у заголовка шторки.
@@ -66,11 +85,6 @@ fun WorkoutProgramMarkSheet(
                 value = glyph.toLyteGlyph(),
                 accent = accent.toLyteAccent(),
                 onChange = { selected -> onIntent(WorkoutDetailsIntent.OnGlyphChanged(selected.toExerciseGlyph())) },
-            )
-            LyteButton(
-                text = stringResource(Res.string.workout_details_done),
-                onClick = { onIntent(WorkoutDetailsIntent.OnMarkSheetDismissed) },
-                fullWidth = true,
             )
         }
     }
