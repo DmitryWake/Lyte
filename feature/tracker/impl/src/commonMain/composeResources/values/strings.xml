@@ -16,11 +16,9 @@
         <item quantity="other">%1$d упражнений</item>
     </plurals>
 
-    <string name="workout_preview_start">Начать тренировку</string>
+    <string name="workout_preview_start">Начать</string>
     <string name="workout_preview_error">Не удалось загрузить программу</string>
     <string name="workout_preview_start_error">Не удалось начать тренировку</string>
-    <!-- Сводка в шапке превью: «5 упражнений · 16 подходов». -->
-    <string name="workout_preview_summary">%1$s · %2$s</string>
     <plurals name="workout_preview_exercise_count">
         <item quantity="one">%1$d упражнение</item>
         <item quantity="few">%1$d упражнения</item>

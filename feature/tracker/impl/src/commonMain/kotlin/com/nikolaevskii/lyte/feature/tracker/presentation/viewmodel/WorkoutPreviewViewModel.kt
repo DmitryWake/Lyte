@@ -30,6 +30,10 @@ class WorkoutPreviewViewModel(
         when (intent) {
             WorkoutPreviewIntent.OnStartClicked -> startSession()
 
+            is WorkoutPreviewIntent.OnExerciseClicked -> openExerciseInfo(intent.number)
+
+            WorkoutPreviewIntent.OnExerciseInfoDismissed -> closeExerciseInfo()
+
             WorkoutPreviewIntent.OnBack -> lyteNavigator.back()
         }
     }
@@ -79,6 +83,25 @@ class WorkoutPreviewViewModel(
                         }
                     }
                 }
+        }
+    }
+
+    /**
+     * Состав уже загружен, поэтому шторка открывается синхронно. Номер, которому не нашлось
+     * упражнения, состояние не трогает: клик по исчезнувшей карточке не должен открывать пустоту.
+     */
+    private fun openExerciseInfo(number: Int) {
+        updateState {
+            val content = this as? WorkoutPreviewUiState.Content ?: return@updateState this
+            val exercise = content.program.exercises.firstOrNull { exercise -> exercise.number == number }
+                ?: return@updateState this
+            content.copy(exerciseInfo = exercise)
+        }
+    }
+
+    private fun closeExerciseInfo() {
+        updateState {
+            (this as? WorkoutPreviewUiState.Content)?.copy(exerciseInfo = null) ?: this
         }
     }
 

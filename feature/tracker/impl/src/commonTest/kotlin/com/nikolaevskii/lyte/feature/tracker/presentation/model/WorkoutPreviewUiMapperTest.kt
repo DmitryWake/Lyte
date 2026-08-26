@@ -1,6 +1,7 @@
 package com.nikolaevskii.lyte.feature.tracker.presentation.model
 
 import com.nikolaevskii.lyte.core.design.icon.LyteExerciseGlyph
+import com.nikolaevskii.lyte.core.design.model.LyteSetValue
 import com.nikolaevskii.lyte.core.design.theme.LyteAccent
 import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
 import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
@@ -25,7 +26,6 @@ class WorkoutPreviewUiMapperTest {
 
         assertEquals("Push Day", model.programName)
         assertEquals(2, model.exerciseCount)
-        assertEquals(3, model.setCount)
         assertEquals(listOf(1, 2), model.exercises.map { it.number })
         assertEquals(listOf("Жим лёжа", "Отжимания на брусьях"), model.exercises.map { it.name })
     }
@@ -50,7 +50,21 @@ class WorkoutPreviewUiMapperTest {
     }
 
     @Test
-    fun formatsWeightWithoutTrailingZero() {
+    fun mapsExerciseDescriptionAsIs() {
+        // Описание задают не всем упражнениям: `null` доезжает до шторки как «описания нет».
+        val exercises = workout(
+            exercises = listOf(
+                exercise(name = "Жим лёжа", description = "Штанга, горизонтальная скамья", reps = listOf(rep(8, 80.0))),
+                exercise(name = "Растяжка", reps = listOf(rep(1, null))),
+            ),
+        ).toPreviewUiModel().exercises
+
+        assertEquals(listOf("Штанга, горизонтальная скамья", null), exercises.map { it.description })
+    }
+
+    @Test
+    fun keepsWeightAsNumberForDesignSystemFormatter() {
+        // Маппер не форматирует: «60» против «62.5» — забота `lyteSetValueLabel` в UI-слое.
         val sets = workout(exercises = listOf(exercise(name = "Жим", reps = listOf(rep(8, 60.0), rep(8, 62.5)))))
             .toPreviewUiModel()
             .exercises
@@ -59,8 +73,8 @@ class WorkoutPreviewUiMapperTest {
 
         assertEquals(
             listOf(
-                WorkoutPreviewSetUiModel.Weighted(reps = 8, weight = "60"),
-                WorkoutPreviewSetUiModel.Weighted(reps = 8, weight = "62.5"),
+                LyteSetValue(reps = 8, weight = 60.0),
+                LyteSetValue(reps = 8, weight = 62.5),
             ),
             sets,
         )
@@ -76,8 +90,8 @@ class WorkoutPreviewUiMapperTest {
 
         assertEquals(
             listOf(
-                WorkoutPreviewSetUiModel.Bodyweight(reps = 12),
-                WorkoutPreviewSetUiModel.Bodyweight(reps = 10),
+                LyteSetValue(reps = 12, weight = null),
+                LyteSetValue(reps = 10, weight = null),
             ),
             sets,
         )
@@ -89,11 +103,18 @@ class WorkoutPreviewUiMapperTest {
     private fun exercise(
         name: String,
         reps: List<WorkoutRepEntity>,
+        description: String? = null,
         accent: ExerciseAccent = ExerciseAccent.Default,
         glyph: ExerciseGlyph = ExerciseGlyph.Default,
     ): WorkoutExerciseWithRepsEntity =
         WorkoutExerciseWithRepsEntity(
-            exercise = WorkoutExerciseEntity(id = name, name = name, accent = accent, glyph = glyph),
+            exercise = WorkoutExerciseEntity(
+                id = name,
+                name = name,
+                description = description,
+                accent = accent,
+                glyph = glyph,
+            ),
             reps = reps,
         )
 

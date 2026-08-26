@@ -53,7 +53,6 @@ class WorkoutPreviewViewModelTest {
         val program = (viewModel.uiState.value as WorkoutPreviewUiState.Content).program
         assertEquals("Push Day", program.programName)
         assertEquals(2, program.exerciseCount)
-        assertEquals(3, program.setCount)
         assertEquals(listOf("Жим лёжа", "Отжимания на брусьях"), program.exercises.map { it.name })
         assertEquals(listOf(1, 2), program.exercises.map { it.number })
     }
@@ -187,6 +186,40 @@ class WorkoutPreviewViewModelTest {
         assertTrue(navigator.commandLog.isEmpty())
     }
 
+    @Test
+    fun exerciseTapOpensInfoSheetWithThatExercise() = runTest(testDispatcher) {
+        val viewModel = viewModel(repository = FakeWorkoutRepository(initialWorkout = pushDay()))
+        runCurrent()
+
+        viewModel.onIntent(WorkoutPreviewIntent.OnExerciseClicked(number = 2))
+
+        val content = viewModel.uiState.value as WorkoutPreviewUiState.Content
+        assertEquals(content.program.exercises[1], content.exerciseInfo)
+    }
+
+    @Test
+    fun dismissClosesInfoSheet() = runTest(testDispatcher) {
+        val viewModel = viewModel(repository = FakeWorkoutRepository(initialWorkout = pushDay()))
+        runCurrent()
+        viewModel.onIntent(WorkoutPreviewIntent.OnExerciseClicked(number = 1))
+
+        viewModel.onIntent(WorkoutPreviewIntent.OnExerciseInfoDismissed)
+
+        assertNull((viewModel.uiState.value as WorkoutPreviewUiState.Content).exerciseInfo)
+    }
+
+    @Test
+    fun tapOnUnknownExerciseLeavesStateUntouched() = runTest(testDispatcher) {
+        // Номера, которому нет упражнения, быть не должно — но открывать пустую шторку тем более нечем.
+        val viewModel = viewModel(repository = FakeWorkoutRepository(initialWorkout = pushDay()))
+        runCurrent()
+        val before = viewModel.uiState.value
+
+        viewModel.onIntent(WorkoutPreviewIntent.OnExerciseClicked(number = 42))
+
+        assertEquals(before, viewModel.uiState.value)
+    }
+
     private fun viewModel(
         repository: FakeWorkoutRepository = FakeWorkoutRepository(),
         sessionRepository: FakeWorkoutSessionRepository = FakeWorkoutSessionRepository(),
@@ -204,7 +237,11 @@ class WorkoutPreviewViewModelTest {
         description = null,
         exercises = listOf(
             WorkoutExerciseWithRepsEntity(
-                exercise = WorkoutExerciseEntity(id = "e1", name = "Жим лёжа"),
+                exercise = WorkoutExerciseEntity(
+                    id = "e1",
+                    name = "Жим лёжа",
+                    description = "Штанга, горизонтальная скамья",
+                ),
                 reps = listOf(
                     WorkoutRepEntity(count = 8, weight = 80.0),
                     WorkoutRepEntity(count = 8, weight = 80.0),

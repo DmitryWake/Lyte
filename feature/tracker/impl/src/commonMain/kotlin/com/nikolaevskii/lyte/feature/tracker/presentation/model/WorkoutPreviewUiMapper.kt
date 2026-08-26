@@ -1,24 +1,24 @@
 package com.nikolaevskii.lyte.feature.tracker.presentation.model
 
-import com.nikolaevskii.lyte.core.design.format.formatWeight
+import com.nikolaevskii.lyte.core.design.model.LyteSetValue
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutRepEntity
 
 /**
  * Маппит доменную программу в готовую к отрисовке [WorkoutPreviewUiModel]: нумерация упражнений,
- * подсчёт подходов, выбор «с весом / со своим весом» и формат числа веса. Чистая функция без ресурсов —
- * локализованные единицы подставляет UI-слой.
+ * подсчёт и перевод плановых подходов в значение дизайн-системы. Чистая функция без ресурсов —
+ * формат значения и локализованные единицы подставляет UI-слой (`lyteSetValueLabel`).
  */
 fun WorkoutEntity.toPreviewUiModel(): WorkoutPreviewUiModel =
     WorkoutPreviewUiModel(
         programName = name,
         exerciseCount = exercises.size,
-        setCount = exercises.sumOf { exercise -> exercise.reps.size },
         exercises = exercises.mapIndexed { index, exercise ->
             WorkoutPreviewExerciseUiModel(
                 number = index + 1,
                 name = exercise.exercise.name,
-                sets = exercise.reps.map { rep -> rep.toPreviewSet() },
+                description = exercise.exercise.description,
+                sets = exercise.reps.map { rep -> rep.toSetValue() },
                 accent = exercise.exercise.accent.toLyteAccent(),
                 glyph = exercise.exercise.glyph.toLyteGlyph(),
             )
@@ -26,11 +26,5 @@ fun WorkoutEntity.toPreviewUiModel(): WorkoutPreviewUiModel =
     )
 
 /** Конвенция домена: вес `null` или `0` — упражнение со своим весом, вес не показываем. */
-private fun WorkoutRepEntity.toPreviewSet(): WorkoutPreviewSetUiModel {
-    val weight = weight
-    return if (weight != null && weight > 0.0) {
-        WorkoutPreviewSetUiModel.Weighted(reps = count, weight = formatWeight(weight))
-    } else {
-        WorkoutPreviewSetUiModel.Bodyweight(reps = count)
-    }
-}
+private fun WorkoutRepEntity.toSetValue(): LyteSetValue =
+    LyteSetValue(reps = count, weight = weight?.takeIf { value -> value > 0.0 })
