@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -111,7 +112,11 @@ fun WorkoutDetailsContent(
     state: WorkoutDetailsUiState,
     onIntent: (WorkoutDetailsIntent) -> Unit,
 ) {
+    // imePadding: приложение edge-to-edge (`enableEdgeToEdge()` в MainActivity), поэтому окно
+    // клавиатурой не ужимается — без него IME, поднятая полем «Название», перекрыла бы прибитую
+    // к низу кнопку «Готово». Тот же приём, что в `LyteBottomSheet`.
     Scaffold(
+        modifier = Modifier.imePadding(),
         topBar = {
             LyteTopBar(
                 title = stringResource(Res.string.workout_details_title),
