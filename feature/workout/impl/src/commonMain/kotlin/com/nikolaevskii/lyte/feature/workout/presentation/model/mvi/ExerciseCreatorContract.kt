@@ -3,6 +3,8 @@ package com.nikolaevskii.lyte.feature.workout.presentation.model.mvi
 import com.nikolaevskii.lyte.core.mvi.LyteError
 import com.nikolaevskii.lyte.core.mvi.UiIntent
 import com.nikolaevskii.lyte.core.mvi.UiState
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 
 /**
@@ -19,7 +21,7 @@ data class ExerciseCreatorUiState(
 
     sealed interface ExerciseCreatorContent {
 
-        /** [isSubmitEnabled] — решение ViewModel: можно ли нажать «Создать». */
+        /** [isSubmitEnabled] — решение ViewModel: можно ли нажать «Сохранить». */
         data class Editing(
             val isSubmitEnabled: Boolean = false,
             val error: LyteError? = null,
@@ -42,6 +44,12 @@ sealed interface ExerciseCreatorIntent : UiIntent {
     /** Пользователь изменил описание упражнения (необязательное поле). */
     data class OnDescriptionChanged(val description: String) : ExerciseCreatorIntent
 
-    /** Пользователь нажал «Создать». */
+    /** Пользователь выбрал цвет упражнения. */
+    data class OnAccentChanged(val accent: ExerciseAccent) : ExerciseCreatorIntent
+
+    /** Пользователь выбрал знак движения. */
+    data class OnGlyphChanged(val glyph: ExerciseGlyph) : ExerciseCreatorIntent
+
+    /** Пользователь нажал «Сохранить». */
     data object OnCreateClicked : ExerciseCreatorIntent
 }

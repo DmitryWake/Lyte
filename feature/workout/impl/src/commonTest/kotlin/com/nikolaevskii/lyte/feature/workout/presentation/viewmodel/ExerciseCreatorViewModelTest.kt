@@ -1,5 +1,7 @@
 package com.nikolaevskii.lyte.feature.workout.presentation.viewmodel
 
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExerciseCreatorIntent
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExerciseCreatorUiState
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExerciseCreatorUiState.ExerciseCreatorContent
@@ -57,6 +59,60 @@ class ExerciseCreatorViewModelTest {
 
         viewModel.onIntent(ExerciseCreatorIntent.OnNameChanged(" "))
         assertFalse(viewModel.uiState.value.isSubmitEnabled)
+    }
+
+    @Test
+    fun startsWithDefaultMark() = runTest(testDispatcher) {
+        val viewModel = createViewModel(initialName = "")
+
+        assertEquals(ExerciseAccent.Default, viewModel.uiState.value.exercise.accent)
+        assertEquals(ExerciseGlyph.Default, viewModel.uiState.value.exercise.glyph)
+    }
+
+    /** Маркер к имени отношения не имеет, поэтому выбор цвета не должен трогать доступность сабмита. */
+    @Test
+    fun changeMarkUpdatesDraftWithoutTouchingSubmit() = runTest(testDispatcher) {
+        val viewModel = createViewModel(initialName = "")
+        assertFalse(viewModel.uiState.value.isSubmitEnabled)
+
+        viewModel.onIntent(ExerciseCreatorIntent.OnAccentChanged(ExerciseAccent.Teal))
+        viewModel.onIntent(ExerciseCreatorIntent.OnGlyphChanged(ExerciseGlyph.DumbbellPress))
+
+        assertEquals(ExerciseAccent.Teal, viewModel.uiState.value.exercise.accent)
+        assertEquals(ExerciseGlyph.DumbbellPress, viewModel.uiState.value.exercise.glyph)
+        assertFalse(viewModel.uiState.value.isSubmitEnabled)
+    }
+
+    /** Выбор цвета не исправляет неудачную запись, поэтому баннер ошибки он гасить не должен. */
+    @Test
+    fun changeMarkAfterFailureKeepsErrorBanner() = runTest(testDispatcher) {
+        val repository = FakeWorkoutExerciseRepository().apply { createExerciseError = IllegalStateException("boom") }
+        val viewModel = createViewModel(initialName = "Жим стоя", workoutExerciseRepository = repository)
+        viewModel.onIntent(ExerciseCreatorIntent.OnCreateClicked)
+        runCurrent()
+        assertTrue(viewModel.uiState.value.isError)
+
+        viewModel.onIntent(ExerciseCreatorIntent.OnAccentChanged(ExerciseAccent.Coral))
+
+        assertTrue(viewModel.uiState.value.isError)
+        assertEquals(ExerciseAccent.Coral, viewModel.uiState.value.exercise.accent)
+    }
+
+    @Test
+    fun submitWritesChosenMarkToLibrary() = runTest(testDispatcher) {
+        val repository = FakeWorkoutExerciseRepository()
+        val viewModel = createViewModel(initialName = "Жим гантелей", workoutExerciseRepository = repository)
+        viewModel.onIntent(ExerciseCreatorIntent.OnAccentChanged(ExerciseAccent.Teal))
+        viewModel.onIntent(ExerciseCreatorIntent.OnGlyphChanged(ExerciseGlyph.DumbbellPress))
+
+        viewModel.onIntent(ExerciseCreatorIntent.OnCreateClicked)
+        runCurrent()
+
+        val created = repository.createdExercises.single()
+        assertEquals(ExerciseAccent.Teal, created.accent)
+        assertEquals(ExerciseGlyph.DumbbellPress, created.glyph)
+        // Наружу владельцу отдаётся ровно то, что легло в библиотеку.
+        assertEquals(created, viewModel.uiState.value.exercise)
     }
 
     @Test
