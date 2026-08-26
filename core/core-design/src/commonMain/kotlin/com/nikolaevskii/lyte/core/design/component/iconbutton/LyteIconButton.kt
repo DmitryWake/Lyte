@@ -23,7 +23,7 @@ import com.nikolaevskii.lyte.core.design.theme.lytePressScale
 private val LyteIconButtonDefaultSize = 40.dp
 
 /**
- * Круглая кнопка-иконка. [active] переключает фон на secondaryContainer (напр. открытое меню).
+ * Круглая кнопка-иконка. [active] переключает фон на secondaryContainer (напр. открытая шторка).
  * Нажатие — M3-овский state layer плюс уменьшение до 0.97, как у остальных контролов системы.
  */
 @Composable
@@ -70,7 +70,7 @@ private fun LyteIconButtonPreview() {
     LyteTheme {
         Row(modifier = Modifier.padding(16.dp)) {
             LyteIconButton(icon = LyteIcons.Close, contentDescription = "Закрыть", onClick = {})
-            LyteIconButton(icon = LyteIcons.OverflowMenu, contentDescription = "Меню", onClick = {}, active = true)
+            LyteIconButton(icon = LyteIcons.List, contentDescription = "Упражнения", onClick = {}, active = true)
         }
     }
 }

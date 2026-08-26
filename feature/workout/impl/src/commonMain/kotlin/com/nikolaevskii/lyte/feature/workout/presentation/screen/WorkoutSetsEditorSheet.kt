@@ -34,7 +34,7 @@ import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutRepEntity
 import com.nikolaevskii.lyte.feature.workout.generated.resources.Res
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_set_number
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_sets_add
-import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_sets_done
+import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_done
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutDetailsIntent
 import org.jetbrains.compose.resources.stringResource
 
@@ -71,7 +71,7 @@ fun WorkoutSetsEditorSheet(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 LyteButton(
-                    text = stringResource(Res.string.workout_details_sets_done),
+                    text = stringResource(Res.string.workout_details_done),
                     onClick = { onIntent(WorkoutDetailsIntent.OnSetsEditorDismissed) },
                     fullWidth = true,
                     modifier = Modifier.padding(horizontal = LyteTheme.spacing.s5, vertical = LyteTheme.spacing.s4),

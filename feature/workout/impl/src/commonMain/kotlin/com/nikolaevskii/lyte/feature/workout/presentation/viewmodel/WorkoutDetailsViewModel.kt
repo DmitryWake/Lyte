@@ -6,6 +6,8 @@ import com.nikolaevskii.lyte.core.mvi.BaseViewModel
 import com.nikolaevskii.lyte.core.mvi.LyteNotFoundException
 import com.nikolaevskii.lyte.core.mvi.toLyteError
 import com.nikolaevskii.lyte.core.navigation.LyteNavigator
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseWithRepsEntity
@@ -40,6 +42,12 @@ class WorkoutDetailsViewModel(
     override fun onIntent(intent: WorkoutDetailsIntent) {
         when (intent) {
             is WorkoutDetailsIntent.OnNameChanged -> updateEditing { copy(name = intent.name) }
+            WorkoutDetailsIntent.OnMarkClicked -> updateEditing { copy(editor = WorkoutDetailsEditor.Mark) }
+            // Шторка не закрывается на выбор: в макете цвет и знак подбирают вместе, и пикер знаков
+            // перекрашивается вслед за цветом — закрытие после первого тапа сломало бы этот подбор.
+            is WorkoutDetailsIntent.OnAccentChanged -> updateEditing { copy(accent = intent.accent) }
+            is WorkoutDetailsIntent.OnGlyphChanged -> updateEditing { copy(glyph = intent.glyph) }
+            WorkoutDetailsIntent.OnMarkSheetDismissed -> updateEditing { copy(editor = null) }
             is WorkoutDetailsIntent.OnExerciseMoved -> updateEditing { copy(exercises = exercises.moved(intent.fromIndex, intent.toIndex)) }
             is WorkoutDetailsIntent.OnRemoveExerciseClicked -> updateEditing { copy(exercises = exercises.filterIndexed { i, _ -> i != intent.index }) }
             WorkoutDetailsIntent.OnAddExerciseClicked -> updateEditing { copy(editor = WorkoutDetailsEditor.ExercisePicker()) }
@@ -55,7 +63,7 @@ class WorkoutDetailsViewModel(
                 updateEditedSets { sets -> sets.mapIndexed { i, set -> if (i == intent.setIndex) set.copy(weight = intent.weight) else set } }
             WorkoutDetailsIntent.OnAddSetClicked -> updateEditedSets { sets -> sets + (sets.lastOrNull() ?: DEFAULT_REP) }
             is WorkoutDetailsIntent.OnRemoveSetClicked -> updateEditedSets { sets -> sets.filterIndexed { i, _ -> i != intent.setIndex } }
-            WorkoutDetailsIntent.OnSaveClicked -> save()
+            WorkoutDetailsIntent.OnDoneClicked -> save()
             WorkoutDetailsIntent.OnBackClicked -> lyteNavigator.back()
         }
     }
@@ -64,13 +72,19 @@ class WorkoutDetailsViewModel(
         id = initialId ?: Uuid.random().toString(),
         // Новая программа открывается сразу в редакторе (пустая форма), не в Loading — иначе вечный спиннер.
         content = if (initialId == null) {
-            WorkoutDetailsContent.Editing(name = "", description = null, exercises = emptyList())
+            WorkoutDetailsContent.Editing(
+                name = "",
+                description = null,
+                accent = ExerciseAccent.Default,
+                glyph = ExerciseGlyph.Default,
+                exercises = emptyList(),
+            )
         } else {
             WorkoutDetailsContent.Loading
         },
     )
 
-    // Провал загрузки уходит в воронку handleError → Error: формы и кнопки «Сохранить» нет, поэтому
+    // Провал загрузки уходит в воронку handleError → Error: формы и кнопки «Готово» нет, поэтому
     // перезаписать реальную программу пустой (баг потери данных) невозможно по построению.
     override fun handleError(error: Throwable) {
         updateState { copy(content = WorkoutDetailsContent.Error(error.toLyteError())) }
@@ -84,6 +98,8 @@ class WorkoutDetailsViewModel(
                 content = WorkoutDetailsContent.Editing(
                     name = workout.name,
                     description = workout.description,
+                    accent = workout.accent,
+                    glyph = workout.glyph,
                     exercises = workout.exercises.map { it.toUiModel() },
                 ),
             )
@@ -95,10 +111,15 @@ class WorkoutDetailsViewModel(
         val id = uiStateValue.id
         updateEditing { copy(isSaving = true, saveError = null) }
         launch {
+            // Маркер обязателен в сборке сущности: у accent/glyph в WorkoutEntity есть значения по
+            // умолчанию, и пропуск полей молча перекрасил бы программу в slate/squat при каждом
+            // сохранении.
             val workoutEntity = WorkoutEntity(
                 id = id,
                 name = editing.name,
                 description = editing.description,
+                accent = editing.accent,
+                glyph = editing.glyph,
                 exercises = editing.exercises.map { it.exercise },
             )
             runCatching {
@@ -128,7 +149,7 @@ class WorkoutDetailsViewModel(
             editor = when (val editor = editor) {
                 is WorkoutDetailsEditor.ExerciseCreator -> WorkoutDetailsEditor.ExercisePicker(query = editor.initialName)
                 is WorkoutDetailsEditor.ExercisePicker -> null
-                is WorkoutDetailsEditor.SetsEditor, null -> editor
+                is WorkoutDetailsEditor.SetsEditor, WorkoutDetailsEditor.Mark, null -> editor
             },
         )
     }
