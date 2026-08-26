@@ -1,16 +1,21 @@
 package com.nikolaevskii.lyte.feature.workout.presentation.screen
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -25,32 +30,41 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nikolaevskii.lyte.core.design.LyteTheme
 import com.nikolaevskii.lyte.core.design.component.button.LyteButton
-import com.nikolaevskii.lyte.core.design.component.button.LyteButtonSize
 import com.nikolaevskii.lyte.core.design.component.button.LyteButtonVariant
 import com.nikolaevskii.lyte.core.design.component.card.LyteExerciseCard
 import com.nikolaevskii.lyte.core.design.component.card.LyteExerciseCardVariant
+import com.nikolaevskii.lyte.core.design.component.mark.LyteExerciseMark
 import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBar
+import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBarSize
 import com.nikolaevskii.lyte.core.design.component.overline.LyteOverline
 import com.nikolaevskii.lyte.core.design.component.textfield.LyteTextField
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
+import com.nikolaevskii.lyte.core.mvi.LyteError
 import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
 import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseWithRepsEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutRepEntity
 import com.nikolaevskii.lyte.feature.workout.generated.resources.Res
+import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_exercise_count
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_add_exercise
+import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_done
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_error
+import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_exercises_empty
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_exercises_title
+import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_mark_a11y
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_name_label
-import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_save
+import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_name_placeholder
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_save_error
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_set_count
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_title
@@ -67,9 +81,18 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
-private const val NAME_FIELD_KEY = "name-field"
+private const val HEADER_KEY = "header"
 private const val EXERCISES_OVERLINE_KEY = "exercises-overline"
+private const val EXERCISES_EMPTY_KEY = "exercises-empty"
 private const val ADD_EXERCISE_BUTTON_KEY = "add-exercise-button"
+
+private val HeaderMarkSize = 52.dp
+
+/** Ряд выровнен по нижнему краю, а маркер приподнят над низом поля — `padding-bottom:4px` макета. */
+private val HeaderMarkBottomPadding = 4.dp
+
+private val EmptyExercisesPadding = 18.dp
+private val DoneBarPaddingBottom = 28.dp
 
 @Composable
 fun WorkoutDetailsScreen(
@@ -89,19 +112,24 @@ fun WorkoutDetailsContent(
     state: WorkoutDetailsUiState,
     onIntent: (WorkoutDetailsIntent) -> Unit,
 ) {
+    // imePadding: приложение edge-to-edge (`enableEdgeToEdge()` в MainActivity), поэтому окно
+    // клавиатурой не ужимается — без него IME, поднятая полем «Название», перекрыла бы прибитую
+    // к низу кнопку «Готово». Тот же приём, что в `LyteBottomSheet`.
     Scaffold(
+        modifier = Modifier.imePadding(),
         topBar = {
             LyteTopBar(
                 title = stringResource(Res.string.workout_details_title),
+                size = LyteTopBarSize.Large,
                 onBack = { onIntent(WorkoutDetailsIntent.OnBackClicked) },
             )
         },
         bottomBar = {
             val editing = state.content as? WorkoutDetailsContent.Editing
             if (editing != null) {
-                WorkoutDetailsSaveBar(
+                WorkoutDetailsDoneBar(
                     isSaving = editing.isSaving,
-                    onSave = { onIntent(WorkoutDetailsIntent.OnSaveClicked) },
+                    onDone = { onIntent(WorkoutDetailsIntent.OnDoneClicked) },
                 )
             }
         },
@@ -145,37 +173,45 @@ fun WorkoutDetailsContent(
         }
 
         // Оверлеи (шторки/редактор подходов) ведут свои ViewModel и отдают наверх только события.
-        when (val editor = (state.content as? WorkoutDetailsContent.Editing)?.editor) {
-            is WorkoutDetailsEditor.ExercisePicker -> WorkoutExercisePickerSheet(
-                onExercisePicked = { exercise -> onIntent(WorkoutDetailsIntent.OnExerciseSelected(exercise)) },
-                onCreateExerciseRequested = { query -> onIntent(WorkoutDetailsIntent.OnCreateExerciseClicked(query)) },
-                onDismissRequest = { onIntent(WorkoutDetailsIntent.OnExerciseSheetDismissed) },
-                initialQuery = editor.query,
-            )
+        val editing = state.content as? WorkoutDetailsContent.Editing
+        if (editing != null) {
+            when (val editor = editing.editor) {
+                is WorkoutDetailsEditor.ExercisePicker -> WorkoutExercisePickerSheet(
+                    onExercisePicked = { exercise -> onIntent(WorkoutDetailsIntent.OnExerciseSelected(exercise)) },
+                    onCreateExerciseRequested = { query -> onIntent(WorkoutDetailsIntent.OnCreateExerciseClicked(query)) },
+                    onDismissRequest = { onIntent(WorkoutDetailsIntent.OnExerciseSheetDismissed) },
+                    initialQuery = editor.query,
+                )
 
-            is WorkoutDetailsEditor.ExerciseCreator -> WorkoutExerciseCreateSheet(
-                initialName = editor.initialName,
-                onExerciseCreated = { exercise -> onIntent(WorkoutDetailsIntent.OnExerciseSelected(exercise)) },
-                onDismissRequest = { onIntent(WorkoutDetailsIntent.OnExerciseSheetDismissed) },
-            )
+                is WorkoutDetailsEditor.ExerciseCreator -> WorkoutExerciseCreateSheet(
+                    initialName = editor.initialName,
+                    onExerciseCreated = { exercise -> onIntent(WorkoutDetailsIntent.OnExerciseSelected(exercise)) },
+                    onDismissRequest = { onIntent(WorkoutDetailsIntent.OnExerciseSheetDismissed) },
+                )
 
-            is WorkoutDetailsEditor.SetsEditor -> {
-                val exercise = (state.content as? WorkoutDetailsContent.Editing)?.exercises
-                    ?.getOrNull(editor.exerciseIndex)?.exercise
-                if (exercise != null) {
-                    WorkoutSetsEditorSheet(exercise = exercise, onIntent = onIntent)
+                is WorkoutDetailsEditor.SetsEditor -> {
+                    val exercise = editing.exercises.getOrNull(editor.exerciseIndex)?.exercise
+                    if (exercise != null) {
+                        WorkoutSetsEditorSheet(exercise = exercise, onIntent = onIntent)
+                    }
                 }
-            }
 
-            null -> Unit
+                WorkoutDetailsEditor.Mark -> WorkoutProgramMarkSheet(
+                    accent = editing.accent,
+                    glyph = editing.glyph,
+                    onIntent = onIntent,
+                )
+
+                null -> Unit
+            }
         }
     }
 }
 
 @Composable
-private fun WorkoutDetailsSaveBar(
+private fun WorkoutDetailsDoneBar(
     isSaving: Boolean,
-    onSave: () -> Unit,
+    onDone: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -184,13 +220,73 @@ private fun WorkoutDetailsSaveBar(
         modifier = modifier.fillMaxWidth(),
     ) {
         LyteButton(
-            text = stringResource(Res.string.workout_details_save),
-            onClick = onSave,
+            text = stringResource(Res.string.workout_details_done),
+            onClick = onDone,
             enabled = !isSaving,
             fullWidth = true,
-            modifier = Modifier.padding(horizontal = LyteTheme.spacing.s5, vertical = LyteTheme.spacing.s4),
+            modifier = Modifier.padding(
+                start = LyteTheme.spacing.s5,
+                end = LyteTheme.spacing.s5,
+                top = LyteTheme.spacing.s3,
+                bottom = DoneBarPaddingBottom,
+            ),
         )
     }
+}
+
+/**
+ * Шапка формы: маркер программы и её название в одну строку. Маркер кликабельный — открывает шторку
+ * «Цвет и знак»; отдельной кнопки у него в макете нет, потому что сам маркер и есть превью выбора.
+ */
+@Composable
+private fun WorkoutDetailsHeader(
+    name: String,
+    accent: ExerciseAccent,
+    glyph: ExerciseGlyph,
+    onIntent: (WorkoutDetailsIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        verticalAlignment = Alignment.Bottom,
+        horizontalArrangement = Arrangement.spacedBy(LyteTheme.spacing.s3),
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        LyteExerciseMark(
+            accent = accent.toLyteAccent(),
+            glyph = glyph.toLyteGlyph(),
+            size = HeaderMarkSize,
+            contentDescription = stringResource(Res.string.workout_details_mark_a11y),
+            modifier = Modifier
+                .padding(bottom = HeaderMarkBottomPadding)
+                .clip(CircleShape)
+                .clickable(role = Role.Button) { onIntent(WorkoutDetailsIntent.OnMarkClicked) },
+        )
+        LyteTextField(
+            value = name,
+            onValueChange = { value -> onIntent(WorkoutDetailsIntent.OnNameChanged(value)) },
+            label = stringResource(Res.string.workout_details_name_label),
+            placeholder = stringResource(Res.string.workout_details_name_placeholder),
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+/**
+ * Пустой состав — плашка с подсказкой, а не `LyteEmptyState`: у экрана уже есть и заголовок, и
+ * действие «Добавить упражнение», поэтому полноэкранное пустое состояние повторило бы их третий раз.
+ */
+@Composable
+private fun WorkoutDetailsEmptyExercises(modifier: Modifier = Modifier) {
+    Text(
+        text = stringResource(Res.string.workout_details_exercises_empty),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .padding(EmptyExercisesPadding),
+    )
 }
 
 /**
@@ -220,16 +316,28 @@ private fun WorkoutDetailsForm(
         verticalArrangement = Arrangement.spacedBy(LyteTheme.spacing.s3),
         modifier = modifier.fillMaxWidth(),
     ) {
-        item(key = NAME_FIELD_KEY) {
-            LyteTextField(
-                value = editing.name,
-                onValueChange = { name -> onIntent(WorkoutDetailsIntent.OnNameChanged(name)) },
-                label = stringResource(Res.string.workout_details_name_label),
-                modifier = Modifier.fillMaxWidth(),
+        item(key = HEADER_KEY) {
+            WorkoutDetailsHeader(
+                name = editing.name,
+                accent = editing.accent,
+                glyph = editing.glyph,
+                onIntent = onIntent,
             )
         }
         item(key = EXERCISES_OVERLINE_KEY) {
-            LyteOverline(text = stringResource(Res.string.workout_details_exercises_title))
+            val exerciseCount = editing.exercises.size
+            LyteOverline(
+                text = if (exerciseCount > 0) {
+                    pluralStringResource(Res.plurals.workout_exercise_count, exerciseCount, exerciseCount)
+                } else {
+                    stringResource(Res.string.workout_details_exercises_title)
+                },
+            )
+        }
+        if (editing.exercises.isEmpty()) {
+            item(key = EXERCISES_EMPTY_KEY) {
+                WorkoutDetailsEmptyExercises()
+            }
         }
         itemsIndexed(items = editing.exercises, key = { _, item -> item.key }) { index, item ->
             val isDragging = item.key == draggingKey
@@ -283,6 +391,8 @@ private fun WorkoutDetailsForm(
                         )
                     },
                 ),
+                // Тап по карточке ведёт в подходы — как в макете; кнопка edit остаётся для явности.
+                onClick = { onIntent(WorkoutDetailsIntent.OnEditSetsClicked(index)) },
                 modifier = Modifier
                     .zIndex(if (isDragging) 1f else 0f)
                     .graphicsLayer { translationY = if (isDragging) dragOffset else 0f }
@@ -294,7 +404,6 @@ private fun WorkoutDetailsForm(
                 text = stringResource(Res.string.workout_details_add_exercise),
                 onClick = { onIntent(WorkoutDetailsIntent.OnAddExerciseClicked) },
                 variant = LyteButtonVariant.Tonal,
-                size = LyteButtonSize.Small,
                 icon = LyteIcons.Plus,
                 fullWidth = true,
             )
@@ -312,6 +421,8 @@ private fun WorkoutDetailsContentPreview() {
                 content = WorkoutDetailsContent.Editing(
                     name = "Push Day",
                     description = null,
+                    accent = ExerciseAccent.Indigo,
+                    glyph = ExerciseGlyph.BenchPress,
                     exercises = listOf(
                         previewExercise(
                             key = "1",
@@ -342,12 +453,44 @@ private fun WorkoutDetailsContentPreview() {
     }
 }
 
+/** Новая программа: пустой состав — плашка вместо списка, название ещё не введено. */
+@Composable
+@Preview
+private fun WorkoutDetailsContentEmptyPreview() {
+    LyteTheme {
+        WorkoutDetailsContent(
+            state = WorkoutDetailsUiState(
+                id = "1",
+                content = WorkoutDetailsContent.Editing(
+                    name = "",
+                    description = null,
+                    accent = ExerciseAccent.Default,
+                    glyph = ExerciseGlyph.Default,
+                    exercises = emptyList(),
+                ),
+            ),
+            onIntent = {},
+        )
+    }
+}
+
 @Composable
 @Preview
 private fun WorkoutDetailsContentLoadingPreview() {
     LyteTheme {
         WorkoutDetailsContent(
             state = WorkoutDetailsUiState(id = "1", content = WorkoutDetailsContent.Loading),
+            onIntent = {},
+        )
+    }
+}
+
+@Composable
+@Preview
+private fun WorkoutDetailsContentErrorPreview() {
+    LyteTheme {
+        WorkoutDetailsContent(
+            state = WorkoutDetailsUiState(id = "1", content = WorkoutDetailsContent.Error(LyteError.Storage)),
             onIntent = {},
         )
     }

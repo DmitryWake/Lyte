@@ -3,6 +3,8 @@ package com.nikolaevskii.lyte.feature.workout.presentation.model.mvi
 import com.nikolaevskii.lyte.core.mvi.LyteError
 import com.nikolaevskii.lyte.core.mvi.UiIntent
 import com.nikolaevskii.lyte.core.mvi.UiState
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import com.nikolaevskii.lyte.feature.workout.presentation.model.WorkoutDetailsEditor
 import com.nikolaevskii.lyte.feature.workout.presentation.model.WorkoutExerciseUiModel
@@ -22,12 +24,15 @@ data class WorkoutDetailsUiState(
         /** Загрузка существующей программы по id. */
         data object Loading : WorkoutDetailsContent
 
-        /** Программу не удалось прочитать: формы и кнопки «Сохранить» нет — перезаписывать нечем. */
+        /** Программу не удалось прочитать: формы и кнопки «Готово» нет — перезаписывать нечем. */
         data class Error(val error: LyteError) : WorkoutDetailsContent
 
         data class Editing(
             val name: String,
             val description: String?,
+            /** Маркер программы: собственные цвет и знак, а не выведенные из состава. */
+            val accent: ExerciseAccent,
+            val glyph: ExerciseGlyph,
             val exercises: List<WorkoutExerciseUiModel>,
             /** Один взаимоисключающий оверлей вместо пары независимых nullable-полей. */
             val editor: WorkoutDetailsEditor? = null,
@@ -46,6 +51,18 @@ sealed interface WorkoutDetailsIntent : UiIntent {
 
     /** Пользователь изменил название программы. */
     data class OnNameChanged(val name: String) : WorkoutDetailsIntent
+
+    /** Пользователь тапнул по маркеру программы — открыть шторку «Цвет и знак». */
+    data object OnMarkClicked : WorkoutDetailsIntent
+
+    /** Пользователь выбрал цвет программы в шторке маркера. */
+    data class OnAccentChanged(val accent: ExerciseAccent) : WorkoutDetailsIntent
+
+    /** Пользователь выбрал знак программы в шторке маркера. */
+    data class OnGlyphChanged(val glyph: ExerciseGlyph) : WorkoutDetailsIntent
+
+    /** Пользователь закрыл шторку маркера — кнопкой «Готово», свайпом либо тапом по скриму. */
+    data object OnMarkSheetDismissed : WorkoutDetailsIntent
 
     /** Пользователь перетащил упражнение с [fromIndex] на [toIndex] за drag-хэндл. */
     data class OnExerciseMoved(val fromIndex: Int, val toIndex: Int) : WorkoutDetailsIntent
@@ -89,8 +106,8 @@ sealed interface WorkoutDetailsIntent : UiIntent {
     /** Пользователь нажал «удалить» на подходе [setIndex]. */
     data class OnRemoveSetClicked(val setIndex: Int) : WorkoutDetailsIntent
 
-    /** Пользователь нажал «Сохранить». */
-    data object OnSaveClicked : WorkoutDetailsIntent
+    /** Пользователь нажал «Готово» внизу формы: программа сохраняется и экран закрывается. */
+    data object OnDoneClicked : WorkoutDetailsIntent
 
     /** Пользователь нажал «назад». */
     data object OnBackClicked : WorkoutDetailsIntent

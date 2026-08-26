@@ -52,14 +52,13 @@ Multiplatform: Android/iOS/JVM/JS/Wasm). Значения — обычный `Im
 Lucide — `implementation`-only внутри `core-design`, подключать её отдельно потребителям не нужно.
 
 Доступные иконки: `Dumbbell`, `ClipboardList`, `History`, `Play`, `Plus`, `Minus`, `Check`, `Close`,
-`ChevronRight`, `ChevronLeft`, `GripVertical`, `OverflowMenu`, `Sparkles` (зарезервирована для
-ИИ-поверхностей — не использовать как обычную иконку), `Delete`, `Edit`, `List` (шторка упражнений
-сессии), `SearchX` (пустой результат поиска), `ListChecks`, `Circle`, `CircleDot`, `CircleCheck`,
-`CircleArrowUp`, `CircleArrowDown` (превысил/недобрал цель), `CircleMinus`
-(кружки-статусы подходов).
+`ChevronRight`, `ChevronLeft`, `GripVertical`, `Sparkles` (зарезервирована для ИИ-поверхностей —
+не использовать как обычную иконку), `Delete`, `Edit`, `List` (шторка упражнений сессии), `SearchX`
+(пустой результат поиска), `ListChecks`, `Circle`, `CircleDot`, `CircleCheck`, `CircleArrowUp`,
+`CircleArrowDown` (превысил/недобрал цель), `CircleMinus` (кружки-статусы подходов).
 
-Словарь держит только то, что реально рисуется. `OverflowMenu` в дизайне v2 не используется, но у
-него пока жив call-site: кебаб-меню уходит вместе со списком программ (RD-13).
+Словарь держит только то, что реально рисуется: `OverflowMenu` ушёл вместе с кебаб-меню списка
+программ (RD-13) — в v2 единственное действие карточки стоит на ней самой.
 
 #### Пиктограммы движений
 
@@ -120,7 +119,7 @@ Lucide — `implementation`-only внутри `core-design`, подключат�
 | `component.picker` | `LyteAccentPicker` (шесть цветов), `LyteExerciseIconPicker` (сетка 5×2 знаков) |
 | `component.stepper` | `LyteStepper` (size Large/Medium; ± контрол + ручной tap-to-edit ввод; ввод ограничен: ≤5 цифр целой части и ≤2 знаков после запятой, при `allowDecimal=false` — целочисленный режим для повторов без дробной части, `fillMaxWidth` — для колонок), `LyteSetEditRow` (строка редактирования одного планового подхода программы: заголовок-параметр `title`, удаление, степперы повторов/веса — планирование, не привязано к состоянию активной сессии в отличие от `LyteTrackSetRow`) |
 | `component.card` | `LyteProgramCard` (маркер + один факт + `trailing`), `LyteExerciseCard` (маркер + трек плана; действия задаёт `variant`: `LyteExerciseCardVariant.Editor` — drag-хэндл + edit/remove, `LyteExerciseCardVariant.ReadOnly` — превью программы; `onClick` — тап по колонке контента), `LyteSessionCard` (маркер + геро-число + трек), `LyteListRow` (ведущий элемент — `LyteListRowLeading.Mark`/`Icon`) |
-| `component.feedback` | `LyteDiffRow` (результат подхода: факт + дельта-чип, тон — `LyteProgressTone`), `LyteDialog`, `LyteEmptyState` |
+| `component.feedback` | `LyteDiffRow` (результат подхода: факт + дельта-чип, тон — `LyteProgressTone`), `LyteDialog`, `LyteEmptyState` (иконка-метка + заголовок + подсказка + необязательное действие `actionLabel`/`actionIcon`) |
 | `component.navigation` | `LyteTopBar` (size Small/Large), `LyteBottomNavigationBar` (+ `LyteBottomNavigationBarHeight` — резерв под него для контента, см. «Нюансы») |
 | `component.overlay` | `LyteBottomSheet` (слоты `title`/`subtitle`/`topContent`/`content`/`bottomBar` + `LyteBottomSheetHeight`, см. ниже), `LyteRestTimerOverlay` |
 | `component.datadisplay` | `LyteSessionStopwatch` |

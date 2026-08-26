@@ -1,5 +1,7 @@
 package com.nikolaevskii.lyte.feature.workout.presentation.viewmodel
 
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseWithRepsEntity
@@ -75,6 +77,46 @@ class WorkoutDetailsViewModelTest {
         assertEquals(listOf("Bench Press", "Dips"), state.exercises.map { it.exercise.exercise.name })
         assertFalse(state.isLoading)
         assertEquals(listOf("w1"), repository.getWorkoutCalls)
+    }
+
+    @Test
+    fun editModeLoadsProgramMarkIntoForm() = runTest(testDispatcher) {
+        val repository = FakeWorkoutRepository().apply {
+            workoutToReturn = workout(id = "w1", accent = ExerciseAccent.Indigo, glyph = ExerciseGlyph.BenchPress)
+        }
+        val viewModel = createViewModel(initialId = "w1", workoutRepository = repository)
+
+        runCurrent()
+
+        assertEquals(ExerciseAccent.Indigo, viewModel.uiState.value.accent)
+        assertEquals(ExerciseGlyph.BenchPress, viewModel.uiState.value.glyph)
+    }
+
+    @Test
+    fun markClickOpensMarkSheetAndDismissClosesIt() = runTest(testDispatcher) {
+        val viewModel = createViewModel(initialId = null)
+        runCurrent()
+
+        viewModel.onIntent(WorkoutDetailsIntent.OnMarkClicked)
+        assertEquals(WorkoutDetailsEditor.Mark, viewModel.uiState.value.editor)
+
+        viewModel.onIntent(WorkoutDetailsIntent.OnMarkSheetDismissed)
+        assertNull(viewModel.uiState.value.editor)
+    }
+
+    /** Цвет и знак подбирают вместе, поэтому выбор не закрывает шторку — она остаётся открытой. */
+    @Test
+    fun changeAccentAndGlyphUpdatesDraftAndKeepsSheetOpen() = runTest(testDispatcher) {
+        val viewModel = createViewModel(initialId = null)
+        runCurrent()
+        viewModel.onIntent(WorkoutDetailsIntent.OnMarkClicked)
+
+        viewModel.onIntent(WorkoutDetailsIntent.OnAccentChanged(ExerciseAccent.Lime))
+        viewModel.onIntent(WorkoutDetailsIntent.OnGlyphChanged(ExerciseGlyph.Squat))
+
+        assertEquals(ExerciseAccent.Lime, viewModel.uiState.value.accent)
+        assertEquals(ExerciseGlyph.Squat, viewModel.uiState.value.glyph)
+        assertEquals(WorkoutDetailsEditor.Mark, viewModel.uiState.value.editor)
     }
 
     @Test
@@ -340,7 +382,7 @@ class WorkoutDetailsViewModelTest {
         val generatedId = viewModel.uiState.value.id
         viewModel.onIntent(WorkoutDetailsIntent.OnNameChanged("New Program"))
 
-        viewModel.onIntent(WorkoutDetailsIntent.OnSaveClicked)
+        viewModel.onIntent(WorkoutDetailsIntent.OnDoneClicked)
         runCurrent()
 
         assertEquals(listOf(WorkoutEntity(id = generatedId, name = "New Program", description = null, exercises = emptyList())), repository.createdWorkouts)
@@ -359,7 +401,7 @@ class WorkoutDetailsViewModelTest {
         runCurrent()
         viewModel.onIntent(WorkoutDetailsIntent.OnNameChanged("Renamed"))
 
-        viewModel.onIntent(WorkoutDetailsIntent.OnSaveClicked)
+        viewModel.onIntent(WorkoutDetailsIntent.OnDoneClicked)
         runCurrent()
 
         val saved = repository.editedWorkouts.single()
@@ -370,6 +412,45 @@ class WorkoutDetailsViewModelTest {
         assertEquals(1, navigator.backCallCount)
     }
 
+    /**
+     * Регрессия: у `accent`/`glyph` в [WorkoutEntity] есть значения по умолчанию, поэтому пропуск
+     * полей при сборке сущности не ломал компиляцию, а молча перекрашивал программу в slate/squat
+     * при каждом сохранении.
+     */
+    @Test
+    fun saveInEditModeKeepsProgramMarkUntouched() = runTest(testDispatcher) {
+        val repository = FakeWorkoutRepository().apply {
+            workoutToReturn = workout(id = "w1", accent = ExerciseAccent.Coral, glyph = ExerciseGlyph.PullUp)
+        }
+        val viewModel = createViewModel(initialId = "w1", workoutRepository = repository)
+        runCurrent()
+        viewModel.onIntent(WorkoutDetailsIntent.OnNameChanged("Renamed"))
+
+        viewModel.onIntent(WorkoutDetailsIntent.OnDoneClicked)
+        runCurrent()
+
+        val saved = repository.editedWorkouts.single()
+        assertEquals(ExerciseAccent.Coral, saved.accent)
+        assertEquals(ExerciseGlyph.PullUp, saved.glyph)
+    }
+
+    @Test
+    fun saveInCreateModeWritesChosenMark() = runTest(testDispatcher) {
+        val repository = FakeWorkoutRepository()
+        val viewModel = createViewModel(initialId = null, workoutRepository = repository)
+        runCurrent()
+        viewModel.onIntent(WorkoutDetailsIntent.OnNameChanged("Leg Day"))
+        viewModel.onIntent(WorkoutDetailsIntent.OnAccentChanged(ExerciseAccent.Lime))
+        viewModel.onIntent(WorkoutDetailsIntent.OnGlyphChanged(ExerciseGlyph.Squat))
+
+        viewModel.onIntent(WorkoutDetailsIntent.OnDoneClicked)
+        runCurrent()
+
+        val created = repository.createdWorkouts.single()
+        assertEquals(ExerciseAccent.Lime, created.accent)
+        assertEquals(ExerciseGlyph.Squat, created.glyph)
+    }
+
     @Test
     fun saveFailureKeepsFormAndSurfacesErrorWithoutNavigating() = runTest(testDispatcher) {
         val repository = FakeWorkoutRepository().apply { createWorkoutError = IllegalStateException("save failed") }
@@ -378,7 +459,7 @@ class WorkoutDetailsViewModelTest {
         runCurrent()
         viewModel.onIntent(WorkoutDetailsIntent.OnNameChanged("New Program"))
 
-        viewModel.onIntent(WorkoutDetailsIntent.OnSaveClicked)
+        viewModel.onIntent(WorkoutDetailsIntent.OnDoneClicked)
         runCurrent()
 
         assertNotNull(viewModel.uiState.value.saveError)
@@ -415,8 +496,17 @@ class WorkoutDetailsViewModelTest {
         id: String,
         name: String = "Push Day",
         description: String? = null,
+        accent: ExerciseAccent = ExerciseAccent.Default,
+        glyph: ExerciseGlyph = ExerciseGlyph.Default,
         exercises: List<WorkoutExerciseWithRepsEntity> = emptyList(),
-    ): WorkoutEntity = WorkoutEntity(id = id, name = name, description = description, exercises = exercises)
+    ): WorkoutEntity = WorkoutEntity(
+        id = id,
+        name = name,
+        description = description,
+        accent = accent,
+        glyph = glyph,
+        exercises = exercises,
+    )
 
     private fun exercise(id: String, name: String, vararg plan: Pair<Int, Double?>): WorkoutExerciseWithRepsEntity =
         WorkoutExerciseWithRepsEntity(
@@ -429,6 +519,8 @@ private val WorkoutDetailsUiState.editingArm: WorkoutDetailsContent.Editing?
     get() = content as? WorkoutDetailsContent.Editing
 private val WorkoutDetailsUiState.name: String? get() = editingArm?.name
 private val WorkoutDetailsUiState.description: String? get() = editingArm?.description
+private val WorkoutDetailsUiState.accent: ExerciseAccent? get() = editingArm?.accent
+private val WorkoutDetailsUiState.glyph: ExerciseGlyph? get() = editingArm?.glyph
 private val WorkoutDetailsUiState.exercises: List<WorkoutExerciseUiModel> get() = editingArm?.exercises.orEmpty()
 private val WorkoutDetailsUiState.editor: WorkoutDetailsEditor? get() = editingArm?.editor
 private val WorkoutDetailsUiState.isSaving: Boolean get() = editingArm?.isSaving == true

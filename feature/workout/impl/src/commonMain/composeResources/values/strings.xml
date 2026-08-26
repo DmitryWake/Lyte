@@ -5,11 +5,11 @@
     <string name="workout_list_error">Не удалось загрузить программы</string>
     <string name="workout_list_delete_error">Не удалось удалить программу</string>
     <string name="workout_list_empty_message">Создайте первую программу</string>
-    <string name="workout_list_empty_hint">Программа — шаблон тренировки: упражнения, подходы и веса</string>
+    <string name="workout_list_empty_hint">Программа — это список упражнений и подходов, по которому идёт тренировка.</string>
     <string name="workout_list_delete_a11y">Удалить программу</string>
-    <string name="workout_list_delete_dialog_title">Удалить программу\n«%1$s»?</string>
-    <string name="workout_list_delete_dialog_description">История сессий сохранится.</string>
-    <plurals name="workout_list_exercise_count">
+    <string name="workout_list_delete_dialog_title">Удалить программу «%1$s»?</string>
+    <string name="workout_list_delete_dialog_description">Тренировки в истории останутся.</string>
+    <plurals name="workout_exercise_count">
         <item quantity="one">%1$d упражнение</item>
         <item quantity="few">%1$d упражнения</item>
         <item quantity="many">%1$d упражнений</item>
@@ -17,9 +17,13 @@
     </plurals>
     <string name="workout_details_title">Программа</string>
     <string name="workout_details_name_label">Название</string>
+    <string name="workout_details_name_placeholder">Например, Push Day</string>
     <string name="workout_details_exercises_title">Упражнения</string>
+    <string name="workout_details_exercises_empty">Пока пусто. Добавьте первое упражнение — подходы настроите следом.</string>
+    <string name="workout_details_mark_title">Цвет и знак</string>
+    <string name="workout_details_mark_a11y">Цвет и знак программы</string>
     <string name="workout_details_add_exercise">Добавить упражнение</string>
-    <string name="workout_details_save">Сохранить</string>
+    <string name="workout_details_done">Готово</string>
     <string name="workout_details_error">Не удалось загрузить программу</string>
     <string name="workout_details_save_error">Не удалось сохранить программу</string>
     <plurals name="workout_details_set_count">
@@ -29,7 +33,6 @@
         <item quantity="other">%1$d подходов</item>
     </plurals>
     <string name="workout_details_sets_add">Добавить подход</string>
-    <string name="workout_details_sets_done">Готово</string>
     <string name="workout_details_set_number">Подход %1$d</string>
     <string name="workout_details_picker_title">Добавить упражнение</string>
     <string name="workout_details_picker_search_placeholder">Поиск по названию</string>

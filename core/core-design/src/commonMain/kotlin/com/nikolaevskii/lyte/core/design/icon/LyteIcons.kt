@@ -12,7 +12,6 @@ import com.composables.icons.lucide.CircleDot
 import com.composables.icons.lucide.CircleMinus
 import com.composables.icons.lucide.ClipboardList
 import com.composables.icons.lucide.Dumbbell
-import com.composables.icons.lucide.EllipsisVertical
 import com.composables.icons.lucide.GripVertical
 import com.composables.icons.lucide.History
 import com.composables.icons.lucide.List
@@ -46,7 +45,6 @@ object LyteIcons {
     val ChevronRight: ImageVector get() = Lucide.ChevronRight
     val ChevronLeft: ImageVector get() = Lucide.ChevronLeft
     val GripVertical: ImageVector get() = Lucide.GripVertical
-    val OverflowMenu: ImageVector get() = Lucide.EllipsisVertical
     val Sparkles: ImageVector get() = Lucide.Sparkles
     val Delete: ImageVector get() = Lucide.Trash2
     val Edit: ImageVector get() = Lucide.PencilLine

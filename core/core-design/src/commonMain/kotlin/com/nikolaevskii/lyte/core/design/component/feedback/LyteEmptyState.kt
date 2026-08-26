@@ -39,13 +39,20 @@ private val EmptyStateHintMaxWidth = 260.dp
 private val EmptyStateActionSpacing = 28.dp
 private val EmptyStateMessageTracking = (-0.3).sp
 
-/** Полноэкранное пустое состояние: иконка-метка, заголовок, подсказка, одно действие. */
+/**
+ * Полноэкранное пустое состояние: иконка-метка, заголовок, подсказка, одно действие.
+ *
+ * [actionIcon] рисуется внутри кнопки действия: в списке программ (3.1) она подписана знаком
+ * («+ Новая программа»), а в шторке выбора программы (4.1) знака нет — поэтому иконка необязательна,
+ * а не прошита в компонент.
+ */
 @Composable
 fun LyteEmptyState(
     message: String,
     icon: ImageVector = LyteIcons.Dumbbell,
     hint: String? = null,
     actionLabel: String? = null,
+    actionIcon: ImageVector? = null,
     onAction: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -95,6 +102,7 @@ fun LyteEmptyState(
                 text = actionLabel,
                 onClick = onAction,
                 size = LyteButtonSize.Small,
+                icon = actionIcon,
                 modifier = Modifier.padding(top = EmptyStateActionSpacing),
             )
         }
@@ -113,6 +121,7 @@ private fun LyteEmptyStatePreview() {
                 icon = LyteIcons.ClipboardList,
                 hint = "Программа — это список упражнений и подходов, по которому идёт тренировка.",
                 actionLabel = "Новая программа",
+                actionIcon = LyteIcons.Plus,
                 onAction = {},
             )
         }
