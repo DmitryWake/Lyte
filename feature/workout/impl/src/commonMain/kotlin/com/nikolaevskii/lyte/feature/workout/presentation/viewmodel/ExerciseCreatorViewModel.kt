@@ -32,6 +32,14 @@ class ExerciseCreatorViewModel(
             is ExerciseCreatorIntent.OnDescriptionChanged ->
                 updateState { copy(exercise = exercise.copy(description = intent.description)) }
 
+            // Маркер идёт мимо editing(): доступность «Сохранить» зависит только от имени, а
+            // пересчёт заодно погасил бы баннер неудачной записи — выбор цвета его не исправляет.
+            is ExerciseCreatorIntent.OnAccentChanged ->
+                updateState { copy(exercise = exercise.copy(accent = intent.accent)) }
+
+            is ExerciseCreatorIntent.OnGlyphChanged ->
+                updateState { copy(exercise = exercise.copy(glyph = intent.glyph)) }
+
             ExerciseCreatorIntent.OnCreateClicked -> submit()
         }
     }
@@ -65,7 +73,7 @@ class ExerciseCreatorViewModel(
         }
     }
 
-    /** Обновляет форму: новое упражнение + пересчёт «Создать» (безымянное создать нельзя). */
+    /** Обновляет форму: новое упражнение + пересчёт «Сохранить» (безымянное создать нельзя). */
     private fun ExerciseCreatorUiState.editing(newExercise: WorkoutExerciseEntity): ExerciseCreatorUiState =
         copy(
             exercise = newExercise,

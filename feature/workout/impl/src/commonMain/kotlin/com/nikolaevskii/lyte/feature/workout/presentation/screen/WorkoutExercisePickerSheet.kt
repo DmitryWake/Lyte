@@ -1,8 +1,6 @@
 package com.nikolaevskii.lyte.feature.workout.presentation.screen
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,8 +16,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nikolaevskii.lyte.core.design.LyteTheme
 import com.nikolaevskii.lyte.core.design.component.button.LyteButton
@@ -51,6 +49,9 @@ import com.nikolaevskii.lyte.feature.workout.presentation.viewmodel.ExercisePick
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+
+private val PickerSearchBottomPadding = 10.dp
+private val PickerBottomBarPadding = 28.dp
 
 private val previewLibrary = listOf(
     WorkoutExerciseEntity(
@@ -142,7 +143,11 @@ fun WorkoutExercisePickerSheetContent(
                 placeholder = stringResource(Res.string.workout_details_picker_search_placeholder),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = LyteTheme.spacing.s5, vertical = LyteTheme.spacing.s2),
+                    .padding(
+                        start = LyteTheme.spacing.s5,
+                        end = LyteTheme.spacing.s5,
+                        bottom = PickerSearchBottomPadding,
+                    ),
             )
         },
         bottomBar = {
@@ -157,7 +162,12 @@ fun WorkoutExercisePickerSheetContent(
                     onClick = { onIntent(ExercisePickerIntent.OnCreateExerciseClicked) },
                     icon = LyteIcons.Plus,
                     fullWidth = true,
-                    modifier = Modifier.padding(horizontal = LyteTheme.spacing.s5, vertical = LyteTheme.spacing.s4),
+                    modifier = Modifier.padding(
+                        start = LyteTheme.spacing.s5,
+                        end = LyteTheme.spacing.s5,
+                        top = LyteTheme.spacing.s3,
+                        bottom = PickerBottomBarPadding,
+                    ),
                 )
             }
         },
@@ -184,7 +194,17 @@ fun WorkoutExercisePickerSheetContent(
                     )
                 }
 
-            ExercisePickerContent.NotFound -> ExercisePickerNotFound()
+            // Пустой результат поиска — то же полноразмерное состояние, что и пустая библиотека,
+            // но со своей иконкой: в макете 3.3 это один и тот же блок, а `SearchX` заведён в ДС
+            // именно под него.
+            ExercisePickerContent.NotFound ->
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    LyteEmptyState(
+                        icon = LyteIcons.SearchX,
+                        message = stringResource(Res.string.workout_details_picker_not_found_title),
+                        hint = stringResource(Res.string.workout_details_picker_not_found_hint),
+                    )
+                }
 
             is ExercisePickerContent.Exercises -> LazyColumn(
                 contentPadding = PaddingValues(horizontal = LyteTheme.spacing.s5, vertical = LyteTheme.spacing.s2),
@@ -203,33 +223,6 @@ fun WorkoutExercisePickerSheetContent(
                 }
             }
         }
-    }
-}
-
-/**
- * Пустой результат поиска — намеренно компактнее, чем `LyteEmptyState`: библиотека не пуста, это
- * временное состояние строки поиска, и крупный бейдж с иконкой здесь читался бы как тупик.
- */
-@Composable
-private fun ExercisePickerNotFound(modifier: Modifier = Modifier) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(LyteTheme.spacing.s1),
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = LyteTheme.spacing.s4, vertical = LyteTheme.spacing.s10),
-    ) {
-        Text(
-            text = stringResource(Res.string.workout_details_picker_not_found_title),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-        Text(
-            text = stringResource(Res.string.workout_details_picker_not_found_hint),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
     }
 }
 

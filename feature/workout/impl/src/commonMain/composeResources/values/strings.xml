@@ -34,18 +34,19 @@
     </plurals>
     <string name="workout_details_sets_add">Добавить подход</string>
     <string name="workout_details_set_number">Подход %1$d</string>
-    <string name="workout_details_picker_title">Добавить упражнение</string>
+    <string name="workout_details_picker_title">Упражнение</string>
     <string name="workout_details_picker_search_placeholder">Поиск по названию</string>
-    <string name="workout_details_picker_create">Создать новое упражнение</string>
+    <string name="workout_details_picker_create">Создать упражнение</string>
     <string name="workout_details_picker_not_found_title">Ничего не найдено</string>
-    <string name="workout_details_picker_not_found_hint">Проверьте название или создайте новое упражнение</string>
+    <string name="workout_details_picker_not_found_hint">Проверьте запрос — или создайте своё упражнение.</string>
     <string name="workout_details_picker_error">Не удалось загрузить упражнения</string>
     <string name="workout_details_exercise_create_error">Не удалось сохранить упражнение</string>
     <string name="workout_details_picker_empty_message">Библиотека упражнений пуста</string>
     <string name="workout_details_picker_empty_hint">Создайте первое упражнение</string>
     <string name="workout_details_exercise_create_title">Новое упражнение</string>
     <string name="workout_details_exercise_create_name_label">Название</string>
-    <string name="workout_details_exercise_create_description_label">Описание · необязательно</string>
-    <string name="workout_details_exercise_create_description_placeholder">Техника, оборудование…</string>
-    <string name="workout_details_exercise_create_submit">Создать</string>
+    <string name="workout_details_exercise_create_name_placeholder">Например, Жим гантелей</string>
+    <string name="workout_details_exercise_create_description_label">Описание</string>
+    <string name="workout_details_exercise_create_description_placeholder">Оборудование, техника — коротко</string>
+    <string name="workout_details_exercise_create_submit">Сохранить</string>
 </resources>

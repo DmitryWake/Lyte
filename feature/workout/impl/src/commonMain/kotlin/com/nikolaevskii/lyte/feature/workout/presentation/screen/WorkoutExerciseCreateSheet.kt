@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -17,17 +18,25 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nikolaevskii.lyte.core.design.LyteTheme
 import com.nikolaevskii.lyte.core.design.component.button.LyteButton
 import com.nikolaevskii.lyte.core.design.component.overlay.LyteBottomSheet
-import com.nikolaevskii.lyte.core.design.component.overlay.LyteBottomSheetHeight
+import com.nikolaevskii.lyte.core.design.component.picker.LyteAccentPicker
+import com.nikolaevskii.lyte.core.design.component.picker.LyteExerciseIconPicker
 import com.nikolaevskii.lyte.core.design.component.textfield.LyteTextField
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import com.nikolaevskii.lyte.feature.workout.generated.resources.Res
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_exercise_create_description_label
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_exercise_create_description_placeholder
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_exercise_create_error
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_exercise_create_name_label
+import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_exercise_create_name_placeholder
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_exercise_create_submit
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_exercise_create_title
 import com.nikolaevskii.lyte.core.mvi.LyteError
+import com.nikolaevskii.lyte.feature.workout.presentation.model.toExerciseAccent
+import com.nikolaevskii.lyte.feature.workout.presentation.model.toExerciseGlyph
+import com.nikolaevskii.lyte.feature.workout.presentation.model.toLyteAccent
+import com.nikolaevskii.lyte.feature.workout.presentation.model.toLyteGlyph
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExerciseCreatorIntent
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExerciseCreatorUiState
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.ExerciseCreatorUiState.ExerciseCreatorContent
@@ -36,8 +45,8 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
-private val CreateSheetFieldSpacing = 14.dp
-private val CreateSheetSubmitTopSpacing = 18.dp
+private val CreateSheetFieldSpacing = 18.dp
+private val CreateSheetBottomPadding = 28.dp
 private const val PREVIEW_EXERCISE_ID = "preview"
 
 /**
@@ -48,8 +57,9 @@ private const val PREVIEW_EXERCISE_ID = "preview"
  * библиотеку, а наружу отдаёт только созданное упражнение через [onExerciseCreated]. Добавить его в
  * программу и закрыть шторку — дело владельца.
  *
- * Шторка открывается по высоте контента ([LyteBottomSheetHeight.WrapContent]) — полей всего два.
- * Кнопка «Создать» прибита к её низу и гаснет при пустом названии и на время записи в библиотеку.
+ * Высота — во весь экран: кроме названия и описания форма несёт пикеры цвета и знака, и по
+ * контенту она уже занимает почти весь экран, а `Full`-режим шторки заодно разводит клавиатуру.
+ * Кнопка «Сохранить» прибита к низу и гаснет при пустом названии и на время записи в библиотеку.
  */
 @Composable
 fun WorkoutExerciseCreateSheet(
@@ -87,20 +97,27 @@ fun WorkoutExerciseCreateSheetContent(
     LyteBottomSheet(
         title = stringResource(Res.string.workout_details_exercise_create_title),
         onDismissRequest = onDismissRequest,
-        height = LyteBottomSheetHeight.WrapContent,
         bottomBar = {
-            LyteButton(
-                text = stringResource(Res.string.workout_details_exercise_create_submit),
-                onClick = { onIntent(ExerciseCreatorIntent.OnCreateClicked) },
-                enabled = (state.content as? ExerciseCreatorContent.Editing)?.isSubmitEnabled == true,
-                fullWidth = true,
-                modifier = Modifier.padding(
-                    start = LyteTheme.spacing.s5,
-                    end = LyteTheme.spacing.s5,
-                    top = CreateSheetSubmitTopSpacing,
-                    bottom = LyteTheme.spacing.s5,
-                ),
-            )
+            // Подложка с тенью отделяет прибитую кнопку от формы, уезжающей под неё, — как в шторке
+            // выбора упражнения и в редакторе подходов.
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceContainerLowest,
+                shadowElevation = LyteTheme.elevation.level2,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                LyteButton(
+                    text = stringResource(Res.string.workout_details_exercise_create_submit),
+                    onClick = { onIntent(ExerciseCreatorIntent.OnCreateClicked) },
+                    enabled = (state.content as? ExerciseCreatorContent.Editing)?.isSubmitEnabled == true,
+                    fullWidth = true,
+                    modifier = Modifier.padding(
+                        start = LyteTheme.spacing.s5,
+                        end = LyteTheme.spacing.s5,
+                        top = LyteTheme.spacing.s3,
+                        bottom = CreateSheetBottomPadding,
+                    ),
+                )
+            }
         },
         modifier = modifier,
     ) {
@@ -115,6 +132,7 @@ fun WorkoutExerciseCreateSheetContent(
                 value = state.exercise.name,
                 onValueChange = { name -> onIntent(ExerciseCreatorIntent.OnNameChanged(name)) },
                 label = stringResource(Res.string.workout_details_exercise_create_name_label),
+                placeholder = stringResource(Res.string.workout_details_exercise_create_name_placeholder),
                 modifier = Modifier.fillMaxWidth(),
             )
             LyteTextField(
@@ -124,6 +142,18 @@ fun WorkoutExerciseCreateSheetContent(
                 placeholder = stringResource(Res.string.workout_details_exercise_create_description_placeholder),
                 multiline = true,
                 modifier = Modifier.fillMaxWidth().padding(top = CreateSheetFieldSpacing),
+            )
+            LyteAccentPicker(
+                value = state.exercise.accent.toLyteAccent(),
+                onChange = { selected -> onIntent(ExerciseCreatorIntent.OnAccentChanged(selected.toExerciseAccent())) },
+                modifier = Modifier.padding(top = CreateSheetFieldSpacing),
+            )
+            // Пикер знаков перекрашивается вслед за выбранным цветом — поэтому accent сюда тоже идёт.
+            LyteExerciseIconPicker(
+                value = state.exercise.glyph.toLyteGlyph(),
+                accent = state.exercise.accent.toLyteAccent(),
+                onChange = { selected -> onIntent(ExerciseCreatorIntent.OnGlyphChanged(selected.toExerciseGlyph())) },
+                modifier = Modifier.padding(top = CreateSheetFieldSpacing),
             )
             (state.content as? ExerciseCreatorContent.Editing)?.error?.let {
                 Text(
@@ -143,7 +173,11 @@ private fun WorkoutExerciseCreateSheetContentPreview() {
     LyteTheme {
         WorkoutExerciseCreateSheetContent(
             state = ExerciseCreatorUiState(
-                exercise = previewExercise(name = "Жим гантелей на наклонной"),
+                exercise = previewExercise(
+                    name = "Жим гантелей на наклонной",
+                    accent = ExerciseAccent.Teal,
+                    glyph = ExerciseGlyph.DumbbellPress,
+                ),
                 content = ExerciseCreatorContent.Editing(isSubmitEnabled = true),
             ),
             onIntent = {},
@@ -179,5 +213,9 @@ private fun WorkoutExerciseCreateSheetContentErrorPreview() {
     }
 }
 
-private fun previewExercise(name: String): WorkoutExerciseEntity =
-    WorkoutExerciseEntity(id = PREVIEW_EXERCISE_ID, name = name)
+private fun previewExercise(
+    name: String,
+    accent: ExerciseAccent = ExerciseAccent.Default,
+    glyph: ExerciseGlyph = ExerciseGlyph.Default,
+): WorkoutExerciseEntity =
+    WorkoutExerciseEntity(id = PREVIEW_EXERCISE_ID, name = name, accent = accent, glyph = glyph)
