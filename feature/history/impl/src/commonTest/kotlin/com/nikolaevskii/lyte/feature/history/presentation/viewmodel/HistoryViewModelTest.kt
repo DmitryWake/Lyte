@@ -19,6 +19,8 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HistoryViewModelTest {
@@ -43,8 +45,8 @@ class HistoryViewModelTest {
     fun loadsSessionsGroupedByMonthOnInit() = runTest(testDispatcher) {
         val repository = FakeSessionHistoryRepository(
             finishedSessions = listOf(
-                finishedSession("1", "Push Day", LocalDateTime(2026, Month.JULY, 15, 12, 0), durationMinutes = 52, completedSetCount = 15, totalSetCount = 16),
-                finishedSession("2", "Pull Day", LocalDateTime(2026, Month.JUNE, 15, 12, 0), durationMinutes = 58, completedSetCount = 17, totalSetCount = 17),
+                finishedSession("1", "Push Day", LocalDateTime(2026, Month.JULY, 15, 12, 0), durationMinutes = 52),
+                finishedSession("2", "Pull Day", LocalDateTime(2026, Month.JUNE, 15, 12, 0), durationMinutes = 58),
             ),
         )
         val viewModel = viewModel(repository)
@@ -71,7 +73,7 @@ class HistoryViewModelTest {
         runCurrent()
         assertEquals(HistoryUiState.Empty, viewModel.uiState.value)
         repository.finishedSessions = listOf(
-            finishedSession("1", "Push Day", LocalDateTime(2026, Month.JULY, 2, 12, 0), durationMinutes = 52, completedSetCount = 15, totalSetCount = 16),
+            finishedSession("1", "Push Day", LocalDateTime(2026, Month.JULY, 2, 12, 0), durationMinutes = 52),
         )
 
         viewModel.onIntent(HistoryIntent.OnScreenShown)
@@ -96,7 +98,7 @@ class HistoryViewModelTest {
     fun refreshFailureKeepsExistingContent() = runTest(testDispatcher) {
         val repository = FakeSessionHistoryRepository(
             finishedSessions = listOf(
-                finishedSession("1", "Push Day", LocalDateTime(2026, Month.JULY, 2, 12, 0), durationMinutes = 52, completedSetCount = 15, totalSetCount = 16),
+                finishedSession("1", "Push Day", LocalDateTime(2026, Month.JULY, 2, 12, 0), durationMinutes = 52),
             ),
         )
         val viewModel = viewModel(repository)
@@ -115,7 +117,7 @@ class HistoryViewModelTest {
     fun sessionClickNavigatesToDetailsWithoutChangingState() = runTest(testDispatcher) {
         val repository = FakeSessionHistoryRepository(
             finishedSessions = listOf(
-                finishedSession("s1", "Push Day", LocalDateTime(2026, Month.JULY, 2, 12, 0), durationMinutes = 52, completedSetCount = 15, totalSetCount = 16),
+                finishedSession("s1", "Push Day", LocalDateTime(2026, Month.JULY, 2, 12, 0), durationMinutes = 52),
             ),
         )
         val navigator = FakeLyteNavigator()
@@ -135,5 +137,15 @@ class HistoryViewModelTest {
     ): HistoryViewModel = HistoryViewModel(
         sessionHistoryRepository = repository,
         lyteNavigator = navigator,
+        clock = FixedClock(TEST_NOW),
     )
+
+    /** Часы прибиты: относительная дата карточки не должна зависеть от дня запуска тестов. */
+    private class FixedClock(private val now: Instant) : Clock {
+        override fun now(): Instant = now
+    }
+
+    private companion object {
+        val TEST_NOW: Instant = Instant.parse("2026-08-20T12:00:00Z")
+    }
 }

@@ -3,6 +3,7 @@ package com.nikolaevskii.lyte.feature.history
 import com.nikolaevskii.lyte.core.session.domain.model.SessionExerciseEntity
 import com.nikolaevskii.lyte.core.session.domain.model.SessionProgramEntity
 import com.nikolaevskii.lyte.core.session.domain.model.SessionSetEntity
+import com.nikolaevskii.lyte.core.session.domain.model.SessionSetOutcomeEntity
 import com.nikolaevskii.lyte.core.session.domain.model.SessionSetResultEntity
 import com.nikolaevskii.lyte.core.session.domain.model.SessionSetValueEntity
 import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionEntity
@@ -11,12 +12,20 @@ import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
 import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import kotlin.time.Duration.Companion.minutes
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 
 /** Фиксированная зона тестов — чтобы разложение даты было детерминированным. */
 internal val TEST_TIME_ZONE: TimeZone = TimeZone.UTC
+
+/**
+ * «Сегодня» по умолчанию — заведомо позже всех фикстур, поэтому относительной даты у них нет и тесты
+ * группировки не зависят от неё. Тесты самой относительной даты передают своё значение.
+ */
+internal val TEST_TODAY: LocalDate = LocalDate(2026, Month.AUGUST, 20)
 
 /**
  * Собирает завершённую сессию с моментом окончания [finishedAt] (в [timeZone]) и стартом на
@@ -27,8 +36,7 @@ internal fun finishedSession(
     programName: String,
     finishedAt: LocalDateTime,
     durationMinutes: Int,
-    completedSetCount: Int,
-    totalSetCount: Int,
+    setOutcomes: List<SessionSetOutcomeEntity?> = emptyList(),
     accent: ExerciseAccent = ExerciseAccent.Default,
     glyph: ExerciseGlyph = ExerciseGlyph.Default,
     timeZone: TimeZone = TEST_TIME_ZONE,
@@ -39,8 +47,7 @@ internal fun finishedSession(
         program = SessionProgramEntity(id = "prog-$id", name = programName, accent = accent, glyph = glyph),
         startedAt = finished - durationMinutes.minutes,
         finishedAt = finished,
-        completedSetCount = completedSetCount,
-        totalSetCount = totalSetCount,
+        setOutcomes = setOutcomes,
     )
 }
 
@@ -51,7 +58,7 @@ internal fun finishedSession(
 internal fun finishedSessionEntity(
     id: String = "session-1",
     programName: String = "Push Day",
-    startedAt: LocalDateTime = LocalDateTime(2026, kotlinx.datetime.Month.JULY, 2, 18, 24),
+    startedAt: LocalDateTime = LocalDateTime(2026, Month.JULY, 2, 18, 24),
     durationMinutes: Int = 52,
     exercises: List<SessionExerciseEntity>,
     timeZone: TimeZone = TEST_TIME_ZONE,

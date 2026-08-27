@@ -1,10 +1,8 @@
 package com.nikolaevskii.lyte.feature.history.presentation.model
 
-import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTone
 import com.nikolaevskii.lyte.core.design.model.LyteSetValue
 import com.nikolaevskii.lyte.core.session.domain.model.SessionExerciseEntity
 import com.nikolaevskii.lyte.core.session.domain.model.SessionSetEntity
-import com.nikolaevskii.lyte.core.session.domain.model.SessionSetOutcomeEntity
 import com.nikolaevskii.lyte.core.session.domain.model.SessionSetResultEntity
 import com.nikolaevskii.lyte.core.session.domain.model.SessionSetValueEntity
 import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionEntity
@@ -17,8 +15,9 @@ import kotlinx.datetime.toLocalDateTime
 /**
  * Маппит доменную сессию в готовую к отрисовке [HistorySessionDetailsUiModel] (5.2): дата/время начала
  * по локальному календарю [timeZone], длительность как `finishedAt − startedAt`, счётчики подходов и
- * группы упражнений с диффом «план→факт». Тоны — из единой точки правды [outcome]. Чистая функция без
- * ресурсов: локализованные подписи (месяц, единицы) подставляет UI-слой.
+ * группы упражнений с диффом «план→факт». Тоны — из единой точки правды [outcome] через общий
+ * [toProgressTone]. Чистая функция без ресурсов: локализованные подписи (месяц, единицы)
+ * подставляет UI-слой.
  */
 internal fun WorkoutSessionEntity.toDetailsUiModel(timeZone: TimeZone): HistorySessionDetailsUiModel {
     val startLocal = startedAt.toLocalDateTime(timeZone)
@@ -55,14 +54,6 @@ private fun SessionSetEntity.toDiffRowUiModel(number: Int): HistoryDiffRowUiMode
         actual = (result as? SessionSetResultEntity.Completed)?.actual?.toSetValue(),
         note = note.takeIf { text -> text.isNotBlank() },
     )
-
-private fun SessionSetOutcomeEntity?.toProgressTone(): LyteProgressTone = when (this) {
-    SessionSetOutcomeEntity.MET -> LyteProgressTone.Met
-    SessionSetOutcomeEntity.EXCEEDED -> LyteProgressTone.Positive
-    SessionSetOutcomeEntity.MISSED -> LyteProgressTone.Negative
-    // SKIPPED и невыполненный (null, в завершённой сессии не встречается) — «пропущено».
-    SessionSetOutcomeEntity.SKIPPED, null -> LyteProgressTone.Skipped
-}
 
 /** Вес `null` — упражнение своего веса: строка диффа покажет «12 повт», а не «12×0 кг». */
 private fun SessionSetValueEntity.toSetValue(): LyteSetValue =

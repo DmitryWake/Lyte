@@ -20,51 +20,41 @@ abstract class WorkoutSessionDao {
     @Query("SELECT COUNT(*) FROM workout_session WHERE finished_at IS NULL")
     abstract suspend fun countActiveSessions(): Int
 
-    // Литерал 'COMPLETED' обязан совпадать с SessionSetDatabaseEntity.RESULT_STATUS_COMPLETED —
-    // Room не подставляет const в @Query. Покрыто тестом на счётчики.
-    @Query(
-        """
-        SELECT workout_session.id AS id,
-               workout_session.program_id AS programId,
-               workout_session.program_name AS programName,
-               workout_session.program_accent AS programAccent,
-               workout_session.program_glyph AS programGlyph,
-               workout_session.started_at AS startedAt,
-               workout_session.finished_at AS finishedAt,
-               COUNT(session_set.id) AS totalSetCount,
-               COUNT(CASE WHEN session_set.result_status = 'COMPLETED' THEN 1 END) AS completedSetCount
-        FROM workout_session
-        LEFT JOIN session_exercise ON session_exercise.session_id = workout_session.id
-        LEFT JOIN session_set ON session_set.session_exercise_id = session_exercise.id
-        WHERE workout_session.finished_at IS NOT NULL
-        GROUP BY workout_session.id
-        ORDER BY workout_session.finished_at DESC
-        """,
-    )
-    abstract suspend fun getFinishedItems(): List<SessionItemWithSetCounts>
+    // Только строка сессии: снапшот программы лежит в ней самой, а подходы для трека исходов
+    // забирает getFinishedSessionSets() отдельным запросом — по одному на весь список, не на карточку.
+    @Query("SELECT * FROM workout_session WHERE finished_at IS NOT NULL ORDER BY finished_at DESC")
+    abstract suspend fun getFinishedSessions(): List<WorkoutSessionDatabaseEntity>
 
-    // Реактивная версия getFinishedItems: тот же запрос, эмитит при изменении сессий/подходов.
-    // Литерал 'COMPLETED' дублируется намеренно — Room не подставляет const в @Query.
+    // Реактивная версия getFinishedSessions: тот же запрос, эмитит при изменении сессий.
+    @Query("SELECT * FROM workout_session WHERE finished_at IS NOT NULL ORDER BY finished_at DESC")
+    abstract fun observeFinishedSessions(): Flow<List<WorkoutSessionDatabaseEntity>>
+
+    // Подходы всех завершённых сессий разом: потребитель раскладывает их по session_id и считает
+    // исход каждого. Порядок трека (упражнение → подход) задаёт ORDER BY, а не потребитель.
     @Query(
         """
-        SELECT workout_session.id AS id,
-               workout_session.program_id AS programId,
-               workout_session.program_name AS programName,
-               workout_session.program_accent AS programAccent,
-               workout_session.program_glyph AS programGlyph,
-               workout_session.started_at AS startedAt,
-               workout_session.finished_at AS finishedAt,
-               COUNT(session_set.id) AS totalSetCount,
-               COUNT(CASE WHEN session_set.result_status = 'COMPLETED' THEN 1 END) AS completedSetCount
+        SELECT session_exercise.session_id AS session_id, session_set.*
         FROM workout_session
-        LEFT JOIN session_exercise ON session_exercise.session_id = workout_session.id
-        LEFT JOIN session_set ON session_set.session_exercise_id = session_exercise.id
+        JOIN session_exercise ON session_exercise.session_id = workout_session.id
+        JOIN session_set ON session_set.session_exercise_id = session_exercise.id
         WHERE workout_session.finished_at IS NOT NULL
-        GROUP BY workout_session.id
-        ORDER BY workout_session.finished_at DESC
+        ORDER BY workout_session.finished_at DESC, session_exercise.position, session_set.position
         """,
     )
-    abstract fun observeFinishedItems(): Flow<List<SessionItemWithSetCounts>>
+    abstract suspend fun getFinishedSessionSets(): List<FinishedSessionSetRow>
+
+    // Реактивная версия getFinishedSessionSets: эмитит при изменении подходов.
+    @Query(
+        """
+        SELECT session_exercise.session_id AS session_id, session_set.*
+        FROM workout_session
+        JOIN session_exercise ON session_exercise.session_id = workout_session.id
+        JOIN session_set ON session_set.session_exercise_id = session_exercise.id
+        WHERE workout_session.finished_at IS NOT NULL
+        ORDER BY workout_session.finished_at DESC, session_exercise.position, session_set.position
+        """,
+    )
+    abstract fun observeFinishedSessionSets(): Flow<List<FinishedSessionSetRow>>
 
     @Insert
     abstract suspend fun insertSession(session: WorkoutSessionDatabaseEntity)

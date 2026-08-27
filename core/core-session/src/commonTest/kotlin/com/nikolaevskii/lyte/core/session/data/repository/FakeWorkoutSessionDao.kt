@@ -1,8 +1,8 @@
 package com.nikolaevskii.lyte.core.session.data.repository
 
+import com.nikolaevskii.lyte.core.db.session.FinishedSessionSetRow
 import com.nikolaevskii.lyte.core.db.session.SessionExerciseDatabaseEntity
 import com.nikolaevskii.lyte.core.db.session.SessionExerciseWithSets
-import com.nikolaevskii.lyte.core.db.session.SessionItemWithSetCounts
 import com.nikolaevskii.lyte.core.db.session.SessionSetDatabaseEntity
 import com.nikolaevskii.lyte.core.db.session.SessionWithExercises
 import com.nikolaevskii.lyte.core.db.session.WorkoutSessionDao
@@ -37,28 +37,30 @@ internal class FakeWorkoutSessionDao : WorkoutSessionDao() {
     override suspend fun countActiveSessions(): Int =
         sessions.values.count { it.finishedAt == null }
 
-    override suspend fun getFinishedItems(): List<SessionItemWithSetCounts> =
+    override suspend fun getFinishedSessions(): List<WorkoutSessionDatabaseEntity> =
         sessions.values
             .filter { it.finishedAt != null }
             .sortedByDescending { it.finishedAt }
-            .map { session ->
-                val sessionSets = setsOf(session.id)
-                SessionItemWithSetCounts(
-                    id = session.id,
-                    programId = session.programId,
-                    programName = session.programName,
-                    programAccent = session.programAccent,
-                    programGlyph = session.programGlyph,
-                    startedAt = session.startedAt,
-                    finishedAt = session.finishedAt ?: 0L,
-                    totalSetCount = sessionSets.size,
-                    completedSetCount = sessionSets.count {
-                        it.resultStatus == SessionSetDatabaseEntity.RESULT_STATUS_COMPLETED
-                    },
-                )
-            }
 
-    override fun observeFinishedItems(): Flow<List<SessionItemWithSetCounts>> = flow { emit(getFinishedItems()) }
+    override fun observeFinishedSessions(): Flow<List<WorkoutSessionDatabaseEntity>> =
+        flow { emit(getFinishedSessions()) }
+
+    override suspend fun getFinishedSessionSets(): List<FinishedSessionSetRow> =
+        getFinishedSessions().flatMap { session ->
+            // Порядок строк — как в ORDER BY настоящего запроса: упражнение, затем подход.
+            exercises
+                .filter { it.sessionId == session.id }
+                .sortedBy { it.position }
+                .flatMap { sessionExercise ->
+                    sets
+                        .filter { it.sessionExerciseId == sessionExercise.id }
+                        .sortedBy { it.position }
+                        .map { set -> FinishedSessionSetRow(sessionId = session.id, set = set) }
+                }
+        }
+
+    override fun observeFinishedSessionSets(): Flow<List<FinishedSessionSetRow>> =
+        flow { emit(getFinishedSessionSets()) }
 
     override suspend fun insertSession(session: WorkoutSessionDatabaseEntity) {
         sessions[session.id] = session
@@ -115,11 +117,6 @@ internal class FakeWorkoutSessionDao : WorkoutSessionDao() {
                     )
                 },
         )
-
-    private fun setsOf(sessionId: String): List<SessionSetDatabaseEntity> {
-        val exerciseIds = exercises.filter { it.sessionId == sessionId }.map { it.id }.toSet()
-        return sets.filter { it.sessionExerciseId in exerciseIds }
-    }
 
     private fun updateSet(id: String, transform: (SessionSetDatabaseEntity) -> SessionSetDatabaseEntity) {
         val index = sets.indexOfFirst { it.id == id }
