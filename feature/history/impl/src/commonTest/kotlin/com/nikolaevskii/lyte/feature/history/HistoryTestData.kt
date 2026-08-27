@@ -74,8 +74,17 @@ internal fun finishedSessionEntity(
     )
 }
 
-internal fun sessionExercise(id: String, name: String, sets: List<SessionSetEntity>): SessionExerciseEntity =
-    SessionExerciseEntity(id = id, exercise = WorkoutExerciseEntity(id = "ex-$id", name = name), sets = sets)
+internal fun sessionExercise(
+    id: String,
+    name: String,
+    sets: List<SessionSetEntity>,
+    accent: ExerciseAccent = ExerciseAccent.Default,
+    glyph: ExerciseGlyph = ExerciseGlyph.Default,
+): SessionExerciseEntity = SessionExerciseEntity(
+    id = id,
+    exercise = WorkoutExerciseEntity(id = "ex-$id", name = name, accent = accent, glyph = glyph),
+    sets = sets,
+)
 
 internal fun sessionSet(
     id: String,

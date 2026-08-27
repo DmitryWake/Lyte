@@ -14,14 +14,14 @@ import kotlinx.datetime.toLocalDateTime
 
 /**
  * Маппит доменную сессию в готовую к отрисовке [HistorySessionDetailsUiModel] (5.2): дата/время начала
- * по локальному календарю [timeZone], длительность как `finishedAt − startedAt`, счётчики подходов и
- * группы упражнений с диффом «план→факт». Тоны — из единой точки правды [outcome] через общий
- * [toProgressTone]. Чистая функция без ресурсов: локализованные подписи (месяц, единицы)
+ * по локальному календарю [timeZone], длительность как `finishedAt − startedAt`, трек исходов по всем
+ * подходам и группы упражнений с диффом «план→факт». Тоны — из единой точки правды [outcome] через
+ * общий [toProgressTone]. Чистая функция без ресурсов: локализованные подписи (месяц, единицы)
  * подставляет UI-слой.
  */
 internal fun WorkoutSessionEntity.toDetailsUiModel(timeZone: TimeZone): HistorySessionDetailsUiModel {
     val startLocal = startedAt.toLocalDateTime(timeZone)
-    val allSets = exercises.flatMap { exercise -> exercise.sets }
+    val groups = exercises.map { exercise -> exercise.toGroupUiModel() }
     val duration = finishedAt?.let { finished -> finished - startedAt } ?: Duration.ZERO
     return HistorySessionDetailsUiModel(
         programName = program.name,
@@ -32,9 +32,9 @@ internal fun WorkoutSessionEntity.toDetailsUiModel(timeZone: TimeZone): HistoryS
         startHour = startLocal.hour,
         startMinute = startLocal.minute,
         durationMinutes = duration.inWholeMinutes.toInt().coerceAtLeast(0),
-        completedSetCount = allSets.count { set -> set.result is SessionSetResultEntity.Completed },
-        totalSetCount = allSets.size,
-        exercises = exercises.map { exercise -> exercise.toGroupUiModel() },
+        // Трек берём из уже посчитанных строк диффа, а не считаем исходы второй раз.
+        setTones = groups.flatMap { group -> group.rows.map { row -> row.tone } },
+        exercises = groups,
     )
 }
 
@@ -42,6 +42,8 @@ private fun SessionExerciseEntity.toGroupUiModel(): HistoryExerciseGroupUiModel 
     HistoryExerciseGroupUiModel(
         exerciseId = id,
         exerciseName = exercise.name,
+        accent = exercise.accent.toLyteAccent(),
+        glyph = exercise.glyph.toLyteGlyph(),
         rows = sets.mapIndexed { index, set -> set.toDiffRowUiModel(index + 1) },
     )
 

@@ -50,6 +50,9 @@ internal class FakeWorkoutSessionRepository(
 
     override fun observeFinishedSessions(): Flow<List<WorkoutSessionItemEntity>> = flow { emit(getFinishedSessions()) }
 
+    // История трекеру не нужна — read-часть контракта здесь только ради компиляции.
+    override suspend fun deleteSession(id: String) = Unit
+
     override suspend fun startSession(workout: WorkoutEntity): String {
         startSessionError?.let { error -> throw error }
         startSessionCalls += workout

@@ -18,21 +18,34 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nikolaevskii.lyte.core.design.LyteTheme
 import com.nikolaevskii.lyte.core.design.component.badge.LyteBadge
 import com.nikolaevskii.lyte.core.design.component.badge.LyteBadgeSize
 import com.nikolaevskii.lyte.core.design.component.badge.LyteBadgeTone
+import com.nikolaevskii.lyte.core.design.component.feedback.LyteDialog
 import com.nikolaevskii.lyte.core.design.component.feedback.LyteDiffRow
+import com.nikolaevskii.lyte.core.design.component.iconbutton.LyteIconButton
+import com.nikolaevskii.lyte.core.design.component.mark.LyteExerciseMark
 import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBar
 import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBarSize
 import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTone
+import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTrack
+import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTrackMode
+import com.nikolaevskii.lyte.core.design.icon.LyteExerciseGlyph
+import com.nikolaevskii.lyte.core.design.icon.LyteIcons
 import com.nikolaevskii.lyte.core.design.model.LyteSetValue
-import com.nikolaevskii.lyte.core.design.theme.withTabularNums
+import com.nikolaevskii.lyte.core.design.theme.LyteAccent
+import com.nikolaevskii.lyte.core.mvi.LyteError
 import com.nikolaevskii.lyte.feature.history.generated.resources.Res
+import com.nikolaevskii.lyte.feature.history.generated.resources.history_details_delete_a11y
+import com.nikolaevskii.lyte.feature.history.generated.resources.history_details_delete_dialog_description
+import com.nikolaevskii.lyte.feature.history.generated.resources.history_details_delete_dialog_title
+import com.nikolaevskii.lyte.feature.history.generated.resources.history_details_delete_error
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_details_error
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_details_meta
-import com.nikolaevskii.lyte.feature.history.generated.resources.history_details_sets
+import com.nikolaevskii.lyte.feature.history.generated.resources.history_details_not_found
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_details_title
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_duration
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_month_names_genitive
@@ -46,6 +59,12 @@ import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+
+private val DetailsDeleteButtonSize = 44.dp
+private val DetailsMarkSize = 36.dp
+private val DetailsGroupHeaderGap = 10.dp
+private val DetailsSummaryGap = 10.dp
+private const val MINUTE_PAD_LENGTH = 2
 
 @Composable
 fun HistorySessionDetailsScreen(
@@ -65,14 +84,29 @@ fun HistorySessionDetailsContent(
     state: HistorySessionDetailsUiState,
     onIntent: (HistorySessionDetailsIntent) -> Unit,
 ) {
-    val fallbackTitle = stringResource(Res.string.history_details_title)
-    val title = (state as? HistorySessionDetailsUiState.Content)?.details?.programName ?: fallbackTitle
+    val content = state as? HistorySessionDetailsUiState.Content
+    val genitiveMonths = stringArrayResource(Res.array.history_month_names_genitive)
     Scaffold(
         topBar = {
             LyteTopBar(
-                title = title,
+                // Пока сессия грузится, названия программы ещё нет — шапка не должна быть пустой.
+                title = content?.details?.programName ?: stringResource(Res.string.history_details_title),
                 size = LyteTopBarSize.Large,
                 onBack = { onIntent(HistorySessionDetailsIntent.OnBackClicked) },
+                subtitle = content?.details?.let { details ->
+                    sessionMetaLabel(details = details, monthLabel = genitiveMonths[details.monthNumber - 1])
+                },
+                // Удалять нечего, пока сессия не прочитана.
+                trailing = content?.let {
+                    {
+                        LyteIconButton(
+                            icon = LyteIcons.Delete,
+                            contentDescription = stringResource(Res.string.history_details_delete_a11y),
+                            onClick = { onIntent(HistorySessionDetailsIntent.OnDeleteClicked) },
+                            size = DetailsDeleteButtonSize,
+                        )
+                    }
+                },
             )
         },
     ) { paddingValues ->
@@ -87,23 +121,37 @@ fun HistorySessionDetailsContent(
 
                 is HistorySessionDetailsUiState.Error ->
                     Text(
-                        text = state.message ?: stringResource(Res.string.history_details_error),
+                        text = stringResource(state.error.toMessageResource()),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.align(Alignment.Center),
                     )
 
                 is HistorySessionDetailsUiState.Content ->
-                    HistorySessionDetailsList(details = state.details)
+                    HistorySessionDetailsList(content = state)
             }
+        }
+
+        if (content?.isDeleteDialogVisible == true) {
+            LyteDialog(
+                title = stringResource(
+                    Res.string.history_details_delete_dialog_title,
+                    content.details.programName,
+                ),
+                description = stringResource(Res.string.history_details_delete_dialog_description),
+                onConfirm = { onIntent(HistorySessionDetailsIntent.OnDeleteConfirmed) },
+                onDismissRequest = { onIntent(HistorySessionDetailsIntent.OnDeleteDismissed) },
+            )
         }
     }
 }
 
 @Composable
 private fun HistorySessionDetailsList(
-    details: HistorySessionDetailsUiModel,
+    content: HistorySessionDetailsUiState.Content,
     modifier: Modifier = Modifier,
 ) {
-    val genitiveMonths = stringArrayResource(Res.array.history_month_names_genitive)
+    val details = content.details
     LazyColumn(
         contentPadding = PaddingValues(
             start = LyteTheme.spacing.s5,
@@ -114,17 +162,22 @@ private fun HistorySessionDetailsList(
         verticalArrangement = Arrangement.spacedBy(LyteTheme.spacing.s2),
         modifier = modifier.fillMaxSize(),
     ) {
-        item(key = "meta") {
-            HistorySessionMetaRow(details = details, monthLabel = genitiveMonths[details.monthNumber - 1])
+        content.actionError?.let { error ->
+            item(key = "action-error") {
+                Text(
+                    text = stringResource(Res.string.history_details_delete_error),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.fillMaxWidth().padding(bottom = LyteTheme.spacing.s2),
+                )
+            }
+        }
+        item(key = "summary") {
+            HistorySessionSummaryRow(details = details)
         }
         details.exercises.forEach { group ->
             item(key = "title-${group.exerciseId}") {
-                Text(
-                    text = group.exerciseName,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(top = LyteTheme.spacing.s3),
-                )
+                HistoryExerciseGroupHeader(group = group)
             }
             items(items = group.rows, key = { row -> row.id }) { row ->
                 LyteDiffRow(
@@ -140,37 +193,66 @@ private fun HistorySessionDetailsList(
     }
 }
 
+/** Итог сессии одной строкой: длительность бейджем, исходы всех подходов — треком на всю остальную ширину. */
 @Composable
-private fun HistorySessionMetaRow(
+private fun HistorySessionSummaryRow(
     details: HistorySessionDetailsUiModel,
-    monthLabel: String,
     modifier: Modifier = Modifier,
 ) {
-    val startTime = "${details.startHour}:${details.startMinute.toString().padStart(2, '0')}"
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(LyteTheme.spacing.s2),
+        horizontalArrangement = Arrangement.spacedBy(DetailsSummaryGap),
         modifier = modifier
             .fillMaxWidth()
             .padding(bottom = LyteTheme.spacing.s2),
     ) {
-        Text(
-            text = stringResource(Res.string.history_details_meta, details.dayOfMonth, monthLabel, startTime),
-            style = MaterialTheme.typography.bodySmall.withTabularNums(),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f),
-        )
         LyteBadge(
             text = stringResource(Res.string.history_duration, details.durationMinutes),
             tone = LyteBadgeTone.Neutral,
             size = LyteBadgeSize.Medium,
         )
-        LyteBadge(
-            text = stringResource(Res.string.history_details_sets, details.completedSetCount, details.totalSetCount),
-            tone = LyteBadgeTone.Neutral,
-            size = LyteBadgeSize.Medium,
+        LyteProgressTrack(
+            mode = LyteProgressTrackMode.Tones(tones = details.setTones),
+            modifier = Modifier.weight(1f),
         )
     }
+}
+
+@Composable
+private fun HistoryExerciseGroupHeader(
+    group: HistoryExerciseGroupUiModel,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(DetailsGroupHeaderGap),
+        modifier = modifier.padding(top = LyteTheme.spacing.s3),
+    ) {
+        LyteExerciseMark(accent = group.accent, glyph = group.glyph, size = DetailsMarkSize)
+        Text(
+            text = group.exerciseName,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+    }
+}
+
+/** Подзаголовок шапки: «6 августа 2026 · начало 19:02». */
+@Composable
+private fun sessionMetaLabel(details: HistorySessionDetailsUiModel, monthLabel: String): String {
+    val startTime = "${details.startHour}:${details.startMinute.toString().padStart(MINUTE_PAD_LENGTH, '0')}"
+    return stringResource(
+        Res.string.history_details_meta,
+        details.dayOfMonth,
+        monthLabel,
+        details.year,
+        startTime,
+    )
+}
+
+private fun LyteError.toMessageResource() = when (this) {
+    LyteError.NotFound -> Res.string.history_details_not_found
+    else -> Res.string.history_details_error
 }
 
 @Composable
@@ -178,39 +260,29 @@ private fun HistorySessionMetaRow(
 private fun HistorySessionDetailsContentPreview() {
     LyteTheme {
         HistorySessionDetailsContent(
-            state = HistorySessionDetailsUiState.Content(
-                details = HistorySessionDetailsUiModel(
-                    programName = "Push Day",
-                    year = 2026,
-                    monthNumber = 7,
-                    dayOfMonth = 2,
-                    startHour = 18,
-                    startMinute = 24,
-                    durationMinutes = 52,
-                    completedSetCount = 15,
-                    totalSetCount = 16,
-                    exercises = listOf(
-                        HistoryExerciseGroupUiModel(
-                            exerciseId = "e1",
-                            exerciseName = "Жим лёжа",
-                            rows = listOf(
-                                diffRow("s1", 1, LyteProgressTone.Met, weighted(8, 80.0), weighted(8, 80.0)),
-                                diffRow("s2", 2, LyteProgressTone.Positive, weighted(8, 80.0), weighted(9, 82.5)),
-                                diffRow("s3", 3, LyteProgressTone.Negative, weighted(8, 80.0), weighted(6, 80.0), note = "тяжело"),
-                                diffRow("s4", 4, LyteProgressTone.Skipped, weighted(8, 80.0), actual = null),
-                            ),
-                        ),
-                        HistoryExerciseGroupUiModel(
-                            exerciseId = "e2",
-                            exerciseName = "Отжимания на брусьях",
-                            rows = listOf(
-                                diffRow("s5", 1, LyteProgressTone.Met, bodyweight(12), bodyweight(12)),
-                                diffRow("s6", 2, LyteProgressTone.Positive, bodyweight(12), bodyweight(15)),
-                            ),
-                        ),
-                    ),
-                ),
-            ),
+            state = HistorySessionDetailsUiState.Content(details = previewDetails()),
+            onIntent = {},
+        )
+    }
+}
+
+@Composable
+@Preview
+private fun HistorySessionDetailsContentDeleteDialogPreview() {
+    LyteTheme {
+        HistorySessionDetailsContent(
+            state = HistorySessionDetailsUiState.Content(details = previewDetails(), isDeleteDialogVisible = true),
+            onIntent = {},
+        )
+    }
+}
+
+@Composable
+@Preview
+private fun HistorySessionDetailsContentActionErrorPreview() {
+    LyteTheme {
+        HistorySessionDetailsContent(
+            state = HistorySessionDetailsUiState.Content(details = previewDetails(), actionError = LyteError.Storage),
             onIntent = {},
         )
     }
@@ -228,8 +300,49 @@ private fun HistorySessionDetailsContentLoadingPreview() {
 @Preview
 private fun HistorySessionDetailsContentErrorPreview() {
     LyteTheme {
-        HistorySessionDetailsContent(state = HistorySessionDetailsUiState.Error(message = null), onIntent = {})
+        HistorySessionDetailsContent(
+            state = HistorySessionDetailsUiState.Error(LyteError.Storage),
+            onIntent = {},
+        )
     }
+}
+
+private fun previewDetails(): HistorySessionDetailsUiModel {
+    val exercises = listOf(
+        HistoryExerciseGroupUiModel(
+            exerciseId = "e1",
+            exerciseName = "Жим лёжа",
+            accent = LyteAccent.Indigo,
+            glyph = LyteExerciseGlyph.BenchPress,
+            rows = listOf(
+                diffRow("s1", 1, LyteProgressTone.Met, weighted(8, 80.0), weighted(8, 80.0)),
+                diffRow("s2", 2, LyteProgressTone.Positive, weighted(8, 80.0), weighted(9, 82.5)),
+                diffRow("s3", 3, LyteProgressTone.Negative, weighted(8, 80.0), weighted(6, 80.0), note = "тяжело"),
+                diffRow("s4", 4, LyteProgressTone.Skipped, weighted(8, 80.0), actual = null),
+            ),
+        ),
+        HistoryExerciseGroupUiModel(
+            exerciseId = "e2",
+            exerciseName = "Отжимания на брусьях",
+            accent = LyteAccent.Coral,
+            glyph = LyteExerciseGlyph.Rack,
+            rows = listOf(
+                diffRow("s5", 1, LyteProgressTone.Met, bodyweight(12), bodyweight(12)),
+                diffRow("s6", 2, LyteProgressTone.Positive, bodyweight(12), bodyweight(15)),
+            ),
+        ),
+    )
+    return HistorySessionDetailsUiModel(
+        programName = "Push Day",
+        year = 2026,
+        monthNumber = 7,
+        dayOfMonth = 2,
+        startHour = 18,
+        startMinute = 24,
+        durationMinutes = 52,
+        setTones = exercises.flatMap { group -> group.rows.map { row -> row.tone } },
+        exercises = exercises,
+    )
 }
 
 private fun weighted(reps: Int, weight: Double): LyteSetValue = LyteSetValue(reps = reps, weight = weight)

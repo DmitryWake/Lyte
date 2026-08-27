@@ -1,5 +1,6 @@
 package com.nikolaevskii.lyte.feature.history.presentation.model.mvi
 
+import com.nikolaevskii.lyte.core.mvi.LyteError
 import com.nikolaevskii.lyte.core.mvi.UiIntent
 import com.nikolaevskii.lyte.core.mvi.UiState
 import com.nikolaevskii.lyte.feature.history.presentation.model.HistorySessionDetailsUiModel
@@ -12,10 +13,16 @@ sealed interface HistorySessionDetailsUiState : UiState {
 
     data object Loading : HistorySessionDetailsUiState
 
-    /** Загрузка не удалась или сессия не найдена; [message] — сырой текст ошибки (может быть null). */
-    data class Error(val message: String?) : HistorySessionDetailsUiState
+    /** Загрузка не удалась или сессия не найдена. */
+    data class Error(val error: LyteError) : HistorySessionDetailsUiState
 
-    data class Content(val details: HistorySessionDetailsUiModel) : HistorySessionDetailsUiState
+    data class Content(
+        val details: HistorySessionDetailsUiModel,
+        /** Диалог подтверждения удаления существует только над контентом; имя программы берётся из [details]. */
+        val isDeleteDialogVisible: Boolean = false,
+        /** Неудачное удаление — баннер над деталями (детали остаются на экране). */
+        val actionError: LyteError? = null,
+    ) : HistorySessionDetailsUiState
 }
 
 /** События экрана деталей сессии; решение принимает `HistorySessionDetailsViewModel`. */
@@ -23,4 +30,13 @@ sealed interface HistorySessionDetailsIntent : UiIntent {
 
     /** Пользователь нажал «назад». */
     data object OnBackClicked : HistorySessionDetailsIntent
+
+    /** Пользователь нажал «удалить» в шапке. */
+    data object OnDeleteClicked : HistorySessionDetailsIntent
+
+    /** Пользователь подтвердил удаление сессии. */
+    data object OnDeleteConfirmed : HistorySessionDetailsIntent
+
+    /** Пользователь закрыл диалог подтверждения удаления. */
+    data object OnDeleteDismissed : HistorySessionDetailsIntent
 }

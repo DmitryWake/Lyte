@@ -90,6 +90,14 @@ internal class FakeWorkoutSessionDao : WorkoutSessionDao() {
         sessions[id]?.let { sessions[id] = it.copy(finishedAt = finishedAt) }
     }
 
+    // Каскад настоящей БД воспроизведён руками: упражнения сессии и их подходы уходят вместе с ней.
+    override suspend fun deleteSession(id: String) {
+        val exerciseIds = exercises.filter { it.sessionId == id }.map { it.id }.toSet()
+        sets.removeAll { set -> set.sessionExerciseId in exerciseIds }
+        exercises.removeAll { exercise -> exercise.sessionId == id }
+        sessions.remove(id)
+    }
+
     override suspend fun markPendingSets(sessionId: String, status: String) {
         val exerciseIds = exercises.filter { it.sessionId == sessionId }.map { it.id }.toSet()
         // Индексный проход вместо MutableList.replaceAll: последний на Kotlin/Native требует opt-in
