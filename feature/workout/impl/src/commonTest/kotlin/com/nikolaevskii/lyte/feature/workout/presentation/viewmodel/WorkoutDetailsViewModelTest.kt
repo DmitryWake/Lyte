@@ -359,8 +359,9 @@ class WorkoutDetailsViewModelTest {
         assertEquals(listOf(8 to 90.0, 6 to 95.0), reps.map { it.count to it.weight })
     }
 
+    /** Упражнение в программе без единого подхода бессмысленно, поэтому последний не удаляется. */
     @Test
-    fun removeSetCanEmptyThePlan() = runTest(testDispatcher) {
+    fun removeLastSetIsNoOp() = runTest(testDispatcher) {
         val repository = FakeWorkoutRepository().apply {
             workoutToReturn = workout(id = "w1", exercises = listOf(exercise("e1", "Squat", 8 to 90.0)))
         }
@@ -370,7 +371,8 @@ class WorkoutDetailsViewModelTest {
 
         viewModel.onIntent(WorkoutDetailsIntent.OnRemoveSetClicked(setIndex = 0))
 
-        assertTrue(viewModel.uiState.value.exercises.single().exercise.reps.isEmpty())
+        val reps = viewModel.uiState.value.exercises.single().exercise.reps
+        assertEquals(listOf(8 to 90.0), reps.map { it.count to it.weight })
     }
 
     @Test

@@ -24,7 +24,6 @@
     <string name="set_reference_last">В прошлый раз</string>
     <string name="set_caption_reps">Повт</string>
     <string name="set_caption_weight_name">Вес</string>
-    <string name="set_caption_weight_unit">Кг</string>
     <string name="exercise_glyph_squat">Присед</string>
     <string name="exercise_glyph_deadlift">Становая</string>
     <string name="exercise_glyph_bench_press">Жим лёжа</string>

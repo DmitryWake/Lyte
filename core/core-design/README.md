@@ -117,7 +117,7 @@ Lucide — `implementation`-only внутри `core-design`, подключат�
 | `component.mark` | `LyteExerciseMark` (круг-маркер: цвет + знак движения; размеры макета — 36/38/52dp) |
 | `component.progress` | `LyteProgressTrack` (`LyteProgressTrackMode.Tones`/`Plan`/`Progress`, тона — `LyteProgressTone`) |
 | `component.picker` | `LyteAccentPicker` (шесть цветов), `LyteExerciseIconPicker` (сетка 5×2 знаков) |
-| `component.stepper` | `LyteStepper` (size Large/Medium; ± контрол + ручной tap-to-edit ввод; ввод ограничен: ≤5 цифр целой части и ≤2 знаков после запятой, при `allowDecimal=false` — целочисленный режим для повторов без дробной части, `fillMaxWidth` — для колонок), `LyteSetEditRow` (строка редактирования одного планового подхода программы: заголовок-параметр `title`, удаление, степперы повторов/веса — планирование, не привязано к состоянию активной сессии в отличие от `LyteTrackSetRow`) |
+| `component.stepper` | `LyteStepper` (size Large/Medium; ± контрол + ручной tap-to-edit ввод; ввод ограничен: ≤5 цифр целой части и ≤2 знаков после запятой, при `allowDecimal=false` — целочисленный режим для повторов без дробной части, `fillMaxWidth` — для колонок), `LyteSetEditRow` (карточка одного планового подхода программы: заголовок-параметр `title`, удаление (`onRemove = null` — кнопки нет), степперы повторов/веса — планирование, не привязано к состоянию активной сессии в отличие от `LyteTrackSetRow`) |
 | `component.card` | `LyteProgramCard` (маркер + один факт + `trailing`), `LyteExerciseCard` (маркер + трек плана; действия задаёт `variant`: `LyteExerciseCardVariant.Editor` — drag-хэндл + edit/remove, `LyteExerciseCardVariant.ReadOnly` — превью программы; `onClick` — тап по колонке контента), `LyteSessionCard` (маркер + геро-число + трек), `LyteListRow` (ведущий элемент — `LyteListRowLeading.Mark`/`Icon`) |
 | `component.feedback` | `LyteDiffRow` (результат подхода: факт + дельта-чип, тон — `LyteProgressTone`), `LyteDialog`, `LyteEmptyState` (иконка-метка + заголовок + подсказка + необязательное действие `actionLabel`/`actionIcon`) |
 | `component.navigation` | `LyteTopBar` (size Small/Large), `LyteBottomNavigationBar` (+ `LyteBottomNavigationBarHeight` — резерв под него для контента, см. «Нюансы») |
@@ -460,6 +460,11 @@ implementation(projects.core.coreDesign)
   height=Full внутри редактора программы (решение 3 из `design/v2/TASKS.md`). Визуально
   `Full`-шторка совпадает — `title` встаёт на место заголовка, — а вынос в роуты потребовал бы
   канала результата и переживания черновика редактора: цена без пользовательской выгоды.
+- **Ряд «подпись слева — степпер справа» общий у 3.4 и 4.3** (`LyteStepperRow`, internal). Подпись
+  сидит в слоте фиксированной ширины 40dp, а не по своему тексту: иначе кнопки ± двух составленных
+  друг под другом степперов разъезжались бы по горизонтали, а по ним целятся вслепую. Общий на
+  `LyteSetEditRow` и `LyteTrackSetRow` намеренно — одно и то же «поставь повторы и вес» не должно
+  выглядеть на планировании и на трекинге по-разному.
 - **`LyteBadge` — не M3 `Badge`.** M3 `Badge` — точка-уведомление; `LyteBadge` — пилюля для
   метаданных (счётчики), поэтому реализована кастомно поверх `Surface`.
 - **Нажатие — уменьшение контрола поверх M3-овского state layer.** Кнопка, икон-кнопка, чип и
