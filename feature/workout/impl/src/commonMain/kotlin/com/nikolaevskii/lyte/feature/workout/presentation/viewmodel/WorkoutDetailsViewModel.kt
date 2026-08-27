@@ -62,7 +62,12 @@ class WorkoutDetailsViewModel(
             is WorkoutDetailsIntent.OnSetWeightChanged ->
                 updateEditedSets { sets -> sets.mapIndexed { i, set -> if (i == intent.setIndex) set.copy(weight = intent.weight) else set } }
             WorkoutDetailsIntent.OnAddSetClicked -> updateEditedSets { sets -> sets + (sets.lastOrNull() ?: DEFAULT_REP) }
-            is WorkoutDetailsIntent.OnRemoveSetClicked -> updateEditedSets { sets -> sets.filterIndexed { i, _ -> i != intent.setIndex } }
+            // Последний подход не удаляется: упражнение в программе без единого подхода
+            // бессмысленно. Пустой план у только что добавленного упражнения — другое дело, это
+            // стартовое состояние, и правило требует не «минимум один», а «не опустошай руками».
+            is WorkoutDetailsIntent.OnRemoveSetClicked -> updateEditedSets { sets ->
+                if (sets.size > 1) sets.filterIndexed { i, _ -> i != intent.setIndex } else sets
+            }
             WorkoutDetailsIntent.OnDoneClicked -> save()
             WorkoutDetailsIntent.OnBackClicked -> lyteNavigator.back()
         }

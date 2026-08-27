@@ -23,7 +23,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.nikolaevskii.lyte.core.design.LyteTheme
 import com.nikolaevskii.lyte.core.design.component.button.LyteButton
-import com.nikolaevskii.lyte.core.design.component.button.LyteButtonSize
 import com.nikolaevskii.lyte.core.design.component.button.LyteButtonVariant
 import com.nikolaevskii.lyte.core.design.component.overlay.LyteBottomSheet
 import com.nikolaevskii.lyte.core.design.component.stepper.LyteSetEditRow
@@ -32,22 +31,24 @@ import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseWithRepsEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutRepEntity
 import com.nikolaevskii.lyte.feature.workout.generated.resources.Res
+import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_set_count
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_set_number
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_sets_add
 import com.nikolaevskii.lyte.feature.workout.generated.resources.workout_details_done
 import com.nikolaevskii.lyte.feature.workout.presentation.model.mvi.WorkoutDetailsIntent
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
 private val SetsEditorRowGap = 10.dp
-private val SetsEditorAddButtonTopSpacing = 12.dp
+private val SetsEditorBottomBarPadding = 28.dp
 
 /**
  * Шторка редактирования подходов упражнения (3.4) — открывается по карандашу на карточке
  * упражнения в редакторе программы, а также сразу после выбора упражнения в
  * [WorkoutExercisePickerSheet]. Правки применяются сразу к состоянию экрана; отдельного
- * сохранения у шторки нет, «Готово» лишь закрывает её. Название/описание упражнения — в
- * title/subtitle шторки (закреплены сверху), «Готово» — в её bottomBar (закреплена снизу):
- * ни то ни другое не должно скроллиться вместе со списком подходов.
+ * сохранения у шторки нет, «Готово» лишь закрывает её. Название упражнения и счётчик подходов —
+ * в title/subtitle шторки (закреплены сверху), «Добавить подход» и «Готово» — в её bottomBar
+ * (закреплены снизу): ни то ни другое не должно скроллиться вместе со списком подходов.
  *
  * Скролл контента [LyteBottomSheet] не реализует — это делает потребитель. Подходов немного, а их
  * появление/исчезновение анимируется через `animateContentSize` + `AnimatedVisibility`, поэтому
@@ -62,7 +63,7 @@ fun WorkoutSetsEditorSheet(
 ) {
     LyteBottomSheet(
         title = exercise.exercise.name,
-        subtitle = exercise.exercise.description,
+        subtitle = pluralStringResource(Res.plurals.workout_details_set_count, exercise.reps.size, exercise.reps.size),
         onDismissRequest = { onIntent(WorkoutDetailsIntent.OnSetsEditorDismissed) },
         bottomBar = {
             Surface(
@@ -70,12 +71,31 @@ fun WorkoutSetsEditorSheet(
                 shadowElevation = LyteTheme.elevation.level2,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                LyteButton(
-                    text = stringResource(Res.string.workout_details_done),
-                    onClick = { onIntent(WorkoutDetailsIntent.OnSetsEditorDismissed) },
-                    fullWidth = true,
-                    modifier = Modifier.padding(horizontal = LyteTheme.spacing.s5, vertical = LyteTheme.spacing.s4),
-                )
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(LyteTheme.spacing.s2),
+                    modifier = Modifier.padding(
+                        start = LyteTheme.spacing.s5,
+                        end = LyteTheme.spacing.s5,
+                        top = LyteTheme.spacing.s3,
+                        bottom = SetsEditorBottomBarPadding,
+                    ),
+                ) {
+                    // «Добавить подход» прибита к низу вместе с «Готово», а не едет за списком:
+                    // при десятке подходов её иначе пришлось бы доскроллить.
+                    LyteButton(
+                        text = stringResource(Res.string.workout_details_sets_add),
+                        onClick = { onIntent(WorkoutDetailsIntent.OnAddSetClicked) },
+                        variant = LyteButtonVariant.Tonal,
+                        icon = LyteIcons.Plus,
+                        fullWidth = true,
+                    )
+                    LyteButton(
+                        text = stringResource(Res.string.workout_details_done),
+                        onClick = { onIntent(WorkoutDetailsIntent.OnSetsEditorDismissed) },
+                        variant = LyteButtonVariant.Text,
+                        fullWidth = true,
+                    )
+                }
             }
         },
         modifier = modifier,
@@ -111,21 +131,17 @@ fun WorkoutSetsEditorSheet(
                                 weight = rep.weight ?: 0.0,
                                 onRepsChange = { reps -> onIntent(WorkoutDetailsIntent.OnSetRepsChanged(index, reps)) },
                                 onWeightChange = { weight -> onIntent(WorkoutDetailsIntent.OnSetWeightChanged(index, weight)) },
-                                onRemove = { onIntent(WorkoutDetailsIntent.OnRemoveSetClicked(index)) },
+                                // Последний подход удалить нельзя, поэтому у него и кнопки нет.
+                                onRemove = if (exercise.reps.size > 1) {
+                                    { onIntent(WorkoutDetailsIntent.OnRemoveSetClicked(index)) }
+                                } else {
+                                    null
+                                },
                             )
                         }
                     }
                 }
             }
-            LyteButton(
-                text = stringResource(Res.string.workout_details_sets_add),
-                onClick = { onIntent(WorkoutDetailsIntent.OnAddSetClicked) },
-                variant = LyteButtonVariant.Tonal,
-                size = LyteButtonSize.Small,
-                icon = LyteIcons.Plus,
-                fullWidth = true,
-                modifier = Modifier.padding(top = SetsEditorAddButtonTopSpacing),
-            )
         }
     }
 }

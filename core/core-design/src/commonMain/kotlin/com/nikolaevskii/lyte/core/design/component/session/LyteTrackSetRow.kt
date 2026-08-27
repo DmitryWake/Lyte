@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -29,9 +28,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nikolaevskii.lyte.core.design.LyteTheme
-import com.nikolaevskii.lyte.core.design.component.overline.LyteOverline
 import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTone
 import com.nikolaevskii.lyte.core.design.component.stepper.LyteStepper
+import com.nikolaevskii.lyte.core.design.component.stepper.LyteStepperRow
 import com.nikolaevskii.lyte.core.design.component.stepper.LyteStepperSize
 import com.nikolaevskii.lyte.core.design.format.lyteSetValueLabel
 import com.nikolaevskii.lyte.core.design.generated.resources.Res
@@ -82,8 +81,6 @@ private val TrackSetReferenceLeaderHeight = 1.dp
 private const val TrackSetReferenceLeaderAlpha = 0.6f
 private val TrackSetSteppersTopGap = 14.dp
 private val TrackSetStepperRowGap = 10.dp
-private val TrackSetStepperGap = 12.dp
-private val TrackSetStepperCaptionWidth = 40.dp
 private val TrackSetContentTopGap = 16.dp
 
 /**
@@ -282,7 +279,7 @@ private fun CurrentSetCard(
                 verticalArrangement = Arrangement.spacedBy(TrackSetStepperRowGap),
                 modifier = Modifier.padding(top = TrackSetSteppersTopGap),
             ) {
-                StepperRow(caption = stringResource(Res.string.set_caption_reps)) {
+                LyteStepperRow(caption = stringResource(Res.string.set_caption_reps)) {
                     LyteStepper(
                         value = state.reps.toDouble(),
                         onValueChange = { onRepsChange(it.roundToInt()) },
@@ -295,7 +292,7 @@ private fun CurrentSetCard(
                 }
                 // Степпер веса есть всегда, в том числе у цели «свой вес»: иначе к подтягиваниям
                 // нечем добавить пояс. Ноль — это «пока без веса», а не «веса не бывает».
-                StepperRow(caption = stringResource(Res.string.set_caption_weight_name)) {
+                LyteStepperRow(caption = stringResource(Res.string.set_caption_weight_name)) {
                     LyteStepper(
                         value = state.weight,
                         onValueChange = onWeightChange,
@@ -364,19 +361,6 @@ private fun ReferenceRow(label: String, value: String) {
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
         )
-    }
-}
-
-/** Подпись слева фиксированной ширины — так кнопки ± обоих степперов стоят на одной вертикали. */
-@Composable
-private fun StepperRow(caption: String, stepper: @Composable () -> Unit) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(TrackSetStepperGap),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        LyteOverline(text = caption, modifier = Modifier.width(TrackSetStepperCaptionWidth))
-        Box(modifier = Modifier.weight(1f)) { stepper() }
     }
 }
 
