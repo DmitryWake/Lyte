@@ -9,10 +9,13 @@ import com.nikolaevskii.lyte.feature.history.presentation.model.toMonthGroups
 import com.nikolaevskii.lyte.core.session.domain.repository.SessionHistoryRepository
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 
 class HistoryViewModel(
     private val sessionHistoryRepository: SessionHistoryRepository,
     private val lyteNavigator: LyteNavigator,
+    private val clock: Clock,
 ) : BaseViewModel<HistoryUiState, HistoryIntent>() {
 
     init {
@@ -36,9 +39,13 @@ class HistoryViewModel(
         }
         runCatching { sessionHistoryRepository.getFinishedSessions() }
             .onSuccess { sessions ->
-                // Зону берём в точке использования, а не фиксируем при создании VM: перечитывание
-                // списка подхватит смену системной таймзоны.
-                val groups = sessions.toMonthGroups(TimeZone.currentSystemDefault())
+                // Зону и «сегодня» берём в точке использования, а не фиксируем при создании VM:
+                // перечитывание списка подхватит и смену системной таймзоны, и наступившую полночь.
+                val timeZone = TimeZone.currentSystemDefault()
+                val groups = sessions.toMonthGroups(
+                    timeZone = timeZone,
+                    today = clock.now().toLocalDateTime(timeZone).date,
+                )
                 updateState { if (groups.isEmpty()) HistoryUiState.Empty else HistoryUiState.Content(groups) }
             }
             .onFailure { error ->

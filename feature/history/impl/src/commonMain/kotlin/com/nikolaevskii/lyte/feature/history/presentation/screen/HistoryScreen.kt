@@ -24,12 +24,16 @@ import com.nikolaevskii.lyte.core.design.component.navigation.LyteBottomNavigati
 import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBar
 import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBarSize
 import com.nikolaevskii.lyte.core.design.component.overline.LyteOverline
+import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTone
 import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTrackMode
 import com.nikolaevskii.lyte.core.design.icon.LyteExerciseGlyph
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
 import com.nikolaevskii.lyte.core.design.theme.LyteAccent
 import com.nikolaevskii.lyte.feature.history.generated.resources.Res
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_date
+import com.nikolaevskii.lyte.feature.history.generated.resources.history_date_days_ago
+import com.nikolaevskii.lyte.feature.history.generated.resources.history_date_today
+import com.nikolaevskii.lyte.feature.history.generated.resources.history_date_yesterday
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_empty_hint
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_empty_message
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_error
@@ -42,9 +46,15 @@ import com.nikolaevskii.lyte.feature.history.presentation.model.HistorySessionUi
 import com.nikolaevskii.lyte.feature.history.presentation.model.mvi.HistoryIntent
 import com.nikolaevskii.lyte.feature.history.presentation.model.mvi.HistoryUiState
 import com.nikolaevskii.lyte.feature.history.presentation.viewmodel.HistoryViewModel
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+
+private const val DAYS_AGO_TODAY = 0
+private const val DAYS_AGO_YESTERDAY = 1
+
+private const val PREVIEW_FULL_SESSION_SET_COUNT = 12
 
 @Composable
 fun HistoryScreen(
@@ -135,26 +145,31 @@ private fun HistorySessionList(
             items(items = group.sessions, key = { session -> session.id }) { session ->
                 LyteSessionCard(
                     title = session.programName,
-                    subtitle = stringResource(
-                        Res.string.history_date,
-                        session.dayOfMonth,
-                        monthNamesShort[session.monthNumber - 1],
-                    ),
+                    subtitle = sessionDateLabel(session = session, monthNamesShort = monthNamesShort),
                     duration = stringResource(Res.string.history_session_duration, session.durationMinutes),
                     accent = session.accent,
                     glyph = session.glyph,
                     onClick = { onIntent(HistoryIntent.OnSessionClicked(session.id)) },
-                    // Исходы подходов сессии ещё не считаются, поэтому трек показывает «сколько
-                    // подходов позади» — тона появятся вместе с переработкой экрана Истории.
-                    track = LyteProgressTrackMode.Progress(
-                        total = session.totalSetCount,
-                        done = session.completedSetCount,
-                    ),
+                    track = LyteProgressTrackMode.Tones(tones = session.setTones),
                 )
             }
         }
     }
 }
+
+/**
+ * Дата карточки: свежая сессия названа относительно сегодняшнего дня («Сегодня», «Вчера»,
+ * «N дней назад»), старее недели — обычной датой. Что считать свежим, решает маппер
+ * ([HistorySessionUiModel.daysAgo]) — экран только подставляет строки.
+ */
+@Composable
+private fun sessionDateLabel(session: HistorySessionUiModel, monthNamesShort: List<String>): String =
+    when (val daysAgo = session.daysAgo) {
+        null -> stringResource(Res.string.history_date, session.dayOfMonth, monthNamesShort[session.monthNumber - 1])
+        DAYS_AGO_TODAY -> stringResource(Res.string.history_date_today)
+        DAYS_AGO_YESTERDAY -> stringResource(Res.string.history_date_yesterday)
+        else -> pluralStringResource(Res.plurals.history_date_days_ago, daysAgo, daysAgo)
+    }
 
 @Composable
 @Preview
@@ -173,9 +188,9 @@ private fun HistoryContentPreview() {
                                 year = 2026,
                                 monthNumber = 7,
                                 dayOfMonth = 2,
+                                daysAgo = 0,
                                 durationMinutes = 52,
-                                completedSetCount = 15,
-                                totalSetCount = 16,
+                                setTones = previewMixedTones(),
                                 accent = LyteAccent.Indigo,
                                 glyph = LyteExerciseGlyph.BenchPress,
                             ),
@@ -191,21 +206,22 @@ private fun HistoryContentPreview() {
                                 year = 2026,
                                 monthNumber = 6,
                                 dayOfMonth = 30,
+                                daysAgo = 2,
                                 durationMinutes = 58,
-                                completedSetCount = 17,
-                                totalSetCount = 17,
+                                setTones = List(PREVIEW_FULL_SESSION_SET_COUNT) { LyteProgressTone.Met },
                                 accent = LyteAccent.Coral,
                                 glyph = LyteExerciseGlyph.PullUp,
                             ),
+                            // Сессия старее недели — относительной даты у неё нет, карточка покажет число.
                             HistorySessionUiModel(
                                 id = "3",
                                 programName = "Leg Day",
                                 year = 2026,
                                 monthNumber = 6,
-                                dayOfMonth = 28,
+                                dayOfMonth = 12,
+                                daysAgo = null,
                                 durationMinutes = 61,
-                                completedSetCount = 13,
-                                totalSetCount = 14,
+                                setTones = previewMissedTones(),
                                 accent = LyteAccent.Lime,
                                 glyph = LyteExerciseGlyph.Squat,
                             ),
@@ -217,6 +233,27 @@ private fun HistoryContentPreview() {
         )
     }
 }
+
+/** Сессия «как в жизни»: часть в цель, часть с перевыполнением, недобор и пропущенный хвост. */
+private fun previewMixedTones(): List<LyteProgressTone> = listOf(
+    LyteProgressTone.Met,
+    LyteProgressTone.Met,
+    LyteProgressTone.Positive,
+    LyteProgressTone.Met,
+    LyteProgressTone.Positive,
+    LyteProgressTone.Negative,
+    LyteProgressTone.Met,
+    LyteProgressTone.Skipped,
+)
+
+private fun previewMissedTones(): List<LyteProgressTone> = listOf(
+    LyteProgressTone.Met,
+    LyteProgressTone.Negative,
+    LyteProgressTone.Negative,
+    LyteProgressTone.Met,
+    LyteProgressTone.Met,
+    LyteProgressTone.Skipped,
+)
 
 @Composable
 @Preview

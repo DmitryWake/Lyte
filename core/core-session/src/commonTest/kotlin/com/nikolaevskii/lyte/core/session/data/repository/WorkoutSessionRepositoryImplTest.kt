@@ -1,6 +1,7 @@
 package com.nikolaevskii.lyte.core.session.data.repository
 
 import com.nikolaevskii.lyte.core.db.workout.ExerciseDatabaseEntity
+import com.nikolaevskii.lyte.core.session.domain.model.SessionSetOutcomeEntity
 import com.nikolaevskii.lyte.core.session.domain.model.SessionSetResultEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
 import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
@@ -174,12 +175,14 @@ class WorkoutSessionRepositoryImplTest {
     }
 
     @Test
-    fun getFinishedSessionsReportsSetCounts() = runTest {
+    fun getFinishedSessionsReportsSetOutcomesInSessionOrder() = runTest {
         val clock = MutableClock(START_MILLIS)
         val repository = repository(clock)
         val sessionId = repository.startSession(sampleWorkout())
-        val setId = firstSetId(repository)
-        repository.completeSet(setId = setId, count = 10, weight = 40.0)
+        val setIds = setIds(repository)
+        // Первый подход ровно в цель, второй с перевыполнением, третий остаётся незакрытым.
+        repository.completeSet(setId = setIds[0], count = 10, weight = 40.0)
+        repository.completeSet(setId = setIds[1], count = 9, weight = 45.0)
         clock.nowMillis = FINISH_MILLIS
         repository.finishSession(sessionId)
 
@@ -192,10 +195,38 @@ class WorkoutSessionRepositoryImplTest {
         // Список истории читает маркер из снапшота сессии, а не join'ом к программе.
         assertEquals(ExerciseAccent.Indigo, item.program.accent)
         assertEquals(ExerciseGlyph.BenchPress, item.program.glyph)
-        assertEquals(3, item.totalSetCount)
-        // Один выполнен, два пропущены завершением.
-        assertEquals(1, item.completedSetCount)
+        // Порядок исходов — порядок сессии: два подхода первого упражнения, затем подход второго.
+        assertEquals(
+            listOf(
+                SessionSetOutcomeEntity.MET,
+                SessionSetOutcomeEntity.EXCEEDED,
+                SessionSetOutcomeEntity.SKIPPED,
+            ),
+            item.setOutcomes,
+        )
         assertEquals(Instant.fromEpochMilliseconds(FINISH_MILLIS), item.finishedAt)
+    }
+
+    @Test
+    fun getFinishedSessionsSeparatesOutcomesOfDifferentSessions() = runTest {
+        val clock = MutableClock(START_MILLIS)
+        val repository = repository(clock)
+
+        val firstId = repository.startSession(sampleWorkout())
+        repository.completeSet(setId = setIds(repository)[0], count = 10, weight = 40.0)
+        clock.nowMillis = FINISH_MILLIS
+        repository.finishSession(firstId)
+
+        val secondId = repository.startSession(emptyWorkout())
+        clock.nowMillis = LATER_MILLIS
+        repository.finishSession(secondId)
+
+        val finished = repository.getFinishedSessions()
+
+        assertEquals(listOf(secondId, firstId), finished.map { it.id })
+        // Сессия без подходов не наследует чужие исходы — у неё пустой трек.
+        assertEquals(emptyList(), finished.first().setOutcomes)
+        assertEquals(3, finished.last().setOutcomes.size)
     }
 
     private fun repository(
@@ -239,6 +270,10 @@ class WorkoutSessionRepositoryImplTest {
     private suspend fun firstSetId(repository: WorkoutSessionRepositoryImpl): String =
         repository.getActiveSession()!!.exercises.first().sets.first().id
 
+    /** Id всех подходов активной сессии в её порядке: упражнение → подход. */
+    private suspend fun setIds(repository: WorkoutSessionRepositoryImpl): List<String> =
+        repository.getActiveSession()!!.exercises.flatMap { exercise -> exercise.sets.map { it.id } }
+
     private suspend fun setById(repository: WorkoutSessionRepositoryImpl, setId: String) =
         repository.getActiveSession()!!.exercises.flatMap { it.sets }.single { it.id == setId }
 
@@ -263,6 +298,13 @@ class WorkoutSessionRepositoryImplTest {
                 ),
             ),
         ),
+    )
+
+    private fun emptyWorkout(): WorkoutEntity = WorkoutEntity(
+        id = "prog-empty",
+        name = "Пустая",
+        description = null,
+        exercises = emptyList(),
     )
 
     private class MutableClock(var nowMillis: Long) : Clock {

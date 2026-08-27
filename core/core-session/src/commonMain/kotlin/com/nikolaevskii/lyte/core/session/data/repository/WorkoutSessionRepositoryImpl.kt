@@ -4,6 +4,7 @@ import com.nikolaevskii.lyte.core.db.session.SessionSetDatabaseEntity
 import com.nikolaevskii.lyte.core.db.session.WorkoutSessionDao
 import com.nikolaevskii.lyte.core.session.data.mapper.toDomainEntity
 import com.nikolaevskii.lyte.core.session.data.mapper.toItemEntity
+import com.nikolaevskii.lyte.core.session.data.mapper.toOutcomesBySession
 import com.nikolaevskii.lyte.core.session.data.mapper.toSessionRows
 import com.nikolaevskii.lyte.core.session.domain.applyProgressionTo
 import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionEntity
@@ -12,7 +13,7 @@ import com.nikolaevskii.lyte.core.session.domain.repository.WorkoutSessionReposi
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
 import com.nikolaevskii.lyte.core.workout.domain.repository.WorkoutRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -30,11 +31,28 @@ internal class WorkoutSessionRepositoryImpl(
     override suspend fun getSession(id: String): WorkoutSessionEntity? =
         workoutSessionDao.getSession(id)?.toDomainEntity()
 
-    override suspend fun getFinishedSessions(): List<WorkoutSessionItemEntity> =
-        workoutSessionDao.getFinishedItems().map { it.toItemEntity() }
+    /**
+     * Список истории — **два** запроса, а не запрос на карточку: строки сессий и подходы всех
+     * завершённых сессий разом. Исход подхода считается в общей доменной точке правды
+     * ([com.nikolaevskii.lyte.core.session.domain.util.outcome]), а не в SQL.
+     */
+    override suspend fun getFinishedSessions(): List<WorkoutSessionItemEntity> {
+        val outcomes = workoutSessionDao.getFinishedSessionSets().toOutcomesBySession()
+        return workoutSessionDao.getFinishedSessions().mapNotNull { session ->
+            session.toItemEntity(setOutcomes = outcomes[session.id].orEmpty())
+        }
+    }
 
     override fun observeFinishedSessions(): Flow<List<WorkoutSessionItemEntity>> =
-        workoutSessionDao.observeFinishedItems().map { items -> items.map { item -> item.toItemEntity() } }
+        combine(
+            workoutSessionDao.observeFinishedSessions(),
+            workoutSessionDao.observeFinishedSessionSets(),
+        ) { sessions, setRows ->
+            val outcomes = setRows.toOutcomesBySession()
+            sessions.mapNotNull { session ->
+                session.toItemEntity(setOutcomes = outcomes[session.id].orEmpty())
+            }
+        }
 
     override suspend fun startSession(workout: WorkoutEntity): String {
         val rows = workout.toSessionRows(sessionId = Uuid.random().toString(), startedAt = clock.now())

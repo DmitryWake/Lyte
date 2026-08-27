@@ -1,8 +1,8 @@
 package com.nikolaevskii.lyte.core.session.data.mapper
 
+import com.nikolaevskii.lyte.core.db.session.FinishedSessionSetRow
 import com.nikolaevskii.lyte.core.db.session.SessionExerciseDatabaseEntity
 import com.nikolaevskii.lyte.core.db.session.SessionExerciseWithSets
-import com.nikolaevskii.lyte.core.db.session.SessionItemWithSetCounts
 import com.nikolaevskii.lyte.core.db.session.SessionSetDatabaseEntity
 import com.nikolaevskii.lyte.core.db.session.SessionWithExercises
 import com.nikolaevskii.lyte.core.db.session.WorkoutSessionDatabaseEntity
@@ -10,10 +10,12 @@ import com.nikolaevskii.lyte.core.session.data.model.SessionRowsModel
 import com.nikolaevskii.lyte.core.session.domain.model.SessionExerciseEntity
 import com.nikolaevskii.lyte.core.session.domain.model.SessionProgramEntity
 import com.nikolaevskii.lyte.core.session.domain.model.SessionSetEntity
+import com.nikolaevskii.lyte.core.session.domain.model.SessionSetOutcomeEntity
 import com.nikolaevskii.lyte.core.session.domain.model.SessionSetResultEntity
 import com.nikolaevskii.lyte.core.session.domain.model.SessionSetValueEntity
 import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionEntity
 import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionItemEntity
+import com.nikolaevskii.lyte.core.session.domain.util.outcome
 import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
 import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutEntity
@@ -85,20 +87,33 @@ internal fun SessionWithExercises.toDomainEntity(): WorkoutSessionEntity =
             .map { it.toDomainEntity() },
     )
 
-internal fun SessionItemWithSetCounts.toItemEntity(): WorkoutSessionItemEntity =
-    WorkoutSessionItemEntity(
+/**
+ * Строка завершённой сессии в модель списка истории. [setOutcomes] приходят снаружи — их считает
+ * [toOutcomesBySession] по отдельному запросу подходов, чтобы не тянуть граф на каждую карточку.
+ *
+ * `null` — сессия не завершена. Запрос списка такие строки не отдаёт, так что ветка холостая;
+ * подставлять вместо даты завершения ноль или «сейчас» было бы хуже — история показала бы выдумку.
+ */
+internal fun WorkoutSessionDatabaseEntity.toItemEntity(
+    setOutcomes: List<SessionSetOutcomeEntity?>,
+): WorkoutSessionItemEntity? {
+    val finishedAt = finishedAt ?: return null
+    return WorkoutSessionItemEntity(
         id = id,
-        program = SessionProgramEntity(
-            id = programId,
-            name = programName,
-            accent = ExerciseAccent.fromKey(programAccent),
-            glyph = ExerciseGlyph.fromKey(programGlyph),
-        ),
+        program = toProgramEntity(),
         startedAt = Instant.fromEpochMilliseconds(startedAt),
         finishedAt = Instant.fromEpochMilliseconds(finishedAt),
-        completedSetCount = completedSetCount,
-        totalSetCount = totalSetCount,
+        setOutcomes = setOutcomes,
     )
+}
+
+/**
+ * Исходы подходов всех завершённых сессий, разложенные по id сессии. Порядок внутри списка —
+ * порядок строк запроса (упражнение → подход), пересортировки здесь нет.
+ */
+internal fun List<FinishedSessionSetRow>.toOutcomesBySession(): Map<String, List<SessionSetOutcomeEntity?>> =
+    groupBy { row -> row.sessionId }
+        .mapValues { (_, rows) -> rows.map { row -> row.set.toDomainEntity().outcome() } }
 
 /** Снапшот программы: всё, что нужно карточке истории, лежит в самой строке сессии. */
 private fun WorkoutSessionDatabaseEntity.toProgramEntity(): SessionProgramEntity =
