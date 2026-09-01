@@ -229,6 +229,29 @@ class WorkoutSessionRepositoryImplTest {
         assertEquals(3, finished.last().setOutcomes.size)
     }
 
+    @Test
+    fun deleteSessionRemovesItWithSetsAndLeavesNeighbourAndProgramIntact() = runTest {
+        val clock = MutableClock(START_MILLIS)
+        val workoutRepository = FakeWorkoutRepository().apply { createWorkout(sampleWorkout()) }
+        val repository = repository(clock = clock, workoutRepository = workoutRepository)
+
+        val firstId = repository.startSession(sampleWorkout())
+        clock.nowMillis = FINISH_MILLIS
+        repository.finishSession(firstId)
+        val secondId = repository.startSession(sampleWorkout())
+        clock.nowMillis = LATER_MILLIS
+        repository.finishSession(secondId)
+
+        repository.deleteSession(firstId)
+
+        // Сессия исчезла вместе со своими подходами; соседняя осталась целой.
+        assertNull(repository.getSession(firstId))
+        assertEquals(listOf(secondId), repository.getFinishedSessions().map { it.id })
+        assertEquals(3, repository.getFinishedSessions().single().setOutcomes.size)
+        // Программа удалением сессии не задета: FK на workout у сессии нет.
+        assertEquals(sampleWorkout(), workoutRepository.getWorkout("prog-1"))
+    }
+
     private fun repository(
         clock: Clock = MutableClock(START_MILLIS),
         workoutRepository: WorkoutRepository = FakeWorkoutRepository(),

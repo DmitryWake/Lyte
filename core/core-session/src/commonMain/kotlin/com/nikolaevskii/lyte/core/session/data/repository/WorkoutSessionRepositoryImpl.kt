@@ -54,6 +54,10 @@ internal class WorkoutSessionRepositoryImpl(
             }
         }
 
+    override suspend fun deleteSession(id: String) {
+        workoutSessionDao.deleteSession(id)
+    }
+
     override suspend fun startSession(workout: WorkoutEntity): String {
         val rows = workout.toSessionRows(sessionId = Uuid.random().toString(), startedAt = clock.now())
         workoutSessionDao.insertSessionGraph(

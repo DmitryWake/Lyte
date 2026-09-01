@@ -10,8 +10,9 @@ Data-слой сессий тренировки: доменные модели, 
   `SessionSetEntity`, `SessionSetValueEntity`, `SessionSetResultEntity`, `SessionSetOutcomeEntity`,
   `SessionProgramEntity`.
 - Контракты (`domain.repository`):
-  - `SessionHistoryRepository` — узкий **read**-контракт (`getFinishedSessions`, `observeFinishedSessions`,
-    `getSession`) для истории.
+  - `SessionHistoryRepository` — узкий контракт истории: чтение (`getFinishedSessions`,
+    `observeFinishedSessions`, `getSession`) плюс `deleteSession` — удалить запись из истории может
+    только она сама.
   - `WorkoutSessionRepository : SessionHistoryRepository` — **write**-поверхность трекинга (старт,
     completeSet/skipSet/saveSetNote/setCurrentExercise/finishSession, `getActiveSession`).
 - Доменные правила: `SessionProgression` (`effectiveCurrentExercise`, `currentSet`, `hasPendingSets`),
@@ -39,6 +40,10 @@ implementation(projects.core.coreSession)
   живым из библиотеки тем же join'ом, что имя и описание, и меняется в истории вслед за библиотекой.
 - Инвариант «не более одной активной сессии» держит транзакция DAO (`:core:core-db`).
 - ISP: история инжектит `SessionHistoryRepository`, трекер — `WorkoutSessionRepository`.
+- **Удаление сессии.** `deleteSession(id)` сносит сессию с её упражнениями и подходами (каскад в БД).
+  Программу и упражнения библиотеки не трогает: FK на `workout` у сессии нет вовсе, а архивные
+  (`is_archived`) программа/упражнение после удаления последней ссылавшейся сессии остаются в БД
+  сиротами — чистка сирот пока не реализована.
 - **Список истории — два запроса, не N+1.** `WorkoutSessionItemEntity` несёт `setOutcomes` — исход
   каждого подхода сессии в её порядке (упражнение → подход), из них карточка рисует трек. Тянуть на
   каждую карточку граф сессии нельзя, поэтому репозиторий берёт строки сессий и подходы **всех**

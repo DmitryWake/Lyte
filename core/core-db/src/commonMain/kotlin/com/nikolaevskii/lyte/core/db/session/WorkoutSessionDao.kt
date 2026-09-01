@@ -79,6 +79,16 @@ abstract class WorkoutSessionDao {
     @Query("UPDATE workout_session SET finished_at = :finishedAt WHERE id = :id")
     abstract suspend fun updateFinishedAt(id: String, finishedAt: Long)
 
+    /**
+     * Удаляет сессию вместе с её упражнениями и подходами — те уходят каскадом
+     * (`ON DELETE CASCADE` на `session_exercise.session_id` и `session_set.session_exercise_id`).
+     *
+     * Программу и упражнения библиотеки удаление не задевает: FK на `workout` у сессии нет вовсе,
+     * а FK `session_exercise → exercise` смотрит из ребёнка в родителя — снос ребёнка его не рвёт.
+     */
+    @Query("DELETE FROM workout_session WHERE id = :id")
+    abstract suspend fun deleteSession(id: String)
+
     @Query(
         """
         UPDATE session_set SET result_status = :status

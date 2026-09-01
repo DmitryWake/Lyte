@@ -7,9 +7,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
 /**
- * Дубль read-контракта сессий для тестов Истории: настраиваемый [finishedSessions]/[session] и
- * инъекция ошибок чтения. Благодаря ISP History зависит только от [SessionHistoryRepository], поэтому
- * дублировать write-поверхность трекинга больше не нужно.
+ * Дубль контракта истории для её тестов: настраиваемый [finishedSessions]/[session], инъекция ошибок
+ * и лог удалений. Благодаря ISP History зависит только от [SessionHistoryRepository], поэтому
+ * дублировать write-поверхность трекинга не нужно.
  */
 internal class FakeSessionHistoryRepository(
     var finishedSessions: List<WorkoutSessionItemEntity> = emptyList(),
@@ -18,6 +18,10 @@ internal class FakeSessionHistoryRepository(
 
     var getFinishedSessionsError: Throwable? = null
     var getSessionError: Throwable? = null
+    var deleteSessionError: Throwable? = null
+
+    /** Id сессий, для которых вызвали удаление, — в порядке вызова. */
+    val deletedSessionIds = mutableListOf<String>()
 
     override suspend fun getFinishedSessions(): List<WorkoutSessionItemEntity> {
         getFinishedSessionsError?.let { error -> throw error }
@@ -29,5 +33,10 @@ internal class FakeSessionHistoryRepository(
     override suspend fun getSession(id: String): WorkoutSessionEntity? {
         getSessionError?.let { error -> throw error }
         return session?.takeIf { candidate -> candidate.id == id }
+    }
+
+    override suspend fun deleteSession(id: String) {
+        deleteSessionError?.let { error -> throw error }
+        deletedSessionIds += id
     }
 }

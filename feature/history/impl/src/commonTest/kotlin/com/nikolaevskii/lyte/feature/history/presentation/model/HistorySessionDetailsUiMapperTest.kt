@@ -1,13 +1,17 @@
 package com.nikolaevskii.lyte.feature.history.presentation.model
 
 import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTone
+import com.nikolaevskii.lyte.core.design.icon.LyteExerciseGlyph
 import com.nikolaevskii.lyte.core.design.model.LyteSetValue
+import com.nikolaevskii.lyte.core.design.theme.LyteAccent
 import com.nikolaevskii.lyte.feature.history.TEST_TIME_ZONE
 import com.nikolaevskii.lyte.feature.history.completed
 import com.nikolaevskii.lyte.feature.history.finishedSessionEntity
 import com.nikolaevskii.lyte.feature.history.sessionExercise
 import com.nikolaevskii.lyte.feature.history.sessionSet
 import com.nikolaevskii.lyte.core.session.domain.model.SessionSetResultEntity
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
+import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.Month
 import kotlin.test.Test
@@ -35,6 +39,8 @@ class HistorySessionDetailsUiMapperTest {
             sessionExercise(
                 id = "e2",
                 name = "Отжимания на брусьях",
+                accent = ExerciseAccent.Coral,
+                glyph = ExerciseGlyph.PullUp,
                 sets = listOf(
                     sessionSet("s5", targetCount = 12, targetWeight = null, result = completed(count = 12, weight = null)),
                 ),
@@ -43,7 +49,7 @@ class HistorySessionDetailsUiMapperTest {
     )
 
     @Test
-    fun mapsHeaderMetaFromStartAndCounts() {
+    fun mapsHeaderMetaFromStart() {
         val details = session.toDetailsUiModel(TEST_TIME_ZONE)
 
         assertEquals("Push Day", details.programName)
@@ -53,9 +59,35 @@ class HistorySessionDetailsUiMapperTest {
         assertEquals(18, details.startHour)
         assertEquals(24, details.startMinute)
         assertEquals(52, details.durationMinutes)
-        // Completed: s1, s2, s3, s5 — четыре; s4 пропущен. Всего пять.
-        assertEquals(4, details.completedSetCount)
-        assertEquals(5, details.totalSetCount)
+    }
+
+    @Test
+    fun mapsSetTonesOfWholeSessionInExerciseOrder() {
+        val details = session.toDetailsUiModel(TEST_TIME_ZONE)
+
+        // Четыре подхода первого упражнения, затем единственный подход второго.
+        assertEquals(
+            listOf(
+                LyteProgressTone.Met,
+                LyteProgressTone.Positive,
+                LyteProgressTone.Negative,
+                LyteProgressTone.Skipped,
+                LyteProgressTone.Met,
+            ),
+            details.setTones,
+        )
+    }
+
+    @Test
+    fun mapsExerciseMarkFromLibrary() {
+        val details = session.toDetailsUiModel(TEST_TIME_ZONE)
+
+        // Маркер упражнения живой из библиотеки: без него — дефолт домена как дефолт ДС.
+        assertEquals(listOf(LyteAccent.Slate, LyteAccent.Coral), details.exercises.map { it.accent })
+        assertEquals(
+            listOf(LyteExerciseGlyph.Squat, LyteExerciseGlyph.PullUp),
+            details.exercises.map { it.glyph },
+        )
     }
 
     @Test
