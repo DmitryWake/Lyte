@@ -9,11 +9,12 @@
     <string name="workout_list_delete_a11y">Удалить программу</string>
     <string name="workout_list_delete_dialog_title">Удалить программу «%1$s»?</string>
     <string name="workout_list_delete_dialog_description">Тренировки в истории останутся.</string>
+    <!-- &#160; — неразрывный пробел: число не отрывается от своего слова при переносе. -->
     <plurals name="workout_exercise_count">
-        <item quantity="one">%1$d упражнение</item>
-        <item quantity="few">%1$d упражнения</item>
-        <item quantity="many">%1$d упражнений</item>
-        <item quantity="other">%1$d упражнений</item>
+        <item quantity="one">%1$d&#160;упражнение</item>
+        <item quantity="few">%1$d&#160;упражнения</item>
+        <item quantity="many">%1$d&#160;упражнений</item>
+        <item quantity="other">%1$d&#160;упражнений</item>
     </plurals>
     <string name="workout_details_title">Программа</string>
     <string name="workout_details_name_label">Название</string>
@@ -27,10 +28,10 @@
     <string name="workout_details_error">Не удалось загрузить программу</string>
     <string name="workout_details_save_error">Не удалось сохранить программу</string>
     <plurals name="workout_details_set_count">
-        <item quantity="one">%1$d подход</item>
-        <item quantity="few">%1$d подхода</item>
-        <item quantity="many">%1$d подходов</item>
-        <item quantity="other">%1$d подходов</item>
+        <item quantity="one">%1$d&#160;подход</item>
+        <item quantity="few">%1$d&#160;подхода</item>
+        <item quantity="many">%1$d&#160;подходов</item>
+        <item quantity="other">%1$d&#160;подходов</item>
     </plurals>
     <string name="workout_details_sets_add">Добавить подход</string>
     <string name="workout_details_set_number">Подход %1$d</string>

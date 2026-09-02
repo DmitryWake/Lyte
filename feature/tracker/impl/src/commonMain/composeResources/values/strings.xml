@@ -9,27 +9,28 @@
     <string name="program_picker_empty_message">Создайте первую программу</string>
     <string name="program_picker_empty_hint">Без программы нечего запускать — соберите её из упражнений.</string>
     <string name="program_picker_new_program">Новая программа</string>
+    <!-- &#160; — неразрывный пробел: число не отрывается от своего слова при переносе. -->
     <plurals name="program_picker_exercise_count">
-        <item quantity="one">%1$d упражнение</item>
-        <item quantity="few">%1$d упражнения</item>
-        <item quantity="many">%1$d упражнений</item>
-        <item quantity="other">%1$d упражнений</item>
+        <item quantity="one">%1$d&#160;упражнение</item>
+        <item quantity="few">%1$d&#160;упражнения</item>
+        <item quantity="many">%1$d&#160;упражнений</item>
+        <item quantity="other">%1$d&#160;упражнений</item>
     </plurals>
 
     <string name="workout_preview_start">Начать</string>
     <string name="workout_preview_error">Не удалось загрузить программу</string>
     <string name="workout_preview_start_error">Не удалось начать тренировку</string>
     <plurals name="workout_preview_exercise_count">
-        <item quantity="one">%1$d упражнение</item>
-        <item quantity="few">%1$d упражнения</item>
-        <item quantity="many">%1$d упражнений</item>
-        <item quantity="other">%1$d упражнений</item>
+        <item quantity="one">%1$d&#160;упражнение</item>
+        <item quantity="few">%1$d&#160;упражнения</item>
+        <item quantity="many">%1$d&#160;упражнений</item>
+        <item quantity="other">%1$d&#160;упражнений</item>
     </plurals>
     <plurals name="workout_preview_set_count">
-        <item quantity="one">%1$d подход</item>
-        <item quantity="few">%1$d подхода</item>
-        <item quantity="many">%1$d подходов</item>
-        <item quantity="other">%1$d подходов</item>
+        <item quantity="one">%1$d&#160;подход</item>
+        <item quantity="few">%1$d&#160;подхода</item>
+        <item quantity="many">%1$d&#160;подходов</item>
+        <item quantity="other">%1$d&#160;подходов</item>
     </plurals>
 
     <string name="active_session_exercise_position">Упражнение %1$d из %2$d</string>
@@ -56,10 +57,10 @@
     <string name="active_session_all_done_title">Тренировка завершена</string>
     <!-- Сводка под треком итога: «15 из 16 подходов выполнено». Форма — по общему числу подходов. -->
     <plurals name="active_session_summary_set_count">
-        <item quantity="one">%1$d из %2$d подхода выполнено</item>
-        <item quantity="few">%1$d из %2$d подходов выполнено</item>
-        <item quantity="many">%1$d из %2$d подходов выполнено</item>
-        <item quantity="other">%1$d из %2$d подходов выполнено</item>
+        <item quantity="one">%1$d из %2$d&#160;подхода выполнено</item>
+        <item quantity="few">%1$d из %2$d&#160;подходов выполнено</item>
+        <item quantity="many">%1$d из %2$d&#160;подходов выполнено</item>
+        <item quantity="other">%1$d из %2$d&#160;подходов выполнено</item>
     </plurals>
     <string name="active_session_save_workout">Сохранить тренировку</string>
     <string name="active_session_error">Не удалось загрузить сессию</string>

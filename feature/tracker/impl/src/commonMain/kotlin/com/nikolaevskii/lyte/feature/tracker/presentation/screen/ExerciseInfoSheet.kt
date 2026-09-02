@@ -24,6 +24,7 @@ import com.nikolaevskii.lyte.core.design.component.mark.LyteExerciseMark
 import com.nikolaevskii.lyte.core.design.component.overlay.LyteBottomSheet
 import com.nikolaevskii.lyte.core.design.component.overlay.LyteBottomSheetHeight
 import com.nikolaevskii.lyte.core.design.component.overline.LyteOverline
+import com.nikolaevskii.lyte.core.design.format.LyteSetValueFormat
 import com.nikolaevskii.lyte.core.design.format.lyteSetValueLabel
 import com.nikolaevskii.lyte.core.design.icon.LyteExerciseGlyph
 import com.nikolaevskii.lyte.core.design.model.LyteSetValue
@@ -157,7 +158,7 @@ private fun ExerciseInfoSetRow(
         )
         Spacer(modifier = Modifier.weight(1f))
         Text(
-            text = lyteSetValueLabel(value),
+            text = lyteSetValueLabel(value = value, format = LyteSetValueFormat.Compact),
             style = MaterialTheme.typography.labelLarge
                 .copy(
                     fontSize = ExerciseInfoSetValueTextSize,

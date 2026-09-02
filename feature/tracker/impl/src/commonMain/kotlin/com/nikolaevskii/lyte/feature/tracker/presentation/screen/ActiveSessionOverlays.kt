@@ -28,6 +28,7 @@ import com.nikolaevskii.lyte.core.design.component.button.LyteButton
 import com.nikolaevskii.lyte.core.design.component.overlay.LyteBottomSheet
 import com.nikolaevskii.lyte.core.design.component.overlay.LyteBottomSheetHeight
 import com.nikolaevskii.lyte.core.design.component.textfield.LyteTextField
+import com.nikolaevskii.lyte.core.design.format.LyteSetValueFormat
 import com.nikolaevskii.lyte.core.design.format.lyteSetValueLabel
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
 import com.nikolaevskii.lyte.core.design.model.LyteSetValue
@@ -221,7 +222,7 @@ private fun SwitcherTargetPill(value: LyteSetValue) {
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
         Text(
-            text = lyteSetValueLabel(value),
+            text = lyteSetValueLabel(value = value, format = LyteSetValueFormat.Compact),
             style = MaterialTheme.typography.labelMedium.copy(
                 fontSize = SwitcherPillTextSize,
                 fontWeight = FontWeight.SemiBold,

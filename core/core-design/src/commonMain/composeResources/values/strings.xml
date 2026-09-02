@@ -3,7 +3,8 @@
     <string name="wordmark">Lyte</string>
     <string name="wordmark_accent">.</string>
     <string name="rest_title">Отдых</string>
-    <string name="rest_add_30">+30 сек</string>
+    <!-- &#160; — неразрывный пробел: число не отрывается от своей единицы при переносе. -->
+    <string name="rest_add_30">+30&#160;сек</string>
     <string name="rest_skip">Пропустить</string>
     <string name="diff_reps">повт</string>
     <string name="diff_weight">кг</string>

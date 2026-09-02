@@ -18,6 +18,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nikolaevskii.lyte.core.design.LyteTheme
 import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTone
+import com.nikolaevskii.lyte.core.design.format.LyteSetValueFormat
+import com.nikolaevskii.lyte.core.design.format.MULTIPLICATION_SIGN
+import com.nikolaevskii.lyte.core.design.format.NON_BREAKING_SPACE
 import com.nikolaevskii.lyte.core.design.format.formatWeight
 import com.nikolaevskii.lyte.core.design.format.lyteSetValueLabel
 import com.nikolaevskii.lyte.core.design.generated.resources.Res
@@ -140,7 +143,9 @@ private fun DiffRowFact(
         tone == LyteProgressTone.Todo -> Text(
             text = stringResource(
                 Res.string.set_target,
-                target?.let { value -> lyteSetValueLabel(value) }.orEmpty(),
+                target
+                    ?.let { value -> lyteSetValueLabel(value = value, format = LyteSetValueFormat.Compact) }
+                    .orEmpty(),
             ),
             style = MaterialTheme.typography.bodyMedium.copy(fontSize = DiffSkippedTextSize).withTabularNums(),
             color = foreground,
@@ -175,7 +180,7 @@ private fun DiffRowFact(
                 modifier = Modifier.alignByBaseline(),
             )
             Text(
-                text = stringResource(if (actual.weight != null) Res.string.diff_weight else Res.string.diff_reps),
+                text = stringResource(if (actual.hasLoadedWeight()) Res.string.diff_weight else Res.string.diff_reps),
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontSize = DiffUnitTextSize,
                     fontWeight = FontWeight.Medium,
@@ -212,19 +217,35 @@ private fun DiffDeltaChip(
     }
 }
 
-private fun actualNotation(actual: LyteSetValue): String {
-    val weight = actual.weight
-    return if (weight != null) "${actual.reps}×${formatWeight(weight)}" else actual.reps.toString()
-}
+/**
+ * Свой вес определяется тем же предикатом, что и в [setValueLabel]: `0.0` — это «без отягощения», а
+ * не «ноль килограммов». Иначе строка факта напишет «12×0 кг» там, где строка цели в этом же
+ * компоненте напишет «12 повт».
+ */
+private fun LyteSetValue.hasLoadedWeight(): Boolean = weight != null && weight > 0.0
+
+/**
+ * Нотация собирается здесь, а не берётся у [setValueLabel]: единица рисуется отдельным `Text` со
+ * своим кеглем и выравниванием по базовой линии, готовую строку так не разложить. Разделитель и
+ * округление при этом общие — расходиться им нельзя.
+ */
+private fun actualNotation(actual: LyteSetValue): String =
+    if (actual.hasLoadedWeight()) {
+        "${actual.reps}$MULTIPLICATION_SIGN${formatWeight(checkNotNull(actual.weight))}"
+    } else {
+        actual.reps.toString()
+    }
 
 @Composable
 private fun deltaLabel(delta: LyteDiffDelta): String {
     val parts = buildList {
         if (delta.reps != 0) {
-            add("${sign(delta.reps.toDouble())}${abs(delta.reps)} " + stringResource(Res.string.diff_reps))
+            val reps = "${sign(delta.reps.toDouble())}${abs(delta.reps)}"
+            add(reps + NON_BREAKING_SPACE + stringResource(Res.string.diff_reps))
         }
         if (delta.weight != 0.0) {
-            add("${sign(delta.weight)}${formatWeight(abs(delta.weight))} " + stringResource(Res.string.diff_weight))
+            val weight = "${sign(delta.weight)}${formatWeight(abs(delta.weight))}"
+            add(weight + NON_BREAKING_SPACE + stringResource(Res.string.diff_weight))
         }
     }
     return parts.joinToString(SET_VALUE_SEPARATOR)

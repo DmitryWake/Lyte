@@ -44,7 +44,8 @@ internal fun WorkoutExerciseEntity.toDatabaseEntity(): ExerciseDatabaseEntity =
         id = id,
         name = name,
         // Служебная колонка под поиск и сортировку — см. ExerciseDatabaseEntity.nameNormalized.
-        nameNormalized = name.lowercase(),
+        // Нормализуется тем же правилом, что и поисковый запрос, иначе LIKE сравнивает разное.
+        nameNormalized = name.normalizedForSearch(),
         description = description,
         accent = accent.key,
         glyph = glyph.key,

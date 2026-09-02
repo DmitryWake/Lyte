@@ -8,18 +8,19 @@
     <string name="history_date">%1$d %2$s</string>
     <string name="history_date_today">Сегодня</string>
     <string name="history_date_yesterday">Вчера</string>
+    <!-- &#160; — неразрывный пробел: число не отрывается от своего слова при переносе. -->
     <plurals name="history_date_days_ago">
-        <item quantity="one">%1$d день назад</item>
-        <item quantity="few">%1$d дня назад</item>
-        <item quantity="many">%1$d дней назад</item>
-        <item quantity="other">%1$d дней назад</item>
+        <item quantity="one">%1$d&#160;день назад</item>
+        <item quantity="few">%1$d&#160;дня назад</item>
+        <item quantity="many">%1$d&#160;дней назад</item>
+        <item quantity="other">%1$d&#160;дней назад</item>
     </plurals>
-    <string name="history_session_duration">%1$d мин</string>
+    <string name="history_session_duration">%1$d&#160;мин</string>
     <string name="history_details_title">Тренировка</string>
     <string name="history_details_error">Не удалось загрузить сессию</string>
     <string name="history_details_not_found">Тренировка не найдена</string>
     <string name="history_details_meta">%1$d %2$s %3$d · начало %4$s</string>
-    <string name="history_duration">%1$d мин</string>
+    <string name="history_duration">%1$d&#160;мин</string>
     <string name="history_details_delete_a11y">Удалить тренировку</string>
     <string name="history_details_delete_dialog_title">Удалить тренировку «%1$s»?</string>
     <string name="history_details_delete_dialog_description">Запись пропадёт из истории.</string>

@@ -28,7 +28,7 @@ Lyte — фитнес-трекер на Kotlin Multiplatform (Android + iOS), UI
 
 - Тесты живут в модулях, где есть логика: `:core:core-mvi`, `:core:core-db`, `:core:core-workout`, `:core:core-session`, `:feature:{tracker,workout,history,splash}:impl`. Гейт (гонять перед коммитом/релизом, macOS):
   - Host/JVM: `./gradlew :core:core-mvi:testAndroidHostTest :core:core-db:testAndroidHostTest :core:core-workout:testAndroidHostTest :core:core-session:testAndroidHostTest :feature:tracker:impl:testAndroidHostTest :feature:workout:impl:testAndroidHostTest :feature:history:impl:testAndroidHostTest :feature:splash:impl:testAndroidHostTest`
-  - iOS-симулятор (ловит Kotlin/Native-only поломки): те же модули с `:iosSimulatorArm64Test`, **кроме** `:core:core-db` — все его тесты (миграция и SQL нетривиальных запросов DAO) живут в `androidHostTest`, потому что гоняют настоящую SQLite под Robolectric.
+  - iOS-симулятор (ловит Kotlin/Native-only поломки): те же модули с `:iosSimulatorArm64Test`, плюс `:core:core-design` (форматирование чисел зависит от платформенного `Double.toString()`), **кроме** `:core:core-db` — все его тесты (миграция и SQL нетривиальных запросов DAO) живут в `androidHostTest`, потому что гоняют настоящую SQLite под Robolectric.
   - Сборки: `./gradlew :androidApp:assembleDebug` и `:shared:linkDebugFrameworkIosSimulatorArm64`.
   - Скриншоты в гейт не входят: их сверяет и перегенерирует CI (см. «Скриншот-тесты»). На macOS
     локальный `verifyRoborazzi*` краснеет из-за субпиксельных расхождений — это не поломка.
