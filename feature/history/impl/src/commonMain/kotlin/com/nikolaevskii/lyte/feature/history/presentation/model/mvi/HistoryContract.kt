@@ -1,5 +1,6 @@
 package com.nikolaevskii.lyte.feature.history.presentation.model.mvi
 
+import com.nikolaevskii.lyte.core.mvi.LyteError
 import com.nikolaevskii.lyte.core.mvi.UiIntent
 import com.nikolaevskii.lyte.core.mvi.UiState
 import com.nikolaevskii.lyte.feature.history.presentation.model.HistoryMonthGroupUiModel
@@ -14,8 +15,8 @@ sealed interface HistoryUiState : UiState {
     /** Первичная загрузка — показать индикатор (данных ещё нет). */
     data object Loading : HistoryUiState
 
-    /** Загрузка не удалась и показывать нечего; [message] — сырой текст ошибки (может быть null). */
-    data class Error(val message: String?) : HistoryUiState
+    /** Загрузка не удалась и показывать нечего; [error] — типизированная ошибка, текст подбирает экран. */
+    data class Error(val error: LyteError) : HistoryUiState
 
     /** Завершённых сессий нет — пустое состояние. */
     data object Empty : HistoryUiState
@@ -29,6 +30,9 @@ sealed interface HistoryIntent : UiIntent {
 
     /** Экран показан — перечитываем список, чтобы подхватить сессии, завершённые в трекере. */
     data object OnScreenShown : HistoryIntent
+
+    /** Тап по «Повторить» в состоянии ошибки — перезапустить загрузку списка. */
+    data object OnRetryClicked : HistoryIntent
 
     /** Тап по завершённой сессии [id] — открыть её детали (5.2). */
     data class OnSessionClicked(val id: String) : HistoryIntent

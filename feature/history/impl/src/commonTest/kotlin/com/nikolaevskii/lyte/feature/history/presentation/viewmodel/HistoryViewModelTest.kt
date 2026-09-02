@@ -1,10 +1,12 @@
 package com.nikolaevskii.lyte.feature.history.presentation.viewmodel
 
+import com.nikolaevskii.lyte.core.mvi.LyteError
 import com.nikolaevskii.lyte.core.navigation.model.NavCommand
 import com.nikolaevskii.lyte.feature.history.HistorySessionDetailsRoute
 import com.nikolaevskii.lyte.feature.history.finishedSession
 import com.nikolaevskii.lyte.feature.history.presentation.model.mvi.HistoryIntent
 import com.nikolaevskii.lyte.feature.history.presentation.model.mvi.HistoryUiState
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -91,7 +93,26 @@ class HistoryViewModelTest {
         runCurrent()
 
         val error = assertIs<HistoryUiState.Error>(viewModel.uiState.value)
-        assertEquals("boom", error.message)
+        // Сырой текст Room/SQLite наружу не утекает — экран получает типизированную ошибку.
+        assertIs<LyteError.Unknown>(error.error)
+    }
+
+    @Test
+    fun retryAfterFailureReloadsSessions() = runTest(testDispatcher) {
+        val repository = FakeSessionHistoryRepository().apply { getFinishedSessionsError = IllegalStateException("boom") }
+        val viewModel = viewModel(repository)
+        runCurrent()
+        assertIs<HistoryUiState.Error>(viewModel.uiState.value)
+        repository.getFinishedSessionsError = null
+        repository.finishedSessions = listOf(
+            finishedSession("1", "Push Day", LocalDateTime(2026, Month.JULY, 2, 12, 0), durationMinutes = 52),
+        )
+
+        viewModel.onIntent(HistoryIntent.OnRetryClicked)
+        runCurrent()
+
+        val content = assertIs<HistoryUiState.Content>(viewModel.uiState.value)
+        assertEquals("Push Day", content.groups.single().sessions.single().programName)
     }
 
     @Test
@@ -111,6 +132,53 @@ class HistoryViewModelTest {
 
         // Ошибка перечитывания не затирает уже показанный список.
         assertEquals(loaded, viewModel.uiState.value)
+    }
+
+    @Test
+    fun retryFromErrorShowsLoadingBeforeResult() = runTest(testDispatcher) {
+        val repository = FakeSessionHistoryRepository()
+        repository.getFinishedSessionsError = IllegalStateException("boom")
+        val viewModel = viewModel(repository)
+        runCurrent()
+        assertIs<HistoryUiState.Error>(viewModel.uiState.value)
+
+        // Загрузку держим на шлюзе: иначе StateFlow схлопнет Loading с итоговым кадром, и переход,
+        // ради которого в loadSessions стоит ветка `!is Content`, останется без свидетеля.
+        val gate = CompletableDeferred<Unit>()
+        repository.getFinishedSessionsGate = gate
+        repository.getFinishedSessionsError = null
+        repository.finishedSessions = listOf(
+            finishedSession("1", "Push Day", LocalDateTime(2026, Month.JULY, 2, 12, 0), durationMinutes = 52),
+        )
+
+        viewModel.onIntent(HistoryIntent.OnRetryClicked)
+        runCurrent()
+        assertIs<HistoryUiState.Loading>(viewModel.uiState.value)
+
+        gate.complete(Unit)
+        runCurrent()
+        assertIs<HistoryUiState.Content>(viewModel.uiState.value)
+    }
+
+    @Test
+    fun failureOutsideRunCatchingSurfacesError() = runTest(testDispatcher) {
+        // Сбой в `.onSuccess` (группировка по месяцам) идёт мимо runCatching — через воронку
+        // handleError. Без её переопределения экран навсегда завис бы в Loading.
+        val repository = FakeSessionHistoryRepository(
+            finishedSessions = listOf(
+                finishedSession("1", "Push Day", LocalDateTime(2026, Month.JULY, 2, 12, 0), durationMinutes = 52),
+            ),
+        )
+        val viewModel = HistoryViewModel(
+            sessionHistoryRepository = repository,
+            lyteNavigator = FakeLyteNavigator(),
+            clock = ThrowingClock,
+        )
+
+        viewModel.onIntent(HistoryIntent.OnScreenShown)
+        runCurrent()
+
+        assertIs<HistoryUiState.Error>(viewModel.uiState.value)
     }
 
     @Test
@@ -139,6 +207,11 @@ class HistoryViewModelTest {
         lyteNavigator = navigator,
         clock = FixedClock(TEST_NOW),
     )
+
+    /** Часы, которые падают: воспроизводят сбой в `.onSuccess`, идущий мимо runCatching. */
+    private object ThrowingClock : Clock {
+        override fun now(): Instant = throw IllegalStateException("clock boom")
+    }
 
     /** Часы прибиты: относительная дата карточки не должна зависеть от дня запуска тестов. */
     private class FixedClock(private val now: Instant) : Clock {
