@@ -1,12 +1,14 @@
 package com.nikolaevskii.lyte.feature.history.presentation.viewmodel
 
 import com.nikolaevskii.lyte.core.mvi.BaseViewModel
+import com.nikolaevskii.lyte.core.mvi.toLyteError
 import com.nikolaevskii.lyte.core.navigation.LyteNavigator
 import com.nikolaevskii.lyte.feature.history.HistorySessionDetailsRoute
 import com.nikolaevskii.lyte.feature.history.presentation.model.mvi.HistoryIntent
 import com.nikolaevskii.lyte.feature.history.presentation.model.mvi.HistoryUiState
 import com.nikolaevskii.lyte.feature.history.presentation.model.toMonthGroups
 import com.nikolaevskii.lyte.core.session.domain.repository.SessionHistoryRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -25,6 +27,8 @@ class HistoryViewModel(
     override fun onIntent(intent: HistoryIntent) {
         when (intent) {
             HistoryIntent.OnScreenShown -> launch { loadSessions() }
+            // Повтор после ошибки — та же загрузка: список сейчас в Error, поэтому пойдёт через Loading.
+            HistoryIntent.OnRetryClicked -> launch { loadSessions() }
             is HistoryIntent.OnSessionClicked ->
                 lyteNavigator.navigate(HistorySessionDetailsRoute(sessionId = intent.id))
         }
@@ -49,8 +53,23 @@ class HistoryViewModel(
                 updateState { if (groups.isEmpty()) HistoryUiState.Empty else HistoryUiState.Content(groups) }
             }
             .onFailure { error ->
-                // Ошибка перечитывания при уже показанном списке не затирает его.
-                updateState { if (this is HistoryUiState.Content) this else HistoryUiState.Error(error.message) }
+                // runCatching ловит и отмену — её нельзя показывать пользователем как ошибку.
+                if (error is CancellationException) throw error
+                showError(error)
             }
+    }
+
+    /**
+     * Сбой мимо [runCatching] — в `.onSuccess` группировка по месяцам берёт таймзону и «сегодня».
+     * Без этой воронки такой бросок ушёл бы в no-op базового класса, и экран навсегда остался бы в
+     * [HistoryUiState.Loading]: кнопка повтора живёт только в арме [HistoryUiState.Error].
+     */
+    override fun handleError(error: Throwable) {
+        showError(error)
+    }
+
+    /** Ошибка перечитывания при уже показанном списке не затирает его. */
+    private fun showError(error: Throwable) {
+        updateState { if (this is HistoryUiState.Content) this else HistoryUiState.Error(error.toLyteError()) }
     }
 }
