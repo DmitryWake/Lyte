@@ -1,10 +1,11 @@
 package com.nikolaevskii.lyte.feature.splash.data.initializer
 
-import com.nikolaevskii.lyte.feature.splash.data.seed.DefaultExerciseLibrary
-import com.nikolaevskii.lyte.feature.splash.data.seed.DefaultWorkoutPrograms
+import com.nikolaevskii.lyte.core.app.testing.FakeAppLaunchStateRepository
 import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
 import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
+import com.nikolaevskii.lyte.feature.splash.data.seed.DefaultExerciseLibrary
+import com.nikolaevskii.lyte.feature.splash.data.seed.DefaultWorkoutPrograms
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals

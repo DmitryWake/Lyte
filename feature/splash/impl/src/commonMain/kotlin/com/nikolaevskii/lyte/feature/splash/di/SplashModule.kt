@@ -1,16 +1,13 @@
 package com.nikolaevskii.lyte.feature.splash.di
 
 import com.nikolaevskii.lyte.feature.splash.data.initializer.WorkoutLibraryInitializer
-import com.nikolaevskii.lyte.feature.splash.data.repository.AppLaunchStateRepositoryImpl
 import com.nikolaevskii.lyte.feature.splash.domain.initializer.AppInitializationManager
 import com.nikolaevskii.lyte.feature.splash.domain.initializer.AppInitializer
-import com.nikolaevskii.lyte.feature.splash.domain.repository.AppLaunchStateRepository
 import com.nikolaevskii.lyte.feature.splash.presentation.viewmodel.SplashViewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 val featureSplashModule = module {
-    single<AppLaunchStateRepository> { AppLaunchStateRepositoryImpl(appLaunchStateDao = get()) }
     single<AppInitializer> {
         WorkoutLibraryInitializer(exerciseRepository = get(), workoutRepository = get(), appLaunchStateRepository = get())
     }

@@ -31,6 +31,7 @@ dependencyResolutionManagement {
 
 include(":androidApp")
 include(":shared")
+include(":core:core-app")
 include(":core:core-mvi")
 include(":core:core-navigation")
 include(":core:core-di")

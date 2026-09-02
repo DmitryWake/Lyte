@@ -1,5 +1,6 @@
 package com.nikolaevskii.lyte.di
 
+import com.nikolaevskii.lyte.core.app.di.coreAppModule
 import com.nikolaevskii.lyte.core.db.di.coreDbModule
 import com.nikolaevskii.lyte.core.di.initKoin
 import com.nikolaevskii.lyte.core.navigation.di.coreNavigationModule
@@ -19,6 +20,7 @@ fun initKoinShared(
         appDeclaration()
         modules(
             coreDbModule(),
+            coreAppModule(),
             coreWorkoutModule(),
             coreSessionModule(),
             coreNavigationModule,
