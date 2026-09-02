@@ -9,7 +9,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -29,6 +28,7 @@ import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTrackMod
 import com.nikolaevskii.lyte.core.design.icon.LyteExerciseGlyph
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
 import com.nikolaevskii.lyte.core.design.theme.LyteAccent
+import com.nikolaevskii.lyte.core.mvi.LyteError
 import com.nikolaevskii.lyte.feature.history.generated.resources.Res
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_date
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_date_days_ago
@@ -39,6 +39,7 @@ import com.nikolaevskii.lyte.feature.history.generated.resources.history_empty_m
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_error
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_month_names
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_month_names_short
+import com.nikolaevskii.lyte.feature.history.generated.resources.history_retry
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_session_duration
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_title
 import com.nikolaevskii.lyte.feature.history.presentation.model.HistoryMonthGroupUiModel
@@ -93,9 +94,16 @@ fun HistoryContent(
                 HistoryUiState.Loading ->
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 
+                // Ошибка — то же полноразмерное состояние, что и пустая история, но с действием
+                // повтора. Текст один на все LyteError: список сессий умеет провалиться только
+                // чтением локальной БД (NotFound здесь недостижим), а сырой текст сбоя наружу не
+                // выходит по контракту LyteError.
                 is HistoryUiState.Error ->
-                    Text(
-                        text = state.message ?: stringResource(Res.string.history_error),
+                    LyteEmptyState(
+                        message = stringResource(Res.string.history_error),
+                        icon = LyteIcons.History,
+                        actionLabel = stringResource(Res.string.history_retry),
+                        onAction = { onIntent(HistoryIntent.OnRetryClicked) },
                         modifier = Modifier.align(Alignment.Center),
                     )
 
@@ -275,6 +283,6 @@ private fun HistoryContentLoadingPreview() {
 @Preview
 private fun HistoryContentErrorPreview() {
     LyteTheme {
-        HistoryContent(state = HistoryUiState.Error(message = null), onIntent = {})
+        HistoryContent(state = HistoryUiState.Error(LyteError.Storage), onIntent = {})
     }
 }

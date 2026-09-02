@@ -3,6 +3,7 @@ package com.nikolaevskii.lyte.feature.history.presentation.viewmodel
 import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionEntity
 import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionItemEntity
 import com.nikolaevskii.lyte.core.session.domain.repository.SessionHistoryRepository
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
@@ -17,6 +18,12 @@ internal class FakeSessionHistoryRepository(
 ) : SessionHistoryRepository {
 
     var getFinishedSessionsError: Throwable? = null
+
+    /**
+     * Шлюз: пока выставлен и не завершён, [getFinishedSessions] висит. Нужен, чтобы тест успел
+     * увидеть промежуточный кадр загрузки — без приостановки `StateFlow` схлопнет его с итоговым.
+     */
+    var getFinishedSessionsGate: CompletableDeferred<Unit>? = null
     var getSessionError: Throwable? = null
     var deleteSessionError: Throwable? = null
 
@@ -24,6 +31,7 @@ internal class FakeSessionHistoryRepository(
     val deletedSessionIds = mutableListOf<String>()
 
     override suspend fun getFinishedSessions(): List<WorkoutSessionItemEntity> {
+        getFinishedSessionsGate?.await()
         getFinishedSessionsError?.let { error -> throw error }
         return finishedSessions
     }

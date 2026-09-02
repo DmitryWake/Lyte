@@ -4,6 +4,7 @@
     <string name="history_empty_message">Здесь появятся ваши тренировки</string>
     <string name="history_empty_hint">Итоги сохраняются автоматически после каждой сессии.</string>
     <string name="history_error">Не удалось загрузить историю</string>
+    <string name="history_retry">Повторить</string>
     <string name="history_date">%1$d %2$s</string>
     <string name="history_date_today">Сегодня</string>
     <string name="history_date_yesterday">Вчера</string>
