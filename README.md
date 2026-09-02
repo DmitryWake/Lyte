@@ -79,7 +79,7 @@ Unit-тесты (host/JVM):
 ## Дизайн
 
 Макеты и дизайн-система — [design/v2](design/v2/README.md) (хендофф-бандл из Claude Design).
-План перехода приложения на неё — [design/v2/TASKS.md](design/v2/TASKS.md).
+План перехода приложения на неё — [roadmap/design-v2/TASKS.md](roadmap/design-v2/TASKS.md).
 
 ## Лицензии
 

@@ -5,6 +5,7 @@ license: Apache-2.0
 metadata:
   author: Mariano Miani
   version: "4.1.0"
+  localPatch: "Lyte: врезки «В Lyte иначе» там, где скилл расходится с CLAUDE.md"
 ---
 
 # Kotlin Multiplatform Architecture Review
@@ -208,6 +209,12 @@ Flag as a concern when:
 ### 6. Domain layer usage
 
 The domain layer is optional. It should exist when it reduces duplication or isolates meaningful business logic.
+
+> **В Lyte выбор уже сделан: UseCase-слоя нет.** Репозитории тонкие, источник один (Room), поэтому
+> ViewModel ходит в репозиторий напрямую. Сложные правила выносятся в **чистые доменные функции и
+> сервисы** (`SessionProgression`, `SessionSetOutcomeUtils`, `SessionPlanProgression`), а не в
+> UseCase-классы. Отсутствие use case здесь — не находка ревью; находка — появившийся
+> pass-through UseCase. См. CLAUDE.md § «Целевая структура».
 
 Check whether:
 - domain use cases encapsulate complex or reusable business logic

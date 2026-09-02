@@ -5,6 +5,7 @@ license: Apache-2.0
 metadata:
   author: Mariano Miani
   version: "3.0.0"
+  localPatch: "Lyte: врезки «В Lyte иначе» там, где скилл расходится с CLAUDE.md"
 ---
 
 # Kotlin Multiplatform Feature Implementation
@@ -799,6 +800,15 @@ Do not assume behavior that only makes sense for one target.
 ## Recommended feature structure
 
 When the project has no established feature structure, this shape is a reasonable default:
+
+> **В Lyte структура уже установлена, и она другая.** Фича — это **два** Gradle-модуля,
+> `feature/<name>/api` (pure KMP, только `@Serializable` роуты) и `feature/<name>/impl`
+> (Compose, экраны, ViewModel, граф навигации). Внутри `impl` слои разделены пакетами:
+> `presentation/{screen,viewmodel,navigation,model/mvi}`. Каталогов `domain/` и `data/` у фичи нет —
+> общие данные живут в core-модулях (`:core:core-workout`, `:core:core-session`).
+> Файлов `<Feature>UiEffect.kt` и `<Feature>UseCase.kt` быть не должно: Effect-канала в проекте нет,
+> UseCase-слоя нет намеренно — ViewModel обращается к репозиторию напрямую. Эталон разбиения —
+> `feature/workout/impl`. См. CLAUDE.md § «Целевая структура» и § «MVI-каркас».
 
 ```text
 feature-<name>/
