@@ -5,6 +5,7 @@ license: Apache-2.0
 metadata:
   author: Mariano Miani
   version: "1.0.0"
+  localPatch: "Lyte: врезки «В Lyte иначе» там, где скилл расходится с CLAUDE.md"
 ---
 
 # Kotlin Multiplatform State Management
@@ -183,6 +184,16 @@ MVI is a pattern, not a library. It can be implemented on top of any of the abov
 ## Effect handling
 
 One-time effects are the most common source of state-management bugs. The core mistake is modeling an effect as persistent state.
+
+> **В Lyte иначе.** Канала эффектов нет вовсе: `:core:core-mvi` не определяет `Effect`, а навигация и
+> прочие one-shot идут через инъектируемый `LyteNavigator` и явное состояние. Ни `SharedFlow`, ни
+> `Channel` для эффектов в проекте не заводятся — варианты A и C ниже читай как общий контекст, а не
+> как руководство к действию. См. CLAUDE.md § «MVI-каркас».
+>
+> Там же второе расхождение: `UiState` экрана — **sealed-иерархия взаимоисключающих армов**
+> (`Loading`/`Error`/`Empty`/`Content`), а не `data class` с флагами `isLoading`/`isError`, как в
+> примерах ниже. Рендер экрана — исчерпывающий `when` без невозможных комбинаций; эталон —
+> `HistoryUiState`, `WorkoutDetailsUiState`.
 
 ### The problem
 

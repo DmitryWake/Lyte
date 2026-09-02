@@ -5,6 +5,7 @@ license: Apache-2.0
 metadata:
   author: Mariano Miani
   version: "4.2.0"
+  localPatch: "Lyte: врезки «В Lyte иначе» там, где скилл расходится с CLAUDE.md"
 ---
 
 # Kotlin Multiplatform Code Review
@@ -81,6 +82,11 @@ Flag and fix cases where:
 Prefer:
 - domain models
 - use cases / interactors
+
+> **В Lyte иначе.** UseCase/interactor-слоя нет намеренно: ViewModel обращается к репозиторию
+> напрямую, а сложные правила живут в чистых доменных функциях (`SessionProgression`,
+> `SessionSetOutcomeUtils`). Читая список ниже, подставляй «доменная функция» вместо «use case».
+> См. CLAUDE.md § «Целевая структура».
 - dedicated mappers
 - reducer/state transformation helpers
 - validators in dedicated files/classes

@@ -32,7 +32,19 @@
       "Bash(grep*)",
       "Bash(rg*)",
       "Bash(mkdir*)",
-      "Bash(touch*)"
+      "Bash(touch*)",
+      "Bash(git commit*)",
+      "Bash(git push*)",
+      "Bash(git rm*)",
+      "mcp__github__create_pull_request",
+      "mcp__github__update_pull_request",
+      "mcp__github__merge_pull_request",
+      "mcp__github__pull_request_read",
+      "mcp__github__actions_list",
+      "mcp__github__get_check_run",
+      "mcp__github__get_job_logs",
+      "mcp__github__list_commits",
+      "mcp__github__get_commit"
     ],
     "deny": [
       "Edit(*.env)",
@@ -52,17 +64,34 @@
       "Bash(rm -rf*)",
       "Bash(git push --force*)",
       "Bash(git reset --hard*)",
-      "Bash(./gradlew clean build)"
+      "Bash(./gradlew clean build)",
+      "Bash(git push*master*)",
+      "Edit(**/keystore.properties)",
+      "Write(**/keystore.properties)",
+      "Edit(**/*.env)",
+      "Write(**/*.env)",
+      "Edit(**/*.keystore)",
+      "Write(**/*.keystore)",
+      "Edit(**/*.jks)",
+      "Write(**/*.jks)",
+      "Edit(version.properties)",
+      "Write(version.properties)"
     ]
   },
   "hooks": {
-    "PostToolUse": [
+    "PreToolUse": [
       {
-        "matcher": "Edit|Write",
+        "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "echo 'File modified: '\"$CLAUDE_FILE_PATH\""
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/guard-screenshots.sh",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/guard-protected-branch.sh",
+            "timeout": 10
           }
         ]
       }
