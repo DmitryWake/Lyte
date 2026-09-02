@@ -213,6 +213,49 @@ private fun WorkoutExerciseCreateSheetContentErrorPreview() {
     }
 }
 
+/** Идёт запись в библиотеку: «Сохранить» погашена, форма остаётся заполненной. */
+@Composable
+@Preview
+private fun WorkoutExerciseCreateSheetContentSavingPreview() {
+    LyteTheme {
+        WorkoutExerciseCreateSheetContent(
+            state = ExerciseCreatorUiState(
+                exercise = previewExercise(
+                    name = "Жим гантелей на наклонной",
+                    accent = ExerciseAccent.Teal,
+                    glyph = ExerciseGlyph.DumbbellPress,
+                ),
+                content = ExerciseCreatorContent.Saving,
+            ),
+            onIntent = {},
+            onDismissRequest = {},
+        )
+    }
+}
+
+/**
+ * Терминальное состояние: упражнение записано, шторку закрывает владелец. Сегодня рисуется так же,
+ * как [ExerciseCreatorContent.Saving] — сабмит недоступен, ошибки нет; кадр держит это под контролем.
+ */
+@Composable
+@Preview
+private fun WorkoutExerciseCreateSheetContentCreatedPreview() {
+    LyteTheme {
+        WorkoutExerciseCreateSheetContent(
+            state = ExerciseCreatorUiState(
+                exercise = previewExercise(
+                    name = "Жим гантелей на наклонной",
+                    accent = ExerciseAccent.Teal,
+                    glyph = ExerciseGlyph.DumbbellPress,
+                ),
+                content = ExerciseCreatorContent.Created,
+            ),
+            onIntent = {},
+            onDismissRequest = {},
+        )
+    }
+}
+
 private fun previewExercise(
     name: String,
     accent: ExerciseAccent = ExerciseAccent.Default,

@@ -249,6 +249,27 @@ private fun WorkoutListContentErrorPreview() {
     }
 }
 
+/**
+ * Удаление не прошло. **Кадр сегодня совпадает с базовым, и это дефект, а не оплошность превью:**
+ * баннер композится до [WorkoutProgramList], поэтому первая непрозрачная карточка его полностью
+ * накрывает — при неудачном удалении пользователь не получает никакого сигнала. Кадр заведён
+ * канарейкой: как только порядок композиции починят (RD-24, «невидимые ошибки»), эталон изменится
+ * и это будет видно в диффе.
+ */
+@Composable
+@Preview
+private fun WorkoutListContentActionErrorPreview() {
+    LyteTheme {
+        WorkoutListContent(
+            state = WorkoutListUiState.Content(
+                programs = previewPrograms,
+                actionError = LyteError.Storage,
+            ),
+            onIntent = {},
+        )
+    }
+}
+
 /** Кадр `programs-delete`: диалог подтверждения поверх списка. */
 @Composable
 @Preview
