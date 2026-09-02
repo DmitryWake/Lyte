@@ -1,6 +1,7 @@
 package com.nikolaevskii.lyte.core.session.data.repository
 
 import com.nikolaevskii.lyte.core.db.session.FinishedSessionSetRow
+import com.nikolaevskii.lyte.core.db.session.ProgramSetHistoryRow
 import com.nikolaevskii.lyte.core.db.session.SessionExerciseDatabaseEntity
 import com.nikolaevskii.lyte.core.db.session.SessionExerciseWithSets
 import com.nikolaevskii.lyte.core.db.session.SessionSetDatabaseEntity
@@ -61,6 +62,28 @@ internal class FakeWorkoutSessionDao : WorkoutSessionDao() {
 
     override fun observeFinishedSessionSets(): Flow<List<FinishedSessionSetRow>> =
         flow { emit(getFinishedSessionSets()) }
+
+    // Тот же порядок, что у настоящего ORDER BY: сессия (свежие первыми) → упражнение → подход.
+    override suspend fun getProgramSetHistory(programId: String): List<ProgramSetHistoryRow> =
+        getFinishedSessions()
+            .filter { session -> session.programId == programId }
+            .flatMap { session ->
+                exercises
+                    .filter { it.sessionId == session.id }
+                    .sortedBy { it.position }
+                    .flatMap { sessionExercise ->
+                        sets
+                            .filter { it.sessionExerciseId == sessionExercise.id }
+                            .sortedBy { it.position }
+                            .map { set ->
+                                ProgramSetHistoryRow(
+                                    sessionId = session.id,
+                                    exerciseId = sessionExercise.exerciseId,
+                                    set = set,
+                                )
+                            }
+                    }
+            }
 
     override suspend fun insertSession(session: WorkoutSessionDatabaseEntity) {
         sessions[session.id] = session

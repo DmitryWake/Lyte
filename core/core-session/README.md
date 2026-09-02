@@ -14,7 +14,8 @@ Data-слой сессий тренировки: доменные модели, 
     `observeFinishedSessions`, `getSession`) плюс `deleteSession` — удалить запись из истории может
     только она сама.
   - `WorkoutSessionRepository : SessionHistoryRepository` — **write**-поверхность трекинга (старт,
-    completeSet/skipSet/saveSetNote/setCurrentExercise/finishSession, `getActiveSession`).
+    completeSet/skipSet/saveSetNote/setCurrentExercise/finishSession, `getActiveSession`) плюс
+    `getPreviousSetResults(session)` — ориентиры «в прошлый раз» для подходов активной сессии.
 - Доменные правила: `SessionProgression` (`effectiveCurrentExercise`, `currentSet`, `hasPendingSets`),
   `SessionSetOutcomeUtils` (`outcome()`, `hasWeight`), `SessionPlanProgression`
   (`WorkoutSessionEntity.applyProgressionTo(workout)`) — чистые функции, единый источник тонов трекинга,
@@ -49,6 +50,16 @@ implementation(projects.core.coreSession)
   каждую карточку граф сессии нельзя, поэтому репозиторий берёт строки сессий и подходы **всех**
   завершённых сессий двумя запросами и раскладывает вторые по первым; исход считает та же
   `outcome()`, что и дифф деталей, а не SQL.
+- **Ориентир «в прошлый раз».** `getPreviousSetResults(session)` отдаёт `Map<setId, SessionSetValueEntity>`
+  под id подходов **переданной** сессии — карта действительна только для неё. Берётся последняя
+  завершённая сессия той же программы, где подход **реально делали**: пропущенный ориентиром не
+  считается и поиск уходит глубже (у досрочно завершённой сессии пропущенные есть всегда). Подход
+  опознаётся по упражнению-библиотеке, номеру его вхождения в сессию и позиции внутри упражнения —
+  не по позиции упражнения, иначе правка программы между тренировками теряла бы все ориентиры;
+  совпадения нет — нет и записи в карте. Данные — один плоский запрос
+  (`WorkoutSessionDao.getProgramSetHistory`), свёртка — в Kotlin (`WorkoutSessionMapper`).
+  Метод лежит на write-контракте, хотя формально это чтение: он рассчитан на активную сессию (для
+  завершённой «прошлый раз» — она сама), а единственный потребитель — трекер.
 - **Прогрессия плана.** `finishSession(id)` после завершения сессии подтягивает цели программы под
   факты: выполненный подход задаёт новую цель (и вверх, и вниз), пропущенный и невыполненный цель не
   меняют. Сессия — снапшот, поэтому упражнения и подходы сопоставляются по позициям и упражнение
