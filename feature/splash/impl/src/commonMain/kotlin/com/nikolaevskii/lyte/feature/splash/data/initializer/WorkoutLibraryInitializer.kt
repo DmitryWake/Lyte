@@ -1,11 +1,11 @@
 package com.nikolaevskii.lyte.feature.splash.data.initializer
 
+import com.nikolaevskii.lyte.core.app.domain.repository.AppLaunchStateRepository
+import com.nikolaevskii.lyte.core.workout.domain.repository.WorkoutExerciseRepository
+import com.nikolaevskii.lyte.core.workout.domain.repository.WorkoutRepository
 import com.nikolaevskii.lyte.feature.splash.data.seed.DefaultExerciseLibrary
 import com.nikolaevskii.lyte.feature.splash.data.seed.DefaultWorkoutPrograms
 import com.nikolaevskii.lyte.feature.splash.domain.initializer.AppInitializer
-import com.nikolaevskii.lyte.feature.splash.domain.repository.AppLaunchStateRepository
-import com.nikolaevskii.lyte.core.workout.domain.repository.WorkoutExerciseRepository
-import com.nikolaevskii.lyte.core.workout.domain.repository.WorkoutRepository
 
 /**
  * Засеивает библиотеку упражнений и стартовые программы один раз за всё время жизни приложения.

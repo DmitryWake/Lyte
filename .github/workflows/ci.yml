@@ -40,6 +40,7 @@ jobs:
           ./gradlew
           :core:core-mvi:testAndroidHostTest
           :core:core-db:testAndroidHostTest
+          :core:core-app:testAndroidHostTest
           :core:core-workout:testAndroidHostTest
           :core:core-session:testAndroidHostTest
           :feature:tracker:impl:testAndroidHostTest
@@ -183,6 +184,7 @@ jobs:
         run: >
           ./gradlew
           :core:core-mvi:iosSimulatorArm64Test
+          :core:core-app:iosSimulatorArm64Test
           :core:core-design:iosSimulatorArm64Test
           :core:core-workout:iosSimulatorArm64Test
           :core:core-session:iosSimulatorArm64Test
