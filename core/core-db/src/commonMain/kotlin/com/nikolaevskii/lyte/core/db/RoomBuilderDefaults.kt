@@ -4,6 +4,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.nikolaevskii.lyte.core.db.migration.MIGRATION_1_2
+import com.nikolaevskii.lyte.core.db.migration.MIGRATION_2_3
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
@@ -14,7 +15,7 @@ import kotlinx.coroutines.IO
  * схемам из `core-db/schemas/`. Деструктивный сброс (`fallbackToDestructiveMigration`) в релизной
  * сборке запрещён — он стирает историю тренировок пользователя при любом бампе версии.
  */
-internal val LYTE_MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2)
+internal val LYTE_MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3)
 
 fun <T : RoomDatabase> RoomDatabase.Builder<T>.applyLyteDefaults(): RoomDatabase.Builder<T> =
     setDriver(BundledSQLiteDriver())

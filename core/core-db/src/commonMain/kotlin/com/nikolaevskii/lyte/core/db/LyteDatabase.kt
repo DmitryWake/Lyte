@@ -28,7 +28,7 @@ import com.nikolaevskii.lyte.core.db.workout.WorkoutSetDatabaseEntity
         SessionSetDatabaseEntity::class,
         AppLaunchStateEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 @ConstructedBy(LyteDatabaseConstructor::class)
