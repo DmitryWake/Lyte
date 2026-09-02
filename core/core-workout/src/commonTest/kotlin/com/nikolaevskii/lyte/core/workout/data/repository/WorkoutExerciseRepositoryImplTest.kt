@@ -8,6 +8,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
+/** Записан явно: в тексте теста неразрывный пробел не отличить от обычного. */
+private const val NON_BREAKING_SPACE = "\u00A0"
+
 class WorkoutExerciseRepositoryImplTest {
 
     @Test
@@ -70,6 +73,21 @@ class WorkoutExerciseRepositoryImplTest {
         val names = repository.getExercises(query = "  ЖиМ  ").map { exercise -> exercise.name }
 
         assertEquals(listOf("Жим лёжа", "жим стоя"), names)
+    }
+
+    /**
+     * Неразрывный пробел внутри имени подставляют клавиатуры (в том числе штатная iOS). Совпасть
+     * с обычным пробелом он обязан в обе стороны, иначе упражнение перестаёт находиться ровно тем
+     * запросом, который перекрывает эту позицию.
+     */
+    @Test
+    fun getExercisesMatchesAcrossNonBreakingSpace() = runTest {
+        val repository = repository()
+        repository.createExercise(WorkoutExerciseEntity(id = "ex-1", name = "Жим${NON_BREAKING_SPACE}лёжа"))
+        repository.createExercise(WorkoutExerciseEntity(id = "ex-2", name = "Тяга штанги"))
+
+        assertEquals(listOf("Жим${NON_BREAKING_SPACE}лёжа"), repository.getExercises(query = "жим л").map { it.name })
+        assertEquals(listOf("Тяга штанги"), repository.getExercises(query = "тяга${NON_BREAKING_SPACE}шт").map { it.name })
     }
 
     @Test

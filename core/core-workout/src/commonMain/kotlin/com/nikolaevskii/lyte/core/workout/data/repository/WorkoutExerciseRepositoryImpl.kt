@@ -1,6 +1,7 @@
 package com.nikolaevskii.lyte.core.workout.data.repository
 
 import com.nikolaevskii.lyte.core.db.workout.ExerciseDao
+import com.nikolaevskii.lyte.core.workout.data.mapper.normalizedForSearch
 import com.nikolaevskii.lyte.core.workout.data.mapper.toDomainEntity
 import com.nikolaevskii.lyte.core.workout.data.mapper.toDatabaseEntity
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
@@ -12,10 +13,11 @@ internal class WorkoutExerciseRepositoryImpl(
 
     /**
      * Фильтрация и сортировка — в SQL (см. [ExerciseDao.search]), сюда остаётся только привести
-     * запрос к тому же виду, в каком лежит `name_normalized`, и экранировать спецсимволы `LIKE`.
+     * запрос к тому же виду, в каком лежит `name_normalized` ([normalizedForSearch] — та же функция,
+     * что заполняет колонку), и экранировать спецсимволы `LIKE`.
      */
     override suspend fun getExercises(query: String): List<WorkoutExerciseEntity> =
-        exerciseDao.search(normalizedQuery = query.trim().lowercase().escapedForLike())
+        exerciseDao.search(normalizedQuery = query.trim().normalizedForSearch().escapedForLike())
             .map { exercise -> exercise.toDomainEntity() }
 
     override suspend fun getExercise(id: String): WorkoutExerciseEntity? =

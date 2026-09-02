@@ -32,6 +32,7 @@ import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTone
 import com.nikolaevskii.lyte.core.design.component.stepper.LyteStepper
 import com.nikolaevskii.lyte.core.design.component.stepper.LyteStepperRow
 import com.nikolaevskii.lyte.core.design.component.stepper.LyteStepperSize
+import com.nikolaevskii.lyte.core.design.format.LyteSetValueFormat
 import com.nikolaevskii.lyte.core.design.format.lyteSetValueLabel
 import com.nikolaevskii.lyte.core.design.generated.resources.Res
 import com.nikolaevskii.lyte.core.design.generated.resources.diff_weight
@@ -189,7 +190,10 @@ private fun RestingSetRow(
 
 @Composable
 private fun RestingSetValue(state: LyteTrackSetState.Resting, foreground: Color) {
-    val label = state.value?.let { value -> lyteSetValueLabel(value) }.orEmpty()
+    // Компактно: строка держит 36dp и стоит в стопке из семи — развёрнутое «10 повт × 62,5 кг» её распирает.
+    val label = state.value
+        ?.let { value -> lyteSetValueLabel(value = value, format = LyteSetValueFormat.Compact) }
+        .orEmpty()
     when (state.tone) {
         LyteProgressTone.Met, LyteProgressTone.Positive, LyteProgressTone.Negative -> Text(
             text = label,
@@ -313,6 +317,9 @@ private fun CurrentSetCard(
 /**
  * Ориентиры текущего подхода — двумя подписанными строками, а не одним прогоном «цель … · в прошлый
  * раз …»: склейка переносилась по словам и переставала читаться.
+ *
+ * Значение здесь развёрнутое («10 повт × 62,5 кг»), в отличие от спокойных строк списка: строк всего
+ * две, места хватает, а ориентир читают именно затем, чтобы понять, что чему единица.
  */
 @Composable
 private fun CurrentSetReferences(target: LyteSetValue?, last: LyteSetValue?) {
@@ -324,10 +331,16 @@ private fun CurrentSetReferences(target: LyteSetValue?, last: LyteSetValue?) {
         modifier = Modifier.padding(top = TrackSetReferenceTopGap, start = TrackSetReferenceIndent),
     ) {
         target?.let { value ->
-            ReferenceRow(label = stringResource(Res.string.set_reference_target), value = lyteSetValueLabel(value))
+            ReferenceRow(
+                label = stringResource(Res.string.set_reference_target),
+                value = lyteSetValueLabel(value = value, format = LyteSetValueFormat.Expanded),
+            )
         }
         last?.let { value ->
-            ReferenceRow(label = stringResource(Res.string.set_reference_last), value = lyteSetValueLabel(value))
+            ReferenceRow(
+                label = stringResource(Res.string.set_reference_last),
+                value = lyteSetValueLabel(value = value, format = LyteSetValueFormat.Expanded),
+            )
         }
     }
 }

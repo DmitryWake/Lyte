@@ -13,8 +13,9 @@ abstract class ExerciseDao {
      * по возрастанию. Архивные упражнения (`is_archived = 1`) в библиотеку не попадают. Пустой
      * [normalizedQuery] отдаёт всю неархивную библиотеку: `LIKE '%%'` совпадает со всем.
      *
-     * [normalizedQuery] — уже приведённая к нижнему регистру подстрока: приводить регистр в SQL
-     * нельзя, `lower()` в SQLite работает только с ASCII (см. [ExerciseDatabaseEntity.nameNormalized]).
+     * [normalizedQuery] — подстрока, уже приведённая **тем же** правилом, что и колонка: нижний
+     * регистр плюс обычный пробел вместо неразрывного (см. [ExerciseDatabaseEntity.nameNormalized]).
+     * Приводить регистр в SQL нельзя — `lower()` в SQLite работает только с ASCII.
      * Спецсимволы `LIKE` (`%`, `_`, `\`) вызывающая сторона обязана экранировать — отсюда `ESCAPE`.
      */
     @Query(

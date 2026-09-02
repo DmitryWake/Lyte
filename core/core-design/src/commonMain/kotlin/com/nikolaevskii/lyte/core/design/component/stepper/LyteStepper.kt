@@ -49,6 +49,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.nikolaevskii.lyte.core.design.LyteTheme
+import com.nikolaevskii.lyte.core.design.format.WeightFractionDigits
+import com.nikolaevskii.lyte.core.design.format.formatWeight
+import com.nikolaevskii.lyte.core.design.format.roundToWeightPrecision
 import com.nikolaevskii.lyte.core.design.generated.resources.Res
 import com.nikolaevskii.lyte.core.design.generated.resources.stepper_edit
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
@@ -70,7 +73,9 @@ private const val StepperDisabledAlpha = 0.38f
 /** Единица измерения — половина кегля числа (`0.5em` в макете), а не отдельный шаг типографики. */
 private const val StepperUnitFontScale = 0.5f
 private const val StepperMaxIntegerDigits = 5
-private const val StepperMaxDecimalDigits = 2
+
+/** Дробная часть ввода ограничена ровно тем, что формат потом покажет (см. [formatWeight]). */
+private const val StepperMaxDecimalDigits = WeightFractionDigits
 private val StepperDecimalInputRegex = Regex("\\d{0,$StepperMaxIntegerDigits}([.,]\\d{0,$StepperMaxDecimalDigits})?")
 private val StepperIntegerInputRegex = Regex("\\d{0,$StepperMaxIntegerDigits}")
 
@@ -79,7 +84,11 @@ private val StepperIntegerInputRegex = Regex("\\d{0,$StepperMaxIntegerDigits}")
  * **ручным вводом** (тап по числу → tap-to-edit поле). Табличные цифры, кнопки ± зафиксированы
  * по краям постоянной ширины (мышечная память попадания пальцем при стопке степперов).
  * [allowDecimal] = `false` — целочисленный режим (для повторов): клавиатура без точки, введённое
- * значение округляется до целого; по умолчанию `true` (дробный ввод для веса, напр. «62.5»).
+ * значение округляется до целого; по умолчанию `true` (дробный ввод для веса, напр. «62,5»).
+ *
+ * Показывает значение тем же [formatWeight], что и подписи вокруг: у степпера нет собственного
+ * формата, иначе «Цель 10 повт × 62,5 кг» стояло бы над полем с «62.5». Ввод при этом принимает
+ * оба разделителя — клавиатура даёт свой по системной локали.
  */
 @Composable
 fun LyteStepper(
@@ -100,14 +109,14 @@ fun LyteStepper(
     val numericStyle = if (size == LyteStepperSize.Large) LyteTheme.numericTypography.large else LyteTheme.numericTypography.medium
 
     var editing by remember { mutableStateOf(false) }
-    var draft by remember { mutableStateOf(TextFieldValue(formatStepperValue(value))) }
+    var draft by remember { mutableStateOf(TextFieldValue(formatWeight(value))) }
     var hasFocus by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
 
     fun commit() {
         val parsed = draft.text.replace(',', '.').toDoubleOrNull()
         if (parsed != null) {
-            val normalized = if (allowDecimal) roundTo2(parsed) else round(parsed)
+            val normalized = if (allowDecimal) roundToWeightPrecision(parsed) else round(parsed)
             onValueChange(normalized.coerceIn(min, max))
         }
         hasFocus = false
@@ -123,7 +132,7 @@ fun LyteStepper(
             icon = LyteIcons.Minus,
             enabled = value > min,
             size = buttonSize,
-            onClick = { onValueChange(roundTo2((value - step).coerceIn(min, max))) },
+            onClick = { onValueChange(roundToWeightPrecision((value - step).coerceIn(min, max))) },
         )
         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
             if (editing) {
@@ -159,7 +168,7 @@ fun LyteStepper(
                     unit = unit,
                     style = numericStyle,
                     onClick = {
-                        val text = formatStepperValue(value)
+                        val text = formatWeight(value)
                         draft = TextFieldValue(text = text, selection = TextRange(0, text.length))
                         hasFocus = false
                         editing = true
@@ -171,7 +180,7 @@ fun LyteStepper(
             icon = LyteIcons.Plus,
             enabled = value < max,
             size = buttonSize,
-            onClick = { onValueChange(roundTo2((value + step).coerceIn(min, max))) },
+            onClick = { onValueChange(roundToWeightPrecision((value + step).coerceIn(min, max))) },
         )
     }
 }
@@ -190,7 +199,7 @@ private fun StepperValueDisplay(
             .clickable(onClick = onClick),
     ) {
         Text(
-            text = formatStepperValue(value),
+            text = formatWeight(value),
             style = style,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.alignByBaseline(),
@@ -251,14 +260,6 @@ private fun StepperCircleButton(
 }
 
 private fun TextStyle.centeredOn(color: Color): TextStyle = copy(textAlign = TextAlign.Center, color = color)
-
-private fun roundTo2(value: Double): Double = round(value * 100) / 100
-
-private fun formatStepperValue(value: Double): String {
-    val rounded = roundTo2(value)
-    val long = rounded.toLong()
-    return if (rounded == long.toDouble()) long.toString() else rounded.toString()
-}
 
 /**
  * Пропускает промежуточный ручной ввод степпера: пустую строку (очистка поля) и число с
