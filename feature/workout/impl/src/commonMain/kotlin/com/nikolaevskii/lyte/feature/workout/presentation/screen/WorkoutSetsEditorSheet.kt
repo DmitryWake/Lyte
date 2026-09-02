@@ -167,3 +167,49 @@ private fun WorkoutSetsEditorSheetPreview() {
         )
     }
 }
+
+/** Единственный подход: удалить его нельзя, поэтому кнопки удаления у ряда нет. */
+@Composable
+@Preview
+private fun WorkoutSetsEditorSheetSingleSetPreview() {
+    LyteTheme {
+        WorkoutSetsEditorSheet(
+            exercise = WorkoutExerciseWithRepsEntity(
+                exercise = WorkoutExerciseEntity(
+                    id = "2",
+                    name = "Гиперэкстензия",
+                    description = "Разгибание корпуса на скамье, без переразгибания поясницы.",
+                ),
+                reps = listOf(WorkoutRepEntity(count = 15, weight = null)),
+            ),
+            onIntent = {},
+        )
+    }
+}
+
+/** Много подходов: список уезжает под прибитые «Добавить подход» и «Готово». */
+@Composable
+@Preview
+private fun WorkoutSetsEditorSheetManySetsPreview() {
+    LyteTheme {
+        WorkoutSetsEditorSheet(
+            exercise = WorkoutExerciseWithRepsEntity(
+                exercise = WorkoutExerciseEntity(
+                    id = "3",
+                    name = "Приседания со штангой",
+                    description = "Штанга на верхней части спины, присед до параллели бёдер с полом.",
+                ),
+                reps = listOf(
+                    WorkoutRepEntity(count = 10, weight = 60.0),
+                    WorkoutRepEntity(count = 8, weight = 80.0),
+                    WorkoutRepEntity(count = 8, weight = 90.0),
+                    WorkoutRepEntity(count = 6, weight = 100.0),
+                    WorkoutRepEntity(count = 6, weight = 100.0),
+                    WorkoutRepEntity(count = 5, weight = 105.0),
+                    WorkoutRepEntity(count = 12, weight = 60.0),
+                ),
+            ),
+            onIntent = {},
+        )
+    }
+}

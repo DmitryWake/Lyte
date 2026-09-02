@@ -240,6 +240,57 @@ private fun WorkoutPreviewContentErrorPreview() {
     }
 }
 
+/** Старт нажат: пока пишется снапшот сессии, кнопка погашена — guard от дабл-тапа. */
+@Composable
+@Preview
+private fun WorkoutPreviewContentStartingPreview() {
+    LyteTheme {
+        Box(modifier = Modifier.size(width = PreviewDeviceWidth, height = PreviewDeviceHeight)) {
+            WorkoutPreviewContent(
+                state = WorkoutPreviewUiState.Content(program = previewProgram(), isStarting = true),
+                onIntent = {},
+            )
+        }
+    }
+}
+
+/**
+ * Старт не удался: кнопка снова активна. **Кадр фиксирует дефект вёрстки:** баннер — `Text` без
+ * подложки в одном `Box` с `LazyColumn`, поэтому красный текст ложится поверх названия первого
+ * упражнения и нечитаемы обе строки. Чинится в RD-24 вместе с остальными невидимыми ошибками;
+ * до тех пор эталон показывает, как это выглядит на самом деле.
+ */
+@Composable
+@Preview
+private fun WorkoutPreviewContentStartErrorPreview() {
+    LyteTheme {
+        Box(modifier = Modifier.size(width = PreviewDeviceWidth, height = PreviewDeviceHeight)) {
+            WorkoutPreviewContent(
+                state = WorkoutPreviewUiState.Content(program = previewProgram(), startError = LyteError.Storage),
+                onIntent = {},
+            )
+        }
+    }
+}
+
+/** Кадр `preview-exercise`: шторка описания упражнения открыта поверх превью программы. */
+@Composable
+@Preview
+private fun WorkoutPreviewContentExerciseInfoPreview() {
+    val program = previewProgram()
+    LyteTheme {
+        Box(modifier = Modifier.size(width = PreviewDeviceWidth, height = PreviewDeviceHeight)) {
+            WorkoutPreviewContent(
+                state = WorkoutPreviewUiState.Content(
+                    program = program,
+                    exerciseInfo = program.exercises.first(),
+                ),
+                onIntent = {},
+            )
+        }
+    }
+}
+
 private fun previewProgram(): WorkoutPreviewUiModel = WorkoutPreviewUiModel(
     programName = "Push Day",
     exerciseCount = 3,

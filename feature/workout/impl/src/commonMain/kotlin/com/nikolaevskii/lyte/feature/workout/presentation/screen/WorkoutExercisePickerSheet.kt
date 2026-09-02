@@ -27,6 +27,7 @@ import com.nikolaevskii.lyte.core.design.component.feedback.LyteEmptyState
 import com.nikolaevskii.lyte.core.design.component.overlay.LyteBottomSheet
 import com.nikolaevskii.lyte.core.design.component.textfield.LyteTextField
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
+import com.nikolaevskii.lyte.core.mvi.LyteError
 import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseAccent
 import com.nikolaevskii.lyte.core.workout.domain.model.ExerciseGlyph
 import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutExerciseEntity
@@ -267,5 +268,18 @@ private fun WorkoutExercisePickerSheetContentEmptyLibraryPreview() {
 private fun WorkoutExercisePickerSheetContentLoadingPreview() {
     LyteTheme {
         WorkoutExercisePickerSheetContent(state = ExercisePickerUiState(), onIntent = {}, onDismissRequest = {})
+    }
+}
+
+/** Библиотеку не удалось прочитать: поиск и «Создать упражнение» остаются доступными. */
+@Composable
+@Preview
+private fun WorkoutExercisePickerSheetContentErrorPreview() {
+    LyteTheme {
+        WorkoutExercisePickerSheetContent(
+            state = ExercisePickerUiState(content = ExercisePickerContent.Error(LyteError.Storage)),
+            onIntent = {},
+            onDismissRequest = {},
+        )
     }
 }

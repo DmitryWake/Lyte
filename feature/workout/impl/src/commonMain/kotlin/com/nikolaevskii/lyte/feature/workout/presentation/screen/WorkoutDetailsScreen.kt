@@ -416,38 +416,7 @@ private fun WorkoutDetailsForm(
 private fun WorkoutDetailsContentPreview() {
     LyteTheme {
         WorkoutDetailsContent(
-            state = WorkoutDetailsUiState(
-                id = "1",
-                content = WorkoutDetailsContent.Editing(
-                    name = "Push Day",
-                    description = null,
-                    accent = ExerciseAccent.Indigo,
-                    glyph = ExerciseGlyph.BenchPress,
-                    exercises = listOf(
-                        previewExercise(
-                            key = "1",
-                            name = "Жим лёжа",
-                            accent = ExerciseAccent.Indigo,
-                            glyph = ExerciseGlyph.BenchPress,
-                            plan = listOf(8 to 70.0, 8 to 80.0, 6 to 85.0),
-                        ),
-                        previewExercise(
-                            key = "2",
-                            name = "Жим гантелей на наклонной",
-                            accent = ExerciseAccent.Teal,
-                            glyph = ExerciseGlyph.DumbbellPress,
-                            plan = listOf(10 to 24.0, 10 to 26.0, 8 to 26.0),
-                        ),
-                        previewExercise(
-                            key = "3",
-                            name = "Отжимания на брусьях",
-                            accent = ExerciseAccent.Amber,
-                            glyph = ExerciseGlyph.Rack,
-                            plan = listOf(12 to null, 12 to null, 10 to null),
-                        ),
-                    ),
-                ),
-            ),
+            state = WorkoutDetailsUiState(id = "1", content = previewEditing()),
             onIntent = {},
         )
     }
@@ -495,6 +464,105 @@ private fun WorkoutDetailsContentErrorPreview() {
         )
     }
 }
+
+/** Идёт запись программы: «Готово» погашена, форма остаётся видимой и заполненной. */
+@Composable
+@Preview
+private fun WorkoutDetailsContentSavingPreview() {
+    LyteTheme {
+        WorkoutDetailsContent(
+            state = WorkoutDetailsUiState(id = "1", content = previewEditing(isSaving = true)),
+            onIntent = {},
+        )
+    }
+}
+
+/** Запись не прошла: баннер над формой, введённое не стёрто. */
+@Composable
+@Preview
+private fun WorkoutDetailsContentSaveErrorPreview() {
+    LyteTheme {
+        WorkoutDetailsContent(
+            state = WorkoutDetailsUiState(id = "1", content = previewEditing(saveError = LyteError.Storage)),
+            onIntent = {},
+        )
+    }
+}
+
+/**
+ * Подарм `editor = SetsEditor`: редактор подходов первого упражнения поверх формы.
+ *
+ * Экранных кадров у подармов `ExercisePicker` и `ExerciseCreator` нет намеренно: обе шторки поднимают
+ * свою ViewModel через `koinViewModel()`, а скриншот-тест Koin не поднимает — такой кадр не «плохо
+ * выглядел бы», а уронил бы гейт. Обе шторки полноэкранные, экран за ними не виден, поэтому их армы
+ * сняты превью собственного stateless-контента в их же файлах.
+ */
+@Composable
+@Preview
+private fun WorkoutDetailsContentSetsEditorPreview() {
+    LyteTheme {
+        WorkoutDetailsContent(
+            state = WorkoutDetailsUiState(
+                id = "1",
+                content = previewEditing(editor = WorkoutDetailsEditor.SetsEditor(exerciseIndex = 0)),
+            ),
+            onIntent = {},
+        )
+    }
+}
+
+/** Подарм `editor = Mark`: шторка «Цвет и знак» поверх формы (кадр `program-mark`). */
+@Composable
+@Preview
+private fun WorkoutDetailsContentMarkSheetPreview() {
+    LyteTheme {
+        WorkoutDetailsContent(
+            state = WorkoutDetailsUiState(id = "1", content = previewEditing(editor = WorkoutDetailsEditor.Mark)),
+            onIntent = {},
+        )
+    }
+}
+
+/**
+ * Та же программа, что в основном превью: новые кадры отличаются состоянием, а не данными, — иначе
+ * дифф пришлось бы читать через различия в составе.
+ */
+private fun previewEditing(
+    editor: WorkoutDetailsEditor? = null,
+    isSaving: Boolean = false,
+    saveError: LyteError? = null,
+): WorkoutDetailsContent.Editing = WorkoutDetailsContent.Editing(
+    name = "Push Day",
+    description = null,
+    accent = ExerciseAccent.Indigo,
+    glyph = ExerciseGlyph.BenchPress,
+    exercises = listOf(
+        previewExercise(
+            key = "1",
+            name = "Жим лёжа",
+            accent = ExerciseAccent.Indigo,
+            glyph = ExerciseGlyph.BenchPress,
+            plan = listOf(8 to 70.0, 8 to 80.0, 6 to 85.0),
+        ),
+        previewExercise(
+            key = "2",
+            name = "Жим гантелей на наклонной",
+            accent = ExerciseAccent.Teal,
+            glyph = ExerciseGlyph.DumbbellPress,
+            plan = listOf(10 to 24.0, 10 to 26.0, 8 to 26.0),
+        ),
+        previewExercise(
+            key = "3",
+            name = "Отжимания на брусьях",
+            accent = ExerciseAccent.Amber,
+            glyph = ExerciseGlyph.Rack,
+            plan = listOf(12 to null, 12 to null, 10 to null),
+        ),
+    ),
+    editor = editor,
+    isSaving = isSaving,
+    saveError = saveError,
+)
 
 private fun previewExercise(
     key: String,

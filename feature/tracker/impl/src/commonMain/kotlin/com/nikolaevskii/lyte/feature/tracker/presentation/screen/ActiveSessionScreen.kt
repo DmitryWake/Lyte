@@ -71,6 +71,8 @@ import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionLas
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionOverlayUiModel
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionSetStatus
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionSetUiModel
+import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionSwitcherRowUiModel
+import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionSwitcherStatus
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.lastSetLabel
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.toTrackSetStates
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionIntent
@@ -665,6 +667,113 @@ private fun ActiveSessionContentErrorPreview() {
     }
 }
 
+/** Длинная заметка: блок под фокус-карточкой не обрезает текст, поэтому кадр показывает его целиком. */
+@Composable
+@Preview
+private fun ActiveSessionContentLongNotePreview() {
+    ActiveSessionPreviewDevice {
+        ActiveSessionContent(
+            state = trackingState(
+                content = previewTracking(
+                    currentIndex = 2,
+                    setCount = 4,
+                    note = "Правое плечо щёлкает на негативе — сегодня работаю в укороченной амплитуде " +
+                        "и не опускаю гантели ниже уровня груди. Если на следующей тренировке щелчок " +
+                        "останется, снимаю 4 кг и добавляю разминочный подход с резиной.",
+                ),
+                elapsedSeconds = 1120,
+            ),
+            onIntent = {},
+        )
+    }
+}
+
+/** Запись подхода не прошла: баннер над кнопками, сессия остаётся рабочей. */
+@Composable
+@Preview
+private fun ActiveSessionContentMutationErrorPreview() {
+    ActiveSessionPreviewDevice {
+        ActiveSessionContent(
+            state = trackingState(
+                content = previewTracking(currentIndex = 1, setCount = 3).copy(hasMutationError = true),
+                elapsedSeconds = 1224,
+            ),
+            onIntent = {},
+        )
+    }
+}
+
+/**
+ * Идёт запись подхода. Сегодня `isMutating` — только guard во ViewModel, экран его не рисует,
+ * поэтому кадр совпадает с `ActiveSessionContentPreview` пиксель в пиксель. Это и есть его смысл:
+ * когда индикацию заведут (RD-24), дифф покажет ровно то, что она добавила.
+ */
+@Composable
+@Preview
+private fun ActiveSessionContentMutatingPreview() {
+    ActiveSessionPreviewDevice {
+        ActiveSessionContent(
+            state = trackingState(
+                content = previewTracking(currentIndex = 1, setCount = 3),
+                elapsedSeconds = 1224,
+            ).copy(isMutating = true),
+            onIntent = {},
+        )
+    }
+}
+
+/** Шторка «Упражнения сессии» поверх трекинга: закрытое, текущее и ещё не начатое упражнения. */
+@Composable
+@Preview
+private fun ActiveSessionContentExerciseSheetPreview() {
+    ActiveSessionPreviewDevice {
+        ActiveSessionContent(
+            state = trackingState(
+                content = previewTracking(currentIndex = 1, setCount = 3).copy(
+                    switcherRows = previewSwitcherRows(),
+                    overlay = ActiveSessionOverlayUiModel.ExerciseSheet,
+                ),
+                elapsedSeconds = 1224,
+            ),
+            onIntent = {},
+        )
+    }
+}
+
+/** Шторка заметки к текущему подходу с набранным, но ещё не сохранённым черновиком. */
+@Composable
+@Preview
+private fun ActiveSessionContentNoteSheetPreview() {
+    ActiveSessionPreviewDevice {
+        ActiveSessionContent(
+            state = trackingState(
+                content = previewTracking(currentIndex = 1, setCount = 3).copy(
+                    overlay = ActiveSessionOverlayUiModel.NoteSheet(draft = "Локти ближе к корпусу"),
+                ),
+                elapsedSeconds = 1224,
+            ),
+            onIntent = {},
+        )
+    }
+}
+
+/** Диалог досрочного завершения: остаток подходов уйдёт в пропущенные. */
+@Composable
+@Preview
+private fun ActiveSessionContentEndEarlyDialogPreview() {
+    ActiveSessionPreviewDevice {
+        ActiveSessionContent(
+            state = trackingState(
+                content = previewTracking(currentIndex = 1, setCount = 3).copy(
+                    overlay = ActiveSessionOverlayUiModel.EndEarlyDialog,
+                ),
+                elapsedSeconds = 1224,
+            ),
+            onIntent = {},
+        )
+    }
+}
+
 @Composable
 private fun ActiveSessionPreviewDevice(content: @Composable () -> Unit) {
     LyteTheme {
@@ -710,6 +819,74 @@ private fun previewTracking(
     )
     return current.toTrackingContent(draftReps = 10, draftWeight = 62.5)
 }
+
+/**
+ * Строки шторки переключения для той же сессии, что показывает [previewTracking]: пять упражнений,
+ * текущее — второе, оно же открыто на экране под шторкой.
+ */
+private fun previewSwitcherRows(): List<ActiveSessionSwitcherRowUiModel> = listOf(
+    ActiveSessionSwitcherRowUiModel(
+        exerciseId = "e1",
+        name = "Жим лёжа",
+        status = ActiveSessionSwitcherStatus.Done,
+        doneCount = 4,
+        setCount = 4,
+        currentSetIndex = null,
+        targetPills = emptyList(),
+        isSelectable = false,
+    ),
+    ActiveSessionSwitcherRowUiModel(
+        exerciseId = "e2",
+        name = "Жим гантелей на наклонной",
+        status = ActiveSessionSwitcherStatus.Current,
+        doneCount = 1,
+        setCount = 3,
+        currentSetIndex = 2,
+        targetPills = emptyList(),
+        isSelectable = true,
+    ),
+    ActiveSessionSwitcherRowUiModel(
+        exerciseId = "e3",
+        name = "Отжимания на брусьях",
+        status = ActiveSessionSwitcherStatus.Pending,
+        doneCount = 0,
+        setCount = 3,
+        currentSetIndex = null,
+        targetPills = listOf(
+            LyteSetValue(reps = 12),
+            LyteSetValue(reps = 12),
+            LyteSetValue(reps = 10),
+        ),
+        isSelectable = true,
+    ),
+    ActiveSessionSwitcherRowUiModel(
+        exerciseId = "e4",
+        name = "Разводка гантелей лёжа",
+        status = ActiveSessionSwitcherStatus.Pending,
+        doneCount = 0,
+        setCount = 3,
+        currentSetIndex = null,
+        targetPills = listOf(
+            LyteSetValue(reps = 12, weight = 14.0),
+            LyteSetValue(reps = 12, weight = 14.0),
+            LyteSetValue(reps = 10, weight = 16.0),
+        ),
+        isSelectable = true,
+    ),
+    ActiveSessionSwitcherRowUiModel(
+        exerciseId = "e5",
+        name = "Французский жим",
+        status = ActiveSessionSwitcherStatus.Pending,
+        doneCount = 0,
+        setCount = 2,
+        currentSetIndex = null,
+        targetPills = listOf(
+            LyteSetValue(reps = 12, weight = 25.0),
+            LyteSetValue(reps = 12, weight = 25.0),
+        ),
+        isSelectable = true,
+    ),
+)
 
 /** Сессия из четырёх упражнений по четыре подхода: один пропущен, остальные с разными исходами. */
 private fun previewAllDoneTones(): List<LyteProgressTone> = listOf(

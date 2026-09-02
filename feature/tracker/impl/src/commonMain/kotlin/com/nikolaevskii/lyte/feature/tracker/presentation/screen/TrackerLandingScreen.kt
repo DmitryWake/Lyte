@@ -167,3 +167,18 @@ private fun TrackerLandingContentPreview() {
         )
     }
 }
+
+/**
+ * Гейт активной сессии: пока идёт проверка БД, экран намеренно пуст — ни вордмарка, ни спиннера.
+ * Кадр фиксирует именно эту пустоту: если она когда-нибудь перестанет быть пустой, это будет видно.
+ */
+@Composable
+@Preview
+private fun TrackerLandingContentCheckingSessionPreview() {
+    LyteTheme {
+        TrackerLandingContent(
+            state = TrackerLandingUiState.CheckingSession,
+            onIntent = {},
+        )
+    }
+}
