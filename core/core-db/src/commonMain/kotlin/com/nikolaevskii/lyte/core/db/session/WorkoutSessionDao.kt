@@ -56,6 +56,33 @@ abstract class WorkoutSessionDao {
     )
     abstract fun observeFinishedSessionSets(): Flow<List<FinishedSessionSetRow>>
 
+    /**
+     * Подходы всех завершённых сессий одной программы — материал для ориентира «в прошлый раз».
+     * Свежие сессии идут первыми, внутри сессии порядок трека (упражнение → подход), поэтому
+     * потребителю достаточно взять первое совпадение.
+     *
+     * Фильтр по программе, а не по списку `exercise_id`: номер вхождения упражнения сопоставим
+     * только внутри одной программы — второе вхождение жима в Push Day и в Full Body не одно и то же.
+     * Обе колонки фильтра проиндексированы (`program_id`, `finished_at`).
+     *
+     * Подходы отдаются как есть, включая пропущенные: отсев по статусу до нумерации вхождений
+     * сдвинул бы её (см. потребителя в `:core:core-session`).
+     */
+    @Query(
+        """
+        SELECT
+            session_exercise.session_id AS session_id,
+            session_exercise.exercise_id AS exercise_id,
+            session_set.*
+        FROM workout_session
+        JOIN session_exercise ON session_exercise.session_id = workout_session.id
+        JOIN session_set ON session_set.session_exercise_id = session_exercise.id
+        WHERE workout_session.program_id = :programId AND workout_session.finished_at IS NOT NULL
+        ORDER BY workout_session.finished_at DESC, session_exercise.position, session_set.position
+        """,
+    )
+    abstract suspend fun getProgramSetHistory(programId: String): List<ProgramSetHistoryRow>
+
     @Insert
     abstract suspend fun insertSession(session: WorkoutSessionDatabaseEntity)
 

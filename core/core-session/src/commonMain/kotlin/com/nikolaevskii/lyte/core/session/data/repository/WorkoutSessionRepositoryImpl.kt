@@ -5,8 +5,10 @@ import com.nikolaevskii.lyte.core.db.session.WorkoutSessionDao
 import com.nikolaevskii.lyte.core.session.data.mapper.toDomainEntity
 import com.nikolaevskii.lyte.core.session.data.mapper.toItemEntity
 import com.nikolaevskii.lyte.core.session.data.mapper.toOutcomesBySession
+import com.nikolaevskii.lyte.core.session.data.mapper.toPreviousSetResults
 import com.nikolaevskii.lyte.core.session.data.mapper.toSessionRows
 import com.nikolaevskii.lyte.core.session.domain.applyProgressionTo
+import com.nikolaevskii.lyte.core.session.domain.model.SessionSetValueEntity
 import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionEntity
 import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionItemEntity
 import com.nikolaevskii.lyte.core.session.domain.repository.WorkoutSessionRepository
@@ -30,6 +32,24 @@ internal class WorkoutSessionRepositoryImpl(
 
     override suspend fun getSession(id: String): WorkoutSessionEntity? =
         workoutSessionDao.getSession(id)?.toDomainEntity()
+
+    /**
+     * Ориентиры на всю сессию — **один** плоский запрос, а не запрос на подход: подходы завершённых
+     * сессий этой программы приезжают свежими вперёд, сопоставляет их [toPreviousSetResults].
+     *
+     * Сопоставление в Kotlin, а не оконной функцией в SQL: правило «какой подход считается тем же»
+     * — доменное, и в `commonTest` оно проверяется на обеих платформах, тогда как тесты
+     * `:core:core-db` живут только в `androidHostTest` (Robolectric).
+     */
+    override suspend fun getPreviousSetResults(session: WorkoutSessionEntity): Map<String, SessionSetValueEntity> {
+        // Контракт «только для активной сессии» держим проверкой, а не прозой в KDoc: для завершённой
+        // сессии выборка вернула бы её собственные факты (она свежайшая по finished_at), и ответ
+        // выглядел бы правдоподобным. Правдоподобный неверный ответ хуже отказа.
+        require(session.finishedAt == null) {
+            "getPreviousSetResults рассчитан на активную сессию, а ${session.id} уже завершена"
+        }
+        return workoutSessionDao.getProgramSetHistory(session.program.id).toPreviousSetResults(session)
+    }
 
     /**
      * Список истории — **два** запроса, а не запрос на карточку: строки сессий и подходы всех

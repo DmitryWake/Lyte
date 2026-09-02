@@ -48,6 +48,10 @@ internal class FakeWorkoutSessionRepository(
 
     override suspend fun getFinishedSessions(): List<WorkoutSessionItemEntity> = emptyList()
 
+    // Ориентиры «в прошлый раз» никто из текущих тестов не проверяет — истории у фейка нет вовсе.
+    override suspend fun getPreviousSetResults(session: WorkoutSessionEntity): Map<String, SessionSetValueEntity> =
+        emptyMap()
+
     override fun observeFinishedSessions(): Flow<List<WorkoutSessionItemEntity>> = flow { emit(getFinishedSessions()) }
 
     // История трекеру не нужна — read-часть контракта здесь только ради компиляции.
