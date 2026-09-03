@@ -1,5 +1,6 @@
 package com.nikolaevskii.lyte.feature.splash.presentation.viewmodel
 
+import com.nikolaevskii.lyte.core.app.testing.FakeAppLaunchStateRepository
 import com.nikolaevskii.lyte.core.navigation.model.LyteNavOptions
 import com.nikolaevskii.lyte.feature.splash.SplashRoute
 import com.nikolaevskii.lyte.feature.splash.presentation.constant.SplashConstant.SPLASH_MIN_LOADING_DURATION_MS
@@ -8,6 +9,7 @@ import com.nikolaevskii.lyte.feature.splash.domain.initializer.AppInitialization
 import com.nikolaevskii.lyte.feature.splash.domain.initializer.AppInitializer
 import com.nikolaevskii.lyte.feature.splash.presentation.model.mvi.SplashUiState
 import com.nikolaevskii.lyte.feature.splash.presentation.model.mvi.SplashIntent
+import com.nikolaevskii.lyte.feature.onboarding.OnboardingRoute
 import com.nikolaevskii.lyte.feature.tracker.TrackerLandingRoute
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -47,7 +49,11 @@ class SplashViewModelTest {
             val navigator = FakeLyteNavigator()
             val manager = AppInitializationManager(initializers = listOf(succeedingInitializer()))
             val viewModel =
-                SplashViewModel(appInitializationManager = manager, lyteNavigator = navigator)
+                SplashViewModel(
+                    appInitializationManager = manager,
+                    appLaunchStateRepository = FakeAppLaunchStateRepository(hasCompletedOnboarding = true),
+                    lyteNavigator = navigator,
+                )
 
             runCurrent()
             assertEquals(SplashUiState.Loading, viewModel.uiState.value)
@@ -83,7 +89,11 @@ class SplashViewModelTest {
             val navigator = FakeLyteNavigator()
             val manager = AppInitializationManager(initializers = listOf(failingInitializer()))
             val viewModel =
-                SplashViewModel(appInitializationManager = manager, lyteNavigator = navigator)
+                SplashViewModel(
+                    appInitializationManager = manager,
+                    appLaunchStateRepository = FakeAppLaunchStateRepository(hasCompletedOnboarding = true),
+                    lyteNavigator = navigator,
+                )
 
             advanceTimeBy(SPLASH_MIN_LOADING_DURATION_MS.milliseconds)
             runCurrent()
@@ -103,6 +113,7 @@ class SplashViewModelTest {
         }
         val viewModel = SplashViewModel(
             appInitializationManager = AppInitializationManager(initializers = listOf(initializer)),
+            appLaunchStateRepository = FakeAppLaunchStateRepository(hasCompletedOnboarding = true),
             lyteNavigator = navigator,
         )
         advanceTimeBy(SPLASH_MIN_LOADING_DURATION_MS.milliseconds)
@@ -124,7 +135,11 @@ class SplashViewModelTest {
             val navigator = FakeLyteNavigator()
             val manager = AppInitializationManager(initializers = listOf(succeedingInitializer()))
             val viewModel =
-                SplashViewModel(appInitializationManager = manager, lyteNavigator = navigator)
+                SplashViewModel(
+                    appInitializationManager = manager,
+                    appLaunchStateRepository = FakeAppLaunchStateRepository(hasCompletedOnboarding = true),
+                    lyteNavigator = navigator,
+                )
 
             // Первая попытка ещё не дошла до минимальной длительности — второй Retry (например, двойной
             // тап) не должен породить второй параллельный запуск, который потом навигирует повторно.
@@ -149,7 +164,11 @@ class SplashViewModelTest {
         }
         val manager = AppInitializationManager(initializers = listOf(cancellingInitializer))
         val viewModel =
-            SplashViewModel(appInitializationManager = manager, lyteNavigator = navigator)
+            SplashViewModel(
+                    appInitializationManager = manager,
+                    appLaunchStateRepository = FakeAppLaunchStateRepository(hasCompletedOnboarding = true),
+                    lyteNavigator = navigator,
+                )
 
         advanceTimeBy(SPLASH_MIN_LOADING_DURATION_MS.milliseconds)
         runCurrent()
@@ -164,5 +183,42 @@ class SplashViewModelTest {
 
     private fun failingInitializer(): AppInitializer = object : AppInitializer {
         override suspend fun initialize(): Unit = error("boom")
+    }
+
+    /**
+     * Развилка «с чего стартует приложение» живёт в сплэше, а не в обучении, поэтому проверяется
+     * здесь. Флаг не выставлен — первым идёт обучение; иначе тур не показался бы никогда.
+     */
+    @Test
+    fun navigatesToOnboardingWhenItWasNotCompleted() = runTest(testDispatcher) {
+        val navigator = FakeLyteNavigator()
+        SplashViewModel(
+            appInitializationManager = AppInitializationManager(initializers = emptyList()),
+            appLaunchStateRepository = FakeAppLaunchStateRepository(hasCompletedOnboarding = false),
+            lyteNavigator = navigator,
+        )
+
+        advanceTimeBy(SPLASH_MIN_LOADING_DURATION_MS.milliseconds)
+        advanceTimeBy(SPLASH_EXIT_DURATION_MS.milliseconds)
+        runCurrent()
+
+        assertEquals(expected = OnboardingRoute, actual = navigator.navigateCalls.single().first)
+    }
+
+    /** Сбой чтения флага не запирает вход: лишний показ тура дешевле неработающего приложения. */
+    @Test
+    fun navigatesToTrackerWhenFlagCannotBeRead() = runTest(testDispatcher) {
+        val navigator = FakeLyteNavigator()
+        SplashViewModel(
+            appInitializationManager = AppInitializationManager(initializers = emptyList()),
+            appLaunchStateRepository = UnreadableAppLaunchStateRepository(),
+            lyteNavigator = navigator,
+        )
+
+        advanceTimeBy(SPLASH_MIN_LOADING_DURATION_MS.milliseconds)
+        advanceTimeBy(SPLASH_EXIT_DURATION_MS.milliseconds)
+        runCurrent()
+
+        assertEquals(expected = TrackerLandingRoute, actual = navigator.navigateCalls.single().first)
     }
 }

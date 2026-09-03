@@ -46,6 +46,7 @@ jobs:
           :feature:tracker:impl:testAndroidHostTest
           :feature:workout:impl:testAndroidHostTest
           :feature:history:impl:testAndroidHostTest
+          :feature:onboarding:impl:testAndroidHostTest
           :feature:splash:impl:testAndroidHostTest
 
       - name: Android debug build
@@ -99,6 +100,7 @@ jobs:
           :feature:tracker:impl:recordRoborazziAndroidHostTest
           :feature:workout:impl:recordRoborazziAndroidHostTest
           :feature:history:impl:recordRoborazziAndroidHostTest
+          :feature:onboarding:impl:recordRoborazziAndroidHostTest
           :feature:splash:impl:recordRoborazziAndroidHostTest
 
       - name: Detect screenshot changes
@@ -191,6 +193,7 @@ jobs:
           :feature:tracker:impl:iosSimulatorArm64Test
           :feature:workout:impl:iosSimulatorArm64Test
           :feature:history:impl:iosSimulatorArm64Test
+          :feature:onboarding:impl:iosSimulatorArm64Test
           :feature:splash:impl:iosSimulatorArm64Test
 
       - name: iOS framework link
