@@ -1,6 +1,7 @@
 package com.nikolaevskii.lyte.feature.tracker.presentation.viewmodel
 
 import com.nikolaevskii.lyte.core.mvi.BaseViewModel
+import com.nikolaevskii.lyte.core.design.model.LyteSetValue
 import com.nikolaevskii.lyte.core.navigation.LyteNavigator
 import com.nikolaevskii.lyte.core.navigation.model.LyteNavOptions
 import com.nikolaevskii.lyte.feature.history.HistorySessionDetailsRoute
@@ -85,6 +86,7 @@ class ActiveSessionViewModel(
                     // Маршрут протух: сессия уже завершена (напр., восстановлен стек старого процесса).
                     navigateToLanding()
                 } else {
+                    loadPreviousSetResults(session)
                     applySession(session)
                 }
             }
@@ -135,6 +137,28 @@ class ActiveSessionViewModel(
      * текущий подход (иначе перезаполняются его целью). Открытую шторку пересборка закрывает — это и есть
      * штатное закрытие шторки заметки после удачного сохранения.
      */
+    /**
+     * Ориентиры «в прошлый раз» читаются **один раз** за загрузку сессии и живут в состоянии: контент
+     * трекинга пересобирается целиком на каждый тап «Готово»/«Пропустить»/сохранение заметки, и запрос
+     * внутри этого пути стоил бы обращения к БД на каждый тап. Факты прошлых сессий за время текущей
+     * не меняются, поэтому перечитывать нечего.
+     *
+     * Провал не показывается: ориентир — подсказка, а не содержимое экрана. Без него карточка
+     * работает, а баннер об ошибке рядом с рабочими степперами сбивал бы с толку.
+     */
+    private suspend fun loadPreviousSetResults(session: WorkoutSessionEntity) {
+        val results = runCatching { workoutSessionRepository.getPreviousSetResults(session) }
+            .onFailure { error -> if (error is CancellationException) throw error }
+            .getOrDefault(emptyMap())
+        updateState {
+            copy(
+                previousSetResults = results.mapValues { (_, value) ->
+                    LyteSetValue(reps = value.count, weight = value.weight)
+                },
+            )
+        }
+    }
+
     private fun applySession(session: WorkoutSessionEntity) {
         val model = session.toActiveSessionUiModel()
         updateState {
@@ -147,7 +171,11 @@ class ActiveSessionViewModel(
                     if (sameSet) previous.draftWeight else (current.targetWeight ?: DEFAULT_DRAFT_WEIGHT)
                 ActiveSessionContent.Tracking(
                     current = current,
-                    trackSets = current.toTrackSetStates(draftReps = draftReps, draftWeight = draftWeight),
+                    trackSets = current.toTrackSetStates(
+                        draftReps = draftReps,
+                        draftWeight = draftWeight,
+                        lastResult = previousSetResults[current.currentSetId],
+                    ),
                     lastSetLabel = current.lastSetLabel(),
                     switcherRows = model.switcherRows,
                     draftReps = draftReps,
