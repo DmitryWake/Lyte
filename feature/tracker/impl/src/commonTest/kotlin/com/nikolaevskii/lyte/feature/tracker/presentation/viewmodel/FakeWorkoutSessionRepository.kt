@@ -29,6 +29,12 @@ internal class FakeWorkoutSessionRepository(
     var saveSetNoteError: Throwable? = null
     var finishSessionError: Throwable? = null
     var startedSessionId: String = "started-session"
+    var previousSetResults: Map<String, SessionSetValueEntity> = emptyMap()
+    var previousSetResultsError: Throwable? = null
+
+    /** Ориентиры читаются один раз за загрузку сессии, поэтому лишний запрос обязан быть виден. */
+    var previousSetResultsCalls: Int = 0
+        private set
 
     val startSessionCalls = mutableListOf<WorkoutEntity>()
     val completeSetCalls = mutableListOf<Triple<String, Int, Double?>>()
@@ -49,9 +55,11 @@ internal class FakeWorkoutSessionRepository(
 
     override suspend fun getFinishedSessions(): List<WorkoutSessionItemEntity> = emptyList()
 
-    // Ориентиры «в прошлый раз» никто из текущих тестов не проверяет — истории у фейка нет вовсе.
-    override suspend fun getPreviousSetResults(session: WorkoutSessionEntity): Map<String, SessionSetValueEntity> =
-        emptyMap()
+    override suspend fun getPreviousSetResults(session: WorkoutSessionEntity): Map<String, SessionSetValueEntity> {
+        previousSetResultsCalls++
+        previousSetResultsError?.let { error -> throw error }
+        return previousSetResults
+    }
 
     override fun observeFinishedSessions(): Flow<List<WorkoutSessionItemEntity>> = flow { emit(getFinishedSessions()) }
 

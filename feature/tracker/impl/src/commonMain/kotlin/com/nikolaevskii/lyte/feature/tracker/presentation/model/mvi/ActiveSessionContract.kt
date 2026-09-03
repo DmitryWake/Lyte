@@ -2,6 +2,7 @@ package com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi
 
 import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTone
 import com.nikolaevskii.lyte.core.design.component.session.LyteTrackSetState
+import com.nikolaevskii.lyte.core.design.model.LyteSetValue
 import com.nikolaevskii.lyte.core.mvi.UiIntent
 import com.nikolaevskii.lyte.core.mvi.UiState
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionCurrentUiModel
@@ -31,6 +32,7 @@ data class ActiveSessionUiState(
     val elapsedSeconds: Int = 0,
     val isMutating: Boolean = false,
     val mutationError: ActiveSessionMutationError? = null,
+    val previousSetResults: Map<String, LyteSetValue> = emptyMap(),
 ) : UiState {
 
     /** Что экран показывает прямо сейчас: один `when` без вложенных проверок на `null`. */

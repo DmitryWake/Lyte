@@ -80,6 +80,17 @@ private val TrackSetReferenceLabelTextSize = 12.sp
 private val TrackSetReferenceValueTextSize = 12.5.sp
 private val TrackSetReferenceLeaderHeight = 1.dp
 private const val TrackSetReferenceLeaderAlpha = 0.6f
+
+/**
+ * Запас под обе строки ориентира: строка «в прошлый раз» есть не у каждого подхода, и без запаса
+ * карточка меняла бы высоту при переходе к следующему — вместе с ней уезжали бы кнопки под ней.
+ *
+ * Считается от размеров самих строк, а не задан числом: правка типографики ориентира иначе
+ * рассинхронизировала бы запас с содержимым, и вернулся бы ровно тот прыжок, ради которого запас
+ * и заведён. Множитель — высота строки к кеглю у Space Grotesk.
+ */
+private val TrackSetReferenceLineHeight = (TrackSetReferenceValueTextSize.value * 1.4f).dp
+private val TrackSetReferencesMinHeight = TrackSetReferenceLineHeight * 2 + TrackSetReferenceRowGap
 private val TrackSetSteppersTopGap = 14.dp
 private val TrackSetStepperRowGap = 10.dp
 private val TrackSetContentTopGap = 16.dp
@@ -328,7 +339,13 @@ private fun CurrentSetReferences(target: LyteSetValue?, last: LyteSetValue?) {
     }
     Column(
         verticalArrangement = Arrangement.spacedBy(TrackSetReferenceRowGap),
-        modifier = Modifier.padding(top = TrackSetReferenceTopGap, start = TrackSetReferenceIndent),
+        modifier = Modifier
+            .padding(top = TrackSetReferenceTopGap, start = TrackSetReferenceIndent)
+            // Место под обе строки резервируется всегда: «в прошлый раз» есть не у каждого подхода, и
+            // без запаса карточка меняла бы высоту при переходе к следующему подходу — прыгали бы и
+            // кнопки под ней, то есть цель тапа уезжала бы из-под пальца. Высота считается от самих
+            // строк, а не задана числом: смена типографики её не рассинхронизирует.
+            .defaultMinSize(minHeight = TrackSetReferencesMinHeight),
     ) {
         target?.let { value ->
             ReferenceRow(

@@ -2,6 +2,7 @@ package com.nikolaevskii.lyte.feature.tracker.presentation.model
 
 import com.nikolaevskii.lyte.core.design.component.progress.LyteProgressTone
 import com.nikolaevskii.lyte.core.design.component.session.LyteTrackSetState
+import com.nikolaevskii.lyte.core.design.model.LyteSetValue
 
 private const val REPS_STEP = 1
 private const val WEIGHT_STEP = 2.5
@@ -14,12 +15,17 @@ private const val WEIGHT_STEP = 2.5
  * Драфты приходят параметрами, потому что их владелец — состояние экрана, а не сессия: они меняются
  * на каждый тап по степперу и в доменную модель не попадают до нажатия «Готово».
  *
- * Ориентир «В прошлый раз» ([LyteTrackSetState.Current.last]) не заполняется: фактов предыдущей
- * сессии домен не хранит (см. KDoc `toActiveSessionUiModel`).
+ * Ориентир «в прошлый раз» приходит параметром, а не считается здесь: он читается один раз на
+ * загрузке сессии и живёт в состоянии экрана, а маппер вызывается заново после каждой мутации.
+ *
+ * Ориентир, совпавший с целью, не показывается: две одинаковые строки подряд не сообщают ничего, а
+ * место занимают и уводят взгляд от единственного случая, ради которого строка нужна, — когда
+ * прошлый раз разошёлся с планом.
  */
 internal fun ActiveSessionCurrentUiModel.toTrackSetStates(
     draftReps: Int,
     draftWeight: Double,
+    lastResult: LyteSetValue? = null,
 ): List<LyteTrackSetState> = sets.map { set ->
     if (set.status == ActiveSessionSetStatus.Current) {
         LyteTrackSetState.Current(
@@ -29,6 +35,7 @@ internal fun ActiveSessionCurrentUiModel.toTrackSetStates(
             // подтягиваниям добавляют пояс.
             weight = draftWeight,
             target = target,
+            last = lastResult.takeIf { value -> value != target },
             repsStep = REPS_STEP,
             weightStep = WEIGHT_STEP,
         )
