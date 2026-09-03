@@ -60,11 +60,12 @@ import com.nikolaevskii.lyte.core.design.theme.lytePressScale
 import kotlin.math.round
 import org.jetbrains.compose.resources.stringResource
 
-/** Размеры по словарю ДС: [Large] — герой формы, [Medium] — контрол в 48dp (минимальная зона касания). */
+/**
+ * Размеры по словарю ДС: [Large] — герой формы (`LyteTheme.hitTarget.stepper`), [Medium] — контрол
+ * в минимальную зону касания (`LyteTheme.hitTarget.min`).
+ */
 enum class LyteStepperSize { Large, Medium }
 
-private val StepperButtonSizeLarge = 56.dp
-private val StepperButtonSizeMedium = 48.dp
 private val StepperWidthLarge = 248.dp
 private val StepperWidthMedium = 196.dp
 private val StepperIconSize = 24.dp
@@ -103,7 +104,7 @@ fun LyteStepper(
     fillMaxWidth: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
-    val buttonSize = if (size == LyteStepperSize.Large) StepperButtonSizeLarge else StepperButtonSizeMedium
+    val buttonSize = if (size == LyteStepperSize.Large) LyteTheme.hitTarget.stepper else LyteTheme.hitTarget.min
     val width = if (size == LyteStepperSize.Large) StepperWidthLarge else StepperWidthMedium
     val widthModifier = if (fillMaxWidth) Modifier.fillMaxWidth() else Modifier.width(width)
     val numericStyle = if (size == LyteStepperSize.Large) LyteTheme.numericTypography.large else LyteTheme.numericTypography.medium

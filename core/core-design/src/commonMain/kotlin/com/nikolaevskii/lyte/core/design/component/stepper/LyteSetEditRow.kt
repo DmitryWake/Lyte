@@ -29,7 +29,6 @@ private val SetEditRowPaddingHorizontal = 16.dp
 private val SetEditRowPaddingTop = 14.dp
 private val SetEditRowPaddingBottom = 16.dp
 private val SetEditRowHeaderGap = 8.dp
-private val SetEditRowDeleteButtonSize = 36.dp
 private val SetEditRowSteppersTopGap = 12.dp
 private val SetEditRowStepperRowGap = 10.dp
 
@@ -101,7 +100,6 @@ fun LyteSetEditRow(
                         icon = LyteIcons.Delete,
                         contentDescription = stringResource(Res.string.a11y_remove_set),
                         onClick = remove,
-                        size = SetEditRowDeleteButtonSize,
                     )
                 }
             }
