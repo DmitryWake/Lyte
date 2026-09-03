@@ -11,6 +11,9 @@
     <string name="diff_skipped">пропущено</string>
     <string name="dialog_confirm_default">Удалить</string>
     <string name="dialog_cancel_default">Отмена</string>
+    <string name="coach_mark_skip">Пропустить</string>
+    <string name="coach_mark_next">Далее</string>
+    <string name="coach_mark_done">Понятно</string>
     <string name="stepper_edit">Ввести значение</string>
     <string name="a11y_remove">Удалить</string>
     <string name="a11y_back">Назад</string>
