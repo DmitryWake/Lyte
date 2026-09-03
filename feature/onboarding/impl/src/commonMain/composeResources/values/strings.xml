@@ -3,4 +3,27 @@
     <string name="onboarding_description">Составляйте программы, отмечайте подходы и вес во время тренировки, смотрите прогресс — всё в одном месте.</string>
     <string name="onboarding_start_tour">Показать как это работает</string>
     <string name="onboarding_skip">Пропустить</string>
+
+    <!-- Реплики шагов тура. Тексты подсказок — дословно из COACH (LyteScreen.dc.html). -->
+    <string name="onboarding_coach_start">Нажмите «Начать» — выберите программу и запустите тренировку.</string>
+    <string name="onboarding_coach_stepper">Меняйте повторения и вес: нажимайте на ± или на само число, чтобы ввести точное значение.</string>
+    <string name="onboarding_coach_commit">«Готово» — подход записан, дальше следующий. «Пропустить» — если решили его не делать.</string>
+    <string name="onboarding_coach_history">Каждая тренировка сохраняется здесь — открывайте, чтобы увидеть подробные результаты.</string>
+
+    <!--
+        Подписи внутри реплик. Копии, а не ссылки на ресурсы боевых экранов: тянуть их значило бы
+        зависимость :feature:onboarding:impl от :feature:tracker:impl и :feature:history:impl, а
+        отсутствие таких зависимостей — главный довод за реплики (RD-31). Оригиналы:
+        tracker_landing_title / _hint / _start и active_session_complete_set / _skip_set в
+        feature/tracker/impl, экраны TrackerLandingScreen и ActiveSessionScreen.
+    -->
+    <string name="onboarding_replica_landing_title">Нет активной сессии</string>
+    <string name="onboarding_replica_landing_hint">Выберите программу — откроются её подходы, таймер запустится сам. Итог сохранится в историю.</string>
+    <string name="onboarding_replica_landing_start">Начать</string>
+    <string name="onboarding_replica_set_done">Готово</string>
+    <string name="onboarding_replica_set_skip">Пропустить</string>
+    <string name="onboarding_replica_history_overline">Сентябрь</string>
+    <string name="onboarding_replica_history_title">Push Day</string>
+    <string name="onboarding_replica_history_subtitle">15 из 16 подходов выполнено</string>
+    <string name="onboarding_replica_history_duration">52 мин</string>
 </resources>

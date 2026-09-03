@@ -31,9 +31,11 @@ import com.nikolaevskii.lyte.feature.onboarding.generated.resources.onboarding_d
 import com.nikolaevskii.lyte.feature.onboarding.generated.resources.onboarding_skip
 import com.nikolaevskii.lyte.feature.onboarding.generated.resources.onboarding_start_tour
 import com.nikolaevskii.lyte.feature.onboarding.generated.resources.onboarding_tagline
+import com.nikolaevskii.lyte.feature.onboarding.presentation.model.OnboardingStep
 import com.nikolaevskii.lyte.feature.onboarding.presentation.model.mvi.OnboardingIntent
 import com.nikolaevskii.lyte.feature.onboarding.presentation.model.mvi.OnboardingUiState
 import com.nikolaevskii.lyte.feature.onboarding.presentation.model.mvi.OnboardingUiState.OnboardingContent
+import com.nikolaevskii.lyte.feature.onboarding.presentation.screen.tour.OnboardingTour
 import com.nikolaevskii.lyte.feature.onboarding.presentation.viewmodel.OnboardingViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -71,7 +73,12 @@ private fun OnboardingContent(
                 modifier = Modifier.fillMaxSize().padding(padding),
             )
 
-            is OnboardingContent.Tour -> Unit
+            is OnboardingContent.Tour -> OnboardingTour(
+                step = state.content.current,
+                isLeaving = state.isLeaving,
+                onIntent = onIntent,
+                modifier = Modifier.fillMaxSize().padding(padding),
+            )
         }
     }
 }
@@ -143,3 +150,40 @@ private fun OnboardingWelcomeLeavingPreview() {
         OnboardingContent(state = OnboardingUiState(isLeaving = true), onIntent = {})
     }
 }
+
+@Preview
+@Composable
+private fun OnboardingTourStartPreview() {
+    LyteTheme {
+        OnboardingContent(state = tourState(OnboardingStep.Start), onIntent = {})
+    }
+}
+
+@Preview
+@Composable
+private fun OnboardingTourStepperPreview() {
+    LyteTheme {
+        OnboardingContent(state = tourState(OnboardingStep.Stepper), onIntent = {})
+    }
+}
+
+@Preview
+@Composable
+private fun OnboardingTourCommitPreview() {
+    LyteTheme {
+        OnboardingContent(state = tourState(OnboardingStep.Commit), onIntent = {})
+    }
+}
+
+/** Последний шаг: «Пропустить» не показывается, основная кнопка подписана «Понятно». */
+@Preview
+@Composable
+private fun OnboardingTourHistoryPreview() {
+    LyteTheme {
+        OnboardingContent(state = tourState(OnboardingStep.History), onIntent = {})
+    }
+}
+
+private fun tourState(step: OnboardingStep): OnboardingUiState = OnboardingUiState(
+    content = OnboardingContent.Tour(step = OnboardingStep.ALL.indexOf(step)),
+)
