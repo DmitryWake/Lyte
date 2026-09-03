@@ -20,18 +20,20 @@ import com.nikolaevskii.lyte.core.design.LyteTheme
 import com.nikolaevskii.lyte.core.design.icon.LyteIcons
 import com.nikolaevskii.lyte.core.design.theme.lytePressScale
 
-private val LyteIconButtonDefaultSize = 40.dp
-
 /**
  * Круглая кнопка-иконка. [active] переключает фон на secondaryContainer (напр. открытая шторка).
  * Нажатие — M3-овский state layer плюс уменьшение до 0.97, как у остальных контролов системы.
+ *
+ * [size] — диаметр нарисованного круга; по умолчанию `LyteTheme.hitTarget.min`. Меньше минимума не
+ * ставим, даже зная, что M3 расширяет зону касания сам: палец целится в то, что видно, и мелкий
+ * кружок остаётся мелкой мишенью.
  */
 @Composable
 fun LyteIconButton(
     icon: ImageVector,
     contentDescription: String?,
     onClick: () -> Unit,
-    size: Dp = LyteIconButtonDefaultSize,
+    size: Dp = LyteTheme.hitTarget.min,
     active: Boolean = false,
     modifier: Modifier = Modifier,
 ) {

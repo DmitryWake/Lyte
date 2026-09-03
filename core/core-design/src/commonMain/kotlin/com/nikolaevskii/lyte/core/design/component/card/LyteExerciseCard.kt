@@ -42,7 +42,6 @@ private val ExerciseCardHandleSize = 18.dp
 private val ExerciseCardMarkSize = 38.dp
 private val ExerciseCardPlanSpacing = 6.dp
 private val ExerciseCardPlanGap = 8.dp
-private val ExerciseCardActionSize = 36.dp
 
 /**
  * Место под трек плана. Резервируется целиком, даже когда трек занимает меньше: так подпись
@@ -176,7 +175,6 @@ fun LyteExerciseCard(
                         icon = LyteIcons.Edit,
                         contentDescription = stringResource(Res.string.a11y_edit_sets),
                         onClick = onEdit,
-                        size = ExerciseCardActionSize,
                     )
                 }
                 variant.onRemove?.let { onRemove ->
@@ -184,7 +182,6 @@ fun LyteExerciseCard(
                         icon = LyteIcons.Delete,
                         contentDescription = stringResource(Res.string.a11y_remove_from_program),
                         onClick = onRemove,
-                        size = ExerciseCardActionSize,
                     )
                 }
             }

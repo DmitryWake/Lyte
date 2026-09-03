@@ -39,21 +39,25 @@
     <string name="active_session_last_set_in_exercise">Последний подход в упражнении</string>
     <string name="active_session_add_note">Заметка</string>
     <string name="active_session_note_sheet_title">Заметка к подходу</string>
-    <string name="active_session_note_placeholder">Комментарий…</string>
+    <string name="active_session_note_placeholder">Как прошёл подход…</string>
     <string name="active_session_note_save">Готово</string>
     <string name="active_session_complete_set">Готово</string>
     <string name="active_session_skip_set">Пропустить</string>
     <string name="active_session_exercises_sheet_title">Упражнения сессии</string>
-    <string name="active_session_exercises_cd">Все упражнения</string>
+    <string name="active_session_exercises_cd">Упражнения сессии</string>
     <string name="active_session_end_early_cd">Завершить тренировку</string>
-    <string name="active_session_switcher_now">Сейчас</string>
-    <string name="active_session_switcher_current_subtitle">сейчас · подход %1$d из %2$d</string>
-    <string name="active_session_switcher_done_subtitle">выполнено · %1$d из %2$d</string>
+    <string name="active_session_switcher_now">сейчас</string>
+    <string name="active_session_switcher_current_subtitle">подход %1$d из %2$d</string>
+    <string name="active_session_switcher_done_subtitle">все подходы закрыты</string>
+    <!-- Начатое, но не текущее упражнение: сколько подходов уже закрыто. -->
+    <string name="active_session_switcher_started_subtitle">%1$d из %2$d</string>
     <string name="active_session_switcher_done">выполнено</string>
-    <string name="active_session_end_early_title">Завершить тренировку досрочно?</string>
-    <string name="active_session_end_early_description">Невыполненные подходы будут отмечены как пропущенные.</string>
+    <string name="active_session_end_early_title">На сегодня хватит?</string>
+    <string name="active_session_end_early_description">Невыполненные подходы отметим как пропущенные.</string>
     <string name="active_session_end_early_confirm">Завершить</string>
-    <string name="active_session_end_early_cancel">Отмена</string>
+    <!-- «Продолжить», а не «Отмена»: в диалоге с двумя выходами «Отмена» двусмысленна — отменить
+         тренировку или отменить завершение? -->
+    <string name="active_session_end_early_cancel">Продолжить</string>
     <string name="active_session_all_done_title">Тренировка завершена</string>
     <!-- Сводка под треком итога: «15 из 16 подходов выполнено». Форма — по общему числу подходов. -->
     <plurals name="active_session_summary_set_count">
