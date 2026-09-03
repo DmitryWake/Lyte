@@ -104,7 +104,9 @@ private fun SessionExerciseEntity.toSwitcherRow(isCurrent: Boolean): ActiveSessi
         doneCount = doneCount,
         setCount = sets.size,
         currentSetIndex = if (isCurrent) sets.indexOfFirst { set -> set.result == null } + 1 else null,
-        targetPills = if (status == ActiveSessionSwitcherStatus.Pending) {
+        // Только у нетронутых: у начатого упражнения часть подходов уже закрыта, и полный список
+        // целей врал бы. Такая строка вместо пилюль показывает счёт «сделано из всего».
+        targetPills = if (status == ActiveSessionSwitcherStatus.Pending && doneCount == 0) {
             sets.map { set -> set.target.toSetValue() }
         } else {
             emptyList()

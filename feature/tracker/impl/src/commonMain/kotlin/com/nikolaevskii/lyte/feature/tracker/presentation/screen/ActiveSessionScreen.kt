@@ -756,6 +756,27 @@ private fun ActiveSessionContentAllDoneSavingPreview() {
     }
 }
 
+/** Единственный подход в сессии: форма плюрала «1 из 1 подхода выполнено» видна только здесь. */
+@Composable
+@Preview
+private fun ActiveSessionContentAllDoneSingleSetPreview() {
+    ActiveSessionPreviewDevice {
+        ActiveSessionContent(
+            state = ActiveSessionUiState(
+                content = ActiveSessionContent.AllDone(
+                    programName = "Становая",
+                    completedCount = 1,
+                    totalCount = 1,
+                    setTones = listOf(LyteProgressTone.Positive),
+                ),
+                startedAt = Instant.fromEpochMilliseconds(0),
+                elapsedSeconds = 214,
+            ),
+            onIntent = {},
+        )
+    }
+}
+
 @Composable
 @Preview
 private fun ActiveSessionContentLoadingPreview() {

@@ -15,6 +15,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -118,6 +119,10 @@ private fun GlyphTile(
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
+            // Плитка рисуется по макету (46dp), а ловит касание по правилу кита: расширение
+            // невидимо и не спорит с кадром, а уменьшать зону до нарисованного круга нельзя —
+            // промах здесь ставит упражнению чужой знак.
+            .minimumInteractiveComponentSize()
             .size(IconPickerTileSize)
             .clip(CircleShape)
             .background(background)

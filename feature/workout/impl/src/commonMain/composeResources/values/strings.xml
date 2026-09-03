@@ -42,8 +42,11 @@
     <string name="workout_details_picker_not_found_hint">Проверьте запрос — или создайте своё упражнение.</string>
     <string name="workout_details_picker_error">Не удалось загрузить упражнения</string>
     <string name="workout_details_exercise_create_error">Не удалось сохранить упражнение</string>
+    <!-- Состояния сверх бандла: в кадре 3.3 пустой список всегда «Ничего не найдено». Пустая
+         библиотека — своё состояние, и подсказка у неё объясняет, зачем упражнения нужны: звать
+         «создайте первое» бессмысленно, кнопка «Создать упражнение» и так прибита снизу. -->
     <string name="workout_details_picker_empty_message">Библиотека упражнений пуста</string>
-    <string name="workout_details_picker_empty_hint">Создайте первое упражнение</string>
+    <string name="workout_details_picker_empty_hint">Упражнение — это движение, из которого собирается программа.</string>
     <string name="workout_details_exercise_create_title">Новое упражнение</string>
     <string name="workout_details_exercise_create_name_label">Название</string>
     <string name="workout_details_exercise_create_name_placeholder">Например, Жим гантелей</string>

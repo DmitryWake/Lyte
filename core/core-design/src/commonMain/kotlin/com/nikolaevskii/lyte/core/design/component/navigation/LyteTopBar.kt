@@ -44,7 +44,6 @@ private val TopBarLargePaddingBottom = 10.dp
 private val TopBarLargeActionRowSpacing = 2.dp
 private val TopBarLargeTitleTopNoActions = 10.dp
 private val TopBarLargeSubtitleSpacing = 4.dp
-private val TopBarLargeBackSize = 44.dp
 private val TopBarLargeActionInset = 12.dp
 private val TopBarLargeTitleTracking = (-0.6).sp
 
@@ -124,7 +123,6 @@ private fun LargeTopBar(
                         icon = LyteIcons.ChevronLeft,
                         contentDescription = stringResource(Res.string.a11y_back),
                         onClick = onBack,
-                        size = TopBarLargeBackSize,
                         modifier = Modifier.offset(x = -TopBarLargeActionInset),
                     )
                 } else {
@@ -196,7 +194,6 @@ private fun LyteTopBarLargeWithTrailingPreview() {
                         icon = LyteIcons.Delete,
                         contentDescription = stringResource(Res.string.a11y_remove),
                         onClick = {},
-                        size = TopBarLargeBackSize,
                     )
                 },
             )
