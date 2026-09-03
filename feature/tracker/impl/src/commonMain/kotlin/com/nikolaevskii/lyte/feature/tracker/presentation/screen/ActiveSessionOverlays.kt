@@ -42,6 +42,7 @@ import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_switcher_done
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_switcher_done_subtitle
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_switcher_now
+import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_switcher_started_subtitle
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionSwitcherRowUiModel
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionSwitcherStatus
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionIntent
@@ -197,17 +198,26 @@ private fun SwitcherRowDetails(row: ActiveSessionSwitcherRowUiModel) {
         }
 
         ActiveSessionSwitcherStatus.Done -> SwitcherSubtitle(
-            text = stringResource(Res.string.active_session_switcher_done_subtitle, row.doneCount, row.setCount),
+            text = stringResource(Res.string.active_session_switcher_done_subtitle),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        ActiveSessionSwitcherStatus.Pending -> FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(SwitcherPillsGap),
-            verticalArrangement = Arrangement.spacedBy(SwitcherPillsGap),
-            modifier = Modifier.padding(top = SwitcherPillsSpacing),
-        ) {
-            row.targetPills.forEach { pill ->
-                SwitcherTargetPill(value = pill)
+        // Начатое упражнение показывает счёт, а не цели: часть подходов уже закрыта, и пилюли
+        // «12 повт» врали бы, что их ещё предстоит сделать. Цели остаются у нетронутых.
+        ActiveSessionSwitcherStatus.Pending -> if (row.doneCount > 0) {
+            SwitcherSubtitle(
+                text = stringResource(Res.string.active_session_switcher_started_subtitle, row.doneCount, row.setCount),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(SwitcherPillsGap),
+                verticalArrangement = Arrangement.spacedBy(SwitcherPillsGap),
+                modifier = Modifier.padding(top = SwitcherPillsSpacing),
+            ) {
+                row.targetPills.forEach { pill ->
+                    SwitcherTargetPill(value = pill)
+                }
             }
         }
     }
@@ -247,8 +257,9 @@ private fun SwitcherTargetPill(value: LyteSetValue) {
 @Composable
 private fun SwitcherRowTrailing(row: ActiveSessionSwitcherRowUiModel) {
     when (row.status) {
+        // Бейдж «сейчас» строчными — как в кадре: капс тут читался бы как предупреждение.
         ActiveSessionSwitcherStatus.Current -> Text(
-            text = stringResource(Res.string.active_session_switcher_now).uppercase(),
+            text = stringResource(Res.string.active_session_switcher_now),
             style = MaterialTheme.typography.labelMedium.copy(
                 fontSize = SwitcherTrailingTextSize,
                 fontWeight = FontWeight.Bold,
@@ -331,6 +342,21 @@ private fun SwitcherRowPreview() {
                         LyteSetValue(reps = 12),
                         LyteSetValue(reps = 10),
                     ),
+                    isSelectable = true,
+                ),
+                isMutating = false,
+                onIntent = {},
+            )
+            // Начатое, но брошенное упражнение: вместо целей — счёт закрытых подходов.
+            SwitcherRow(
+                row = ActiveSessionSwitcherRowUiModel(
+                    exerciseId = "e4",
+                    name = "Разведение гантелей",
+                    status = ActiveSessionSwitcherStatus.Pending,
+                    doneCount = 1,
+                    setCount = 4,
+                    currentSetIndex = null,
+                    targetPills = emptyList(),
                     isSelectable = true,
                 ),
                 isMutating = false,

@@ -15,13 +15,16 @@ import org.jetbrains.compose.resources.StringResource
 /**
  * Верхнеуровневые разделы bottom-bar. Реализуют [TopLevelDestination] (маршрут графа вкладки) и
  * несут метаданные для отрисовки нижней навигации.
+ *
+ * Иконки — как в макете: гантель у «Тренировки» (та же, что герой-иконка лендинга), планшет со
+ * списком у «Программ». Меняться местами им нельзя: это единственная пара, которую легко перепутать.
  */
 enum class LyteBottomBarItem(
     override val graphRoute: Any,
     val icon: ImageVector,
     val label: StringResource,
 ) : TopLevelDestination {
-    TRACKER(graphRoute = TrackerTabGraph, icon = LyteIcons.ListChecks, label = Res.string.tab_tracker),
-    WORKOUTS(graphRoute = WorkoutTabGraph, icon = LyteIcons.Dumbbell, label = Res.string.tab_workouts),
+    TRACKER(graphRoute = TrackerTabGraph, icon = LyteIcons.Dumbbell, label = Res.string.tab_tracker),
+    WORKOUTS(graphRoute = WorkoutTabGraph, icon = LyteIcons.ClipboardList, label = Res.string.tab_workouts),
     HISTORY(graphRoute = HistoryTabGraph, icon = LyteIcons.History, label = Res.string.tab_history),
 }

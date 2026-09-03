@@ -27,6 +27,10 @@
   - `LyteTheme.numericTypography` — `hero`/`large`/`medium`: табличные (`tnum`) стили для «живых»
     чисел (секундомер, степпер, счётчики). Обычный текст всегда через `MaterialTheme.typography`.
   - `LyteTheme.extendedShapes` — `largeIncreased` (20dp), `extraLargeIncreased` (32dp), `full` (pill).
+  - `LyteTheme.hitTarget` — минимальные зоны касания: `min` (48dp — нижняя граница для любого
+    интерактивного элемента) и `stepper` (56dp — крупная кнопка ± там, где степпер герой формы).
+    Отсюда берут размеры `LyteIconButton` и `LyteStepper`; ставить кнопку-иконку меньше `min` нельзя
+    (см. «Нюансы»).
   - `LyteTheme.motion` — токены движения: `durationShort/Medium/Long` (150/250/400, `Int` мс —
     ложатся прямо в `tween()`) и `easingStandard/Emphasized/Decelerate/Accelerate` (`Easing`).
     Анимации компонентов и экранов берут значения отсюда, а не подбирают свои: переходы быстрые
@@ -118,7 +122,7 @@ Lucide — `implementation`-only внутри `core-design`, подключат�
 |---|---|
 | `component.brand` | `LyteWordmark` (знак «Lyte.»: кегль задаёт вызывающий, `dotAlpha` — для «дышащей» точки сплэша) |
 | `component.button` | `LyteButton` (variant Filled/Tonal/Outlined/Text × accent Primary/Secondary/Tertiary/Error × size Large/Medium/Small) |
-| `component.iconbutton` | `LyteIconButton` (`active` — фон открытой шторки, `enabled` — гашение на время записи) |
+| `component.iconbutton` | `LyteIconButton` (размер = и круг, и зона касания, по умолчанию `LyteTheme.hitTarget.min`; `active` — фон открытой шторки, `enabled` — гашение на время записи) |
 | `component.chip` | `LyteChip` (`enabled` — гашение на время записи) |
 | `component.badge` | `LyteBadge` (size Small — счётчик, Medium — табличная stat-пилюля) |
 | `component.switch` | `LyteSwitch` |
@@ -127,7 +131,7 @@ Lucide — `implementation`-only внутри `core-design`, подключат�
 | `component.mark` | `LyteExerciseMark` (круг-маркер: цвет + знак движения; размеры макета — 36/38/52dp) |
 | `component.progress` | `LyteProgressTrack` (`LyteProgressTrackMode.Tones`/`Plan`/`Progress`, тона — `LyteProgressTone`) |
 | `component.picker` | `LyteAccentPicker` (шесть цветов), `LyteExerciseIconPicker` (сетка 5×2 знаков) |
-| `component.stepper` | `LyteStepper` (size Large/Medium; ± контрол + ручной tap-to-edit ввод; ввод ограничен: ≤5 цифр целой части и ≤2 знаков после запятой, при `allowDecimal=false` — целочисленный режим для повторов без дробной части, `fillMaxWidth` — для колонок), `LyteSetEditRow` (карточка одного планового подхода программы: заголовок-параметр `title`, удаление (`onRemove = null` — кнопки нет), степперы повторов/веса — планирование, не привязано к состоянию активной сессии в отличие от `LyteTrackSetRow`) |
+| `component.stepper` | `LyteStepper` (size Large = `LyteTheme.hitTarget.stepper`, Medium = `hitTarget.min`; ± контрол + ручной tap-to-edit ввод; ввод ограничен: ≤5 цифр целой части и ≤2 знаков после запятой, при `allowDecimal=false` — целочисленный режим для повторов без дробной части, `fillMaxWidth` — для колонок), `LyteSetEditRow` (карточка одного планового подхода программы: заголовок-параметр `title`, удаление (`onRemove = null` — кнопки нет), степперы повторов/веса — планирование, не привязано к состоянию активной сессии в отличие от `LyteTrackSetRow`) |
 | `component.card` | `LyteProgramCard` (маркер + один факт + `trailing`), `LyteExerciseCard` (маркер + трек плана; действия задаёт `variant`: `LyteExerciseCardVariant.Editor` — drag-хэндл + edit/remove, `LyteExerciseCardVariant.ReadOnly` — превью программы; `onClick` — тап по колонке контента), `LyteSessionCard` (маркер + геро-число + трек), `LyteListRow` (ведущий элемент — `LyteListRowLeading.Mark`/`Icon`) |
 | `component.feedback` | `LyteDiffRow` (результат подхода: факт + дельта-чип, тон — `LyteProgressTone`), `LyteDialog`, `LyteEmptyState` (иконка-метка + заголовок + подсказка + необязательное действие `actionLabel`/`actionIcon`) |
 | `component.navigation` | `LyteTopBar` (size Small/Large), `LyteBottomNavigationBar` (+ `LyteBottomNavigationBarHeight` — резерв под него для контента, см. «Нюансы») |
@@ -498,6 +502,26 @@ implementation(projects.core.coreDesign)
   `composeResources/values/strings.xml` этого модуля. Доменный текст (название программы, сводка
   подходов) — параметр вызывающей стороны; core-design намеренно ничего не знает о доменной лексике
   (в т.ч. о русской плюрализации — «5 упражнений» собирает вызывающая фича, не компонент).
+- **Нарисованный размер и зона касания — разные вещи.** Там, где макет задаёт размер меньше
+  минимума (чип — 38dp, плитка выбора знака — 46dp), меняется не рисунок, а зона:
+  `minimumInteractiveComponentSize()` ставится **снаружи** фиксированной высоты, иначе она схлопнется
+  до нарисованной. M3 добавляет такое расширение сам, но перестаёт, когда высоту задают поверх него —
+  и именно так чип и жил. Проверять правило grep'ом по `*.dp` нельзя: он не отличает зону касания от
+  иконки внутри неё и от декоративной метки. Смотреть надо на тот `Box`, который несёт
+  `.clickable`/`.selectable` (у свотча акцента это внешний слот на 54dp, а не круг на 44dp).
+- **Зона касания — токен, а не константа компонента.** `--hit-target-min` (48dp) и
+  `--stepper-target` (56dp) из `tokens/spacing.css` живут в `LyteTheme.hitTarget`; `LyteIconButton`
+  и `LyteStepper` берут размеры оттуда, а не заводят свои.
+  У `LyteIconButton` `size` задаёт **нарисованный круг**, и он же по умолчанию равен
+  `hitTarget.min`. M3 внутри `IconButton` расширяет зону касания сам
+  (`minimumInteractiveComponentSize`), но полагаться на это как на замену размеру нельзя: целятся
+  в то, что видно, и 36dp-кружок читается как 36dp-мишень независимо от того, сколько там на самом
+  деле пикселей ловит касание. Поэтому все кнопки-иконки кита — 48dp, и это осознанное расхождение
+  с кадрами (там 36/38/40/44px).
+  **Ниже минимума осознанно остаются** `LyteChip` (38dp), `LyteButton` size=Small (44dp),
+  свотч `LyteAccentPicker` (44dp) и плитка `LyteExerciseIconPicker` (46dp): это не кнопки-иконки,
+  их размеры держат вёрстку кадров, и поднять их — переверстать полкита. Долг назван здесь, чтобы
+  следующий автор не считал это недосмотром.
 - **Backdrop-blur** плавающего `LyteBottomNavigationBar` из референса не воспроизведён — не
   переносится единообразно между Android/iOS в Compose Multiplatform; приближено полупрозрачной
   заливкой.

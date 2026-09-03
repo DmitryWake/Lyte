@@ -282,6 +282,36 @@ class ActiveSessionUiMapperTest {
     }
 
     @Test
+    fun startedButNotCurrentExerciseHasNoTargetPills() {
+        val session = workoutSession(
+            currentExerciseId = "e2",
+            exercises = listOf(
+                sessionExercise(
+                    id = "e1",
+                    name = "Жим",
+                    sets = listOf(
+                        sessionSet(id = "s1", targetCount = 8, targetWeight = 80.0, result = completed(count = 8, weight = 80.0)),
+                        sessionSet(id = "s2", targetCount = 8, targetWeight = 80.0),
+                    ),
+                ),
+                sessionExercise(
+                    id = "e2",
+                    name = "Тяга",
+                    sets = listOf(sessionSet(id = "s3", targetCount = 10, targetWeight = 60.0)),
+                ),
+            ),
+        )
+
+        val started = session.toActiveSessionUiModel().switcherRows[0]
+
+        assertEquals(ActiveSessionSwitcherStatus.Pending, started.status)
+        assertEquals(1, started.doneCount)
+        assertEquals(2, started.setCount)
+        // Цели не показываем: один подход уже закрыт, полный список пилюль обещал бы лишнюю работу.
+        assertTrue(started.targetPills.isEmpty())
+    }
+
+    @Test
     fun exerciseWithoutSetsIsDoneAndNotSelectable() {
         val session = workoutSession(
             exercises = listOf(
