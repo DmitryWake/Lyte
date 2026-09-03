@@ -9,6 +9,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -41,6 +42,11 @@ fun LyteChip(
         label = { Text(text = text, style = MaterialTheme.typography.labelLarge) },
         modifier = modifier
             .lytePressScale(interactionSource)
+            // Чип рисуется по макету (38dp), а ловит касание по правилу кита. Порядок важен:
+            // расширение снаружи, фиксированная высота внутри — иначе зона схлопнулась бы до
+            // нарисованной. M3 добавляет такое расширение сам, но не тогда, когда высота задана
+            // явно поверх него.
+            .minimumInteractiveComponentSize()
             .height(ChipHeight),
         leadingIcon = icon?.let {
             { Icon(imageVector = it, contentDescription = null, modifier = Modifier.height(ChipIconSize)) }

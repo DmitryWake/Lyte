@@ -29,7 +29,6 @@ private val ProgramCardSubtitleSpacing = 1.dp
 
 private val ProgramCardSpecimenGap = 12.dp
 private val ProgramCardSpecimenPadding = 16.dp
-private val ProgramCardSpecimenActionSize = 38.dp
 
 /**
  * Карточка программы в списке (спека 3.1) и в любом другом месте, где программу выбирают.
@@ -109,7 +108,6 @@ private fun LyteProgramCardPreview() {
                         icon = LyteIcons.Delete,
                         contentDescription = null,
                         onClick = {},
-                        size = ProgramCardSpecimenActionSize,
                     )
                 },
             )
@@ -124,7 +122,6 @@ private fun LyteProgramCardPreview() {
                         icon = LyteIcons.Delete,
                         contentDescription = null,
                         onClick = {},
-                        size = ProgramCardSpecimenActionSize,
                     )
                 },
             )

@@ -42,7 +42,6 @@ enum class LyteButtonSize { Large, Medium, Small }
 
 private val ButtonHeightLarge = 64.dp
 private val ButtonHeightMedium = 56.dp
-private val ButtonHeightSmall = 44.dp
 private val ButtonPaddingLarge = 40.dp
 private val ButtonPaddingMedium = 28.dp
 private val ButtonPaddingSmall = 20.dp
@@ -76,7 +75,10 @@ fun LyteButton(
     val heightDp = when (size) {
         LyteButtonSize.Large -> ButtonHeightLarge
         LyteButtonSize.Medium -> ButtonHeightMedium
-        LyteButtonSize.Small -> ButtonHeightSmall
+        // Малая кнопка — не исключение из правила тач-целей, а его самый уязвимый случай: именно ею
+        // набраны обе кнопки диалога, где соседние варианты означают противоположное («Завершить» и
+        // «Продолжить»). Поэтому высота берётся из токена, а не из собственной константы на 44dp.
+        LyteButtonSize.Small -> LyteTheme.hitTarget.min
     }
     val horizontalPadding = when (size) {
         LyteButtonSize.Large -> ButtonPaddingLarge

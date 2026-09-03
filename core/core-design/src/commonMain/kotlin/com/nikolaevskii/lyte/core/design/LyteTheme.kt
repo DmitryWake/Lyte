@@ -9,6 +9,7 @@ import com.nikolaevskii.lyte.core.design.theme.LocalLyteAccents
 import com.nikolaevskii.lyte.core.design.theme.LocalLyteElevation
 import com.nikolaevskii.lyte.core.design.theme.LocalLyteExtendedColors
 import com.nikolaevskii.lyte.core.design.theme.LocalLyteExtendedShapes
+import com.nikolaevskii.lyte.core.design.theme.LocalLyteHitTarget
 import com.nikolaevskii.lyte.core.design.theme.LocalLyteMotion
 import com.nikolaevskii.lyte.core.design.theme.LocalLyteNumericTypography
 import com.nikolaevskii.lyte.core.design.theme.LocalLyteSpacing
@@ -18,11 +19,13 @@ import com.nikolaevskii.lyte.core.design.theme.LyteDarkColorScheme
 import com.nikolaevskii.lyte.core.design.theme.LyteDarkExtendedColors
 import com.nikolaevskii.lyte.core.design.theme.LyteDefaultElevation
 import com.nikolaevskii.lyte.core.design.theme.LyteDefaultExtendedShapes
+import com.nikolaevskii.lyte.core.design.theme.LyteDefaultHitTarget
 import com.nikolaevskii.lyte.core.design.theme.LyteDefaultMotion
 import com.nikolaevskii.lyte.core.design.theme.LyteDefaultSpacing
 import com.nikolaevskii.lyte.core.design.theme.LyteElevation
 import com.nikolaevskii.lyte.core.design.theme.LyteExtendedColors
 import com.nikolaevskii.lyte.core.design.theme.LyteExtendedShapes
+import com.nikolaevskii.lyte.core.design.theme.LyteHitTarget
 import com.nikolaevskii.lyte.core.design.theme.LyteLightAccents
 import com.nikolaevskii.lyte.core.design.theme.LyteLightColorScheme
 import com.nikolaevskii.lyte.core.design.theme.LyteLightExtendedColors
@@ -36,7 +39,7 @@ import com.nikolaevskii.lyte.core.design.theme.lyteTypography
 /**
  * Единая точка входа темы приложения: цвета/типографика/форма M3 плюс расширенные токены
  * (semantic success/diff/ai цвета, акценты упражнений, числовая типографика, spacing, elevation,
- * доп. формы, движение), доступные через аксессор [LyteTheme].
+ * доп. формы, движение, зоны касания), доступные через аксессор [LyteTheme].
  */
 @Composable
 fun LyteTheme(
@@ -54,6 +57,7 @@ fun LyteTheme(
         LocalLyteSpacing provides LyteDefaultSpacing,
         LocalLyteElevation provides LyteDefaultElevation,
         LocalLyteExtendedShapes provides LyteDefaultExtendedShapes,
+        LocalLyteHitTarget provides LyteDefaultHitTarget,
         LocalLyteMotion provides LyteDefaultMotion,
     ) {
         MaterialTheme(
@@ -101,4 +105,9 @@ object LyteTheme {
         @Composable
         @ReadOnlyComposable
         get() = LocalLyteMotion.current
+
+    val hitTarget: LyteHitTarget
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalLyteHitTarget.current
 }
