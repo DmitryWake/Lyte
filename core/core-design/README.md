@@ -131,13 +131,14 @@ Lucide — `implementation`-only внутри `core-design`, подключат�
 | `component.card` | `LyteProgramCard` (маркер + один факт + `trailing`), `LyteExerciseCard` (маркер + трек плана; действия задаёт `variant`: `LyteExerciseCardVariant.Editor` — drag-хэндл + edit/remove, `LyteExerciseCardVariant.ReadOnly` — превью программы; `onClick` — тап по колонке контента), `LyteSessionCard` (маркер + геро-число + трек), `LyteListRow` (ведущий элемент — `LyteListRowLeading.Mark`/`Icon`) |
 | `component.feedback` | `LyteDiffRow` (результат подхода: факт + дельта-чип, тон — `LyteProgressTone`), `LyteDialog`, `LyteEmptyState` (иконка-метка + заголовок + подсказка + необязательное действие `actionLabel`/`actionIcon`) |
 | `component.navigation` | `LyteTopBar` (size Small/Large), `LyteBottomNavigationBar` (+ `LyteBottomNavigationBarHeight` — резерв под него для контента, см. «Нюансы») |
-| `component.overlay` | `LyteBottomSheet` (слоты `title`/`subtitle`/`topContent`/`content`/`bottomBar` + `LyteBottomSheetHeight`, см. ниже), `LyteRestTimerOverlay` |
+| `component.overlay` | `LyteBottomSheet` (слоты `title`/`subtitle`/`topContent`/`content`/`bottomBar` + `LyteBottomSheetHeight`, см. ниже), `LyteRestTimerOverlay`, `LyteCoachMark` (скрим с вырезом + каллаут подсказки, см. ниже) |
 | `component.datadisplay` | `LyteSessionStopwatch` |
 | `component.session` | `LyteTrackSetRow` (подход на экране тренировки: спокойная строка или фокус-карточка — `LyteTrackSetState`), `LyteExerciseSetList` (все подходы упражнения с якорем фокус-карточки), `LyteSetDots`, `LyteExerciseStrip` |
 
-`LyteDialog` / `LyteBottomSheet` / `LyteRestTimerOverlay` не принимают флаг видимости — видимостью
-управляет вызывающая сторона самим фактом композиции (`if (showDialog) { LyteDialog(...) }`), как
-принято в M3 (`AlertDialog`, `ModalBottomSheet` не имеют параметра `visible`).
+`LyteDialog` / `LyteBottomSheet` / `LyteRestTimerOverlay` / `LyteCoachMark` не принимают флаг
+видимости — видимостью управляет вызывающая сторона самим фактом композиции
+(`if (showDialog) { LyteDialog(...) }`), как принято в M3 (`AlertDialog`, `ModalBottomSheet` не
+имеют параметра `visible`).
 
 ### Маркер, трек и пикеры
 
@@ -408,6 +409,44 @@ LyteBottomSheet(
 }
 ```
 
+### Подсказка обучения `LyteCoachMark`
+
+Скрим на весь экран с вырезом вокруг одного элемента плюс каллаут: текст, точки-пейджер и действия
+«Пропустить» / «Далее».
+
+**Прямоугольник выреза — параметр, компонент ничего не измеряет.** `targetBounds: DpRect` задаётся в
+системе координат самого коуч-марка, поэтому его кладут в тот же `Box`, что и подсвечиваемый элемент.
+Вырез шире цели на 8dp с каждой стороны, скругление — не больше 28dp и не больше половины высоты
+(низкая цель даёт пилюлю). Каллаут центрируется по вырезу, прижимается к полям экрана и встаёт под
+вырезом, если туда помещается целиком, иначе над ним; арифметика вынесена в чистую
+`lyteCoachMarkCalloutOffset` и покрыта `CoachMarkCalloutOffsetTest`.
+
+Два следствия, о которых легко забыть:
+
+- **Компонент глотает все касания в своих границах, включая касание внутри выреза.** Подсвеченный
+  элемент нажать нельзя — тур двигают только `onNext` и `onSkip`.
+- **Подпись основной кнопки выбирает сам компонент**: на последнем шаге (`stepIndex >= stepCount - 1`)
+  это «Понятно», и «Пропустить» не показывается. Номер шага компонент и так знает — он нужен ему для
+  точек, поэтому правило не размазывается по вызывающему.
+
+Тексты подсказок — параметры (`text`, необязательный `title`): это доменная лексика конкретного тура,
+а не хром модуля. Своими в модуле остаются только три подписи действий. Про то, чему именно учит тур,
+сколько у него шагов и куда он ведёт дальше, компонент не знает ничего — навигации у него нет.
+
+```kotlin
+Box(modifier = Modifier.fillMaxSize()) {
+    TourStepReplica()
+    LyteCoachMark(
+        targetBounds = DpRect(left = 20.dp, top = 96.dp, right = 373.dp, bottom = 152.dp),
+        text = "Нажмите «Начать» — выберите программу и запустите тренировку.",
+        stepIndex = step,
+        stepCount = totalSteps,
+        onNext = onNext,
+        onSkip = onSkip,
+    )
+}
+```
+
 ## Использование
 
 ```kotlin
@@ -482,6 +521,13 @@ implementation(projects.core.coreDesign)
   выглядеть на планировании и на трекинге по-разному.
 - **`LyteBadge` — не M3 `Badge`.** M3 `Badge` — точка-уведомление; `LyteBadge` — пилюля для
   метаданных (счётчики), поэтому реализована кастомно поверх `Surface`.
+- **`LyteCoachMark` берёт цвет и длительность из токенов, а не из кадра.** В кадре скрим задан
+  литералом `rgba(13,16,10,0.64)`, а переход — 320мс: ни того, ни другого в токенах бандла нет.
+  Скрим собирается из роли `colorScheme.scrim` с той же альфой 0.64 (оттенок в кадре отличается от
+  чёрного на 13/255 — на глаз неразличимо). Длительность — `LyteTheme.motion.durationLong` (400мс):
+  320мс лежат между `durationMedium` и `durationLong`, и выбрана бо́льшая ступень, потому что
+  подсветка переезжает через весь экран, а не меняет состояние на месте. Кривая — `easingEmphasized`,
+  ровно как в кадре.
 - **Нажатие — уменьшение контрола поверх M3-овского state layer.** Кнопка, икон-кнопка, чип и
   кликабельная `LyteExerciseCard` жмутся до 0.97, кнопки ± степпера — до 0.94 и вдобавок
   перекидывают заливку в `primary`/`onPrimary` (одноручный тап вслепую должен дать подтверждение).
