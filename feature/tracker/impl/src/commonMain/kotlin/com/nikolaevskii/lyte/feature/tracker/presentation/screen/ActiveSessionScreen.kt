@@ -611,6 +611,48 @@ private fun ActiveSessionContentFirstSetPreview() {
     }
 }
 
+/** Прошлый раз разошёлся с целью — строка ориентира видна под целью. */
+@Composable
+@Preview
+private fun ActiveSessionContentWithLastResultPreview() {
+    ActiveSessionPreviewDevice {
+        ActiveSessionContent(
+            state = trackingState(
+                content = previewTracking(
+                    currentIndex = 2,
+                    setCount = 8,
+                    lastResult = LyteSetValue(reps = 8, weight = 57.5),
+                ),
+                elapsedSeconds = 640,
+            ),
+            onIntent = {},
+        )
+    }
+}
+
+/**
+ * Разные единицы рядом: цель — подтягивания без веса, а в прошлый раз их делали с поясом. Кадр ловит
+ * ровно тот случай, из-за которого ориентир нельзя печатать одной строкой с целью.
+ */
+@Composable
+@Preview
+private fun ActiveSessionContentLastResultMixedUnitsPreview() {
+    ActiveSessionPreviewDevice {
+        ActiveSessionContent(
+            state = trackingState(
+                content = previewTracking(
+                    currentIndex = 1,
+                    setCount = 5,
+                    target = LyteSetValue(reps = 12),
+                    lastResult = LyteSetValue(reps = 10, weight = 10.0),
+                ),
+                elapsedSeconds = 305,
+            ),
+            onIntent = {},
+        )
+    }
+}
+
 @Composable
 @Preview
 private fun ActiveSessionContentMiddleSetPreview() {
@@ -922,8 +964,9 @@ private fun previewTracking(
     currentIndex: Int,
     setCount: Int,
     note: String = "",
+    target: LyteSetValue = LyteSetValue(reps = 10, weight = 62.5),
+    lastResult: LyteSetValue? = null,
 ): ActiveSessionContent.Tracking {
-    val target = LyteSetValue(reps = 10, weight = 62.5)
     val current = ActiveSessionCurrentUiModel(
         exerciseId = "e2",
         exerciseIndex = 2,
@@ -940,12 +983,16 @@ private fun previewTracking(
         currentSetIndex = currentIndex,
         setCount = setCount,
         currentSetId = "set${currentIndex + 1}",
-        targetReps = 10,
-        targetWeight = 62.5,
+        targetReps = target.reps,
+        targetWeight = target.weight,
         target = target,
         note = note,
     )
-    return current.toTrackingContent(draftReps = 10, draftWeight = 62.5)
+    return current.toTrackingContent(
+        draftReps = target.reps,
+        draftWeight = target.weight ?: 0.0,
+        lastResult = lastResult,
+    )
 }
 
 /**
@@ -1073,9 +1120,10 @@ private fun previewBodyweightTracking(): ActiveSessionContent.Tracking = ActiveS
 private fun ActiveSessionCurrentUiModel.toTrackingContent(
     draftReps: Int,
     draftWeight: Double,
+    lastResult: LyteSetValue? = null,
 ): ActiveSessionContent.Tracking = ActiveSessionContent.Tracking(
     current = this,
-    trackSets = toTrackSetStates(draftReps = draftReps, draftWeight = draftWeight),
+    trackSets = toTrackSetStates(draftReps = draftReps, draftWeight = draftWeight, lastResult = lastResult),
     lastSetLabel = lastSetLabel(),
     switcherRows = emptyList(),
     draftReps = draftReps,

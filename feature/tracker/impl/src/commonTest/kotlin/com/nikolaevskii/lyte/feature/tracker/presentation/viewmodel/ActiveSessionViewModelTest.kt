@@ -29,6 +29,10 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import com.nikolaevskii.lyte.core.design.component.session.LyteTrackSetState
+import com.nikolaevskii.lyte.core.design.model.LyteSetValue
+import com.nikolaevskii.lyte.core.session.domain.model.SessionSetValueEntity
+import kotlin.test.assertNull
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -583,6 +587,76 @@ class ActiveSessionViewModelTest {
      * с внятным сообщением получается вечно крутящийся в виртуальном времени `delay`-цикл и повисший
      * прогон. Красный тест обязан падать, а не вешать гейт.
      */
+    /**
+     * Ориентиры читаются один раз за загрузку. Контент трекинга пересобирается на каждый тап
+     * «Готово»/«Пропустить»/сохранение заметки, и запрос внутри этого пути стоил бы обращения к БД на
+     * каждый тап — при том, что факты прошлых сессий за время текущей не меняются.
+     */
+    @Test
+    fun previousResultsAreQueriedOncePerLoad() = activeSessionTest {
+        val repository = repository(twoSetSession())
+        val viewModel = viewModel(repository)
+        runCurrent()
+
+        viewModel.onIntent(ActiveSessionIntent.OnCompleteSetClicked)
+        runCurrent()
+        viewModel.onIntent(ActiveSessionIntent.OnSkipSetClicked)
+        runCurrent()
+
+        assertEquals(expected = 1, actual = repository.previousSetResultsCalls)
+    }
+
+    @Test
+    fun previousResultIsShownWhenItDivergedFromTarget() = activeSessionTest {
+        val repository = repository(twoSetSession())
+        repository.previousSetResults = mapOf("s1" to SessionSetValueEntity(count = 8, weight = 57.5))
+        val viewModel = viewModel(repository)
+        runCurrent()
+
+        assertEquals(
+            expected = LyteSetValue(reps = 8, weight = 57.5),
+            actual = currentTrackSet(viewModel).last,
+        )
+    }
+
+    /** Совпавший с целью ориентир — две одинаковые строки подряд; они не сообщают ничего. */
+    @Test
+    fun previousResultEqualToTargetIsHidden() = activeSessionTest {
+        val repository = repository(twoSetSession())
+        repository.previousSetResults = mapOf("s1" to SessionSetValueEntity(count = 10, weight = 60.0))
+        val viewModel = viewModel(repository)
+        runCurrent()
+
+        assertNull(currentTrackSet(viewModel).last, "Ориентир совпал с целью и не должен рисоваться")
+    }
+
+    /** У подхода без истории строки нет — пустого или нулевого ориентира не бывает. */
+    @Test
+    fun setWithoutHistoryHasNoReference() = activeSessionTest {
+        val viewModel = viewModel(repository(twoSetSession()))
+        runCurrent()
+
+        assertNull(currentTrackSet(viewModel).last)
+    }
+
+    /** Сбой чтения ориентиров не ломает экран: подсказка не содержимое, степперы работают. */
+    @Test
+    fun failedPreviousResultsQueryLeavesScreenUsable() = activeSessionTest {
+        val repository = repository(twoSetSession())
+        repository.previousSetResultsError = IllegalStateException("БД недоступна")
+        val viewModel = viewModel(repository)
+        runCurrent()
+
+        val content = viewModel.uiState.value.content
+        assertTrue(content is ActiveSessionUiState.ActiveSessionContent.Tracking)
+        assertNull(currentTrackSet(viewModel).last)
+    }
+
+    private fun currentTrackSet(viewModel: ActiveSessionViewModel): LyteTrackSetState.Current {
+        val content = viewModel.uiState.value.content as ActiveSessionUiState.ActiveSessionContent.Tracking
+        return content.trackSets.filterIsInstance<LyteTrackSetState.Current>().single()
+    }
+
     private fun activeSessionTest(body: TestScope.() -> Unit) = runTest(testDispatcher) {
         try {
             body()
