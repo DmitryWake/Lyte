@@ -45,6 +45,7 @@ class WorkoutPreviewViewModel(
         updateState { WorkoutPreviewUiState.Error(error.toLyteError()) }
     }
 
+    /** Удалённая программа читается как «нет такой», поэтому уходит в тот же арм ошибки. */
     private suspend fun loadProgram() {
         updateState { WorkoutPreviewUiState.Loading }
         val workout = workoutRepository.getWorkout(programId)
@@ -53,10 +54,8 @@ class WorkoutPreviewViewModel(
     }
 
     /**
-     * Старт: снапшот программы в БД → замена стека вкладки экраном сессии (назад в превью/пикер после
-     * старта не возвращаемся). Если активная сессия уже есть (инвариант БД «не больше одной» кинул
-     * исключение или гонка гейта) — открываем её вместо ошибки. Неудачный старт не подменяет экран:
-     * состав остаётся, показывается баннер [WorkoutPreviewUiState.Content.startError].
+     * Старт: программа перечитывается (экран мог провисеть в стеке вкладки сколько угодно), снапшот
+     * в БД → замена стека вкладки экраном сессии (назад в превью/пикер после старта не возвращаемся).
      */
     private fun startSession() {
         val content = uiStateValue as? WorkoutPreviewUiState.Content ?: return
@@ -71,18 +70,35 @@ class WorkoutPreviewViewModel(
                 workoutSessionRepository.startSession(workout)
             }
                 .onSuccess { sessionId -> navigateToSession(sessionId) }
-                .onFailure { error ->
-                    if (error is CancellationException) throw error
-                    val activeSession = runCatching { workoutSessionRepository.getActiveSession() }.getOrNull()
-                    if (activeSession != null) {
-                        navigateToSession(activeSession.id)
-                    } else {
-                        updateState {
-                            (this as? WorkoutPreviewUiState.Content)
-                                ?.copy(isStarting = false, startError = error.toLyteError()) ?: this
-                        }
-                    }
-                }
+                .onFailure { error -> handleStartFailure(error) }
+        }
+    }
+
+    /**
+     * Программы больше нет (её удалили в другой вкладке, пока превью висело в стеке) — состав на
+     * экране устарел целиком, поэтому экран сменяется на арм ошибки с выходом, а не получает баннер
+     * над кнопкой «Начать», которой нечего запускать.
+     *
+     * Прочий сбой сначала проверяет активную сессию: инвариант БД «не больше одной» или гонка гейта
+     * означают, что тренировка уже идёт, — открываем её. Если нет, состав остаётся на экране, а
+     * поверх показывается баннер [WorkoutPreviewUiState.Content.startError].
+     */
+    private suspend fun handleStartFailure(error: Throwable) {
+        if (error is CancellationException) {
+            throw error
+        }
+        if (error is LyteNotFoundException) {
+            updateState { WorkoutPreviewUiState.Error(error.toLyteError()) }
+            return
+        }
+        val activeSession = runCatching { workoutSessionRepository.getActiveSession() }.getOrNull()
+        if (activeSession != null) {
+            navigateToSession(activeSession.id)
+        } else {
+            updateState {
+                (this as? WorkoutPreviewUiState.Content)
+                    ?.copy(isStarting = false, startError = error.toLyteError()) ?: this
+            }
         }
     }
 

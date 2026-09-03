@@ -1,5 +1,6 @@
 package com.nikolaevskii.lyte.feature.tracker.presentation.viewmodel
 
+import com.nikolaevskii.lyte.core.mvi.LyteError
 import com.nikolaevskii.lyte.core.navigation.model.LyteNavOptions
 import com.nikolaevskii.lyte.core.navigation.model.NavCommand
 import com.nikolaevskii.lyte.feature.tracker.ActiveSessionRoute
@@ -59,12 +60,13 @@ class WorkoutPreviewViewModelTest {
 
     @Test
     fun missingProgramSurfacesError() = runTest(testDispatcher) {
-        // getWorkout возвращает null (программу удалили/заархивировали) — checkNotNull падает в ошибку.
+        // getWorkout отдаёт null и для удалённой программы (архивную он не возвращает) — экран
+        // обязан показать «нет такой», а не пустой состав с кнопкой «Начать».
         val viewModel = viewModel(repository = FakeWorkoutRepository(initialWorkout = null))
 
         runCurrent()
 
-        assertTrue(viewModel.uiState.value is WorkoutPreviewUiState.Error)
+        assertEquals(WorkoutPreviewUiState.Error(LyteError.NotFound), viewModel.uiState.value)
     }
 
     @Test
@@ -162,6 +164,29 @@ class WorkoutPreviewViewModelTest {
         runCurrent()
 
         assertEquals(1, sessionRepository.startSessionCalls.size)
+    }
+
+    @Test
+    fun startAfterProgramDeletedReplacesContentWithNotFound() = runTest(testDispatcher) {
+        val navigator = FakeLyteNavigator()
+        val sessionRepository = FakeWorkoutSessionRepository()
+        val repository = FakeWorkoutRepository(initialWorkout = pushDay())
+        val viewModel = viewModel(
+            repository = repository,
+            sessionRepository = sessionRepository,
+            navigator = navigator,
+        )
+        runCurrent()
+        // Программу удалили во вкладке «Программы», пока превью висело в стеке трекера.
+        repository.workout = null
+
+        viewModel.onIntent(WorkoutPreviewIntent.OnStartClicked)
+        runCurrent()
+
+        // Не баннер над устаревшим составом: запускать нечего, поэтому экран целиком меняется.
+        assertEquals(WorkoutPreviewUiState.Error(LyteError.NotFound), viewModel.uiState.value)
+        assertTrue(sessionRepository.startSessionCalls.isEmpty())
+        assertTrue(navigator.commandLog.isEmpty())
     }
 
     @Test

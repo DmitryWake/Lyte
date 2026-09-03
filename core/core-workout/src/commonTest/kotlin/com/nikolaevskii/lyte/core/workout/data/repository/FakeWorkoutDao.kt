@@ -42,8 +42,9 @@ internal class FakeWorkoutDao : WorkoutDao() {
 
     override fun observeItems(): Flow<List<WorkoutItemWithExerciseCount>> = flow { emit(getItems()) }
 
+    // Архивную программу не отдаёт — как и настоящий запрос с `is_archived = 0`.
     override suspend fun getWithExercises(id: String): WorkoutWithExercises? {
-        val workout = workouts[id] ?: return null
+        val workout = workouts[id]?.takeUnless { it.isArchived } ?: return null
         // Дети возвращаются в обратном порядке вставки — репозиторий обязан
         // восстановить порядок по position.
         val exerciseRows = crossRefs
@@ -109,4 +110,16 @@ internal class FakeWorkoutDao : WorkoutDao() {
     override suspend fun archiveWorkout(id: String) {
         workouts[id]?.let { workouts[id] = it.copy(isArchived = true) }
     }
+
+    override suspend fun isWorkoutArchived(id: String): Boolean = workouts[id]?.isArchived == true
+
+    override suspend fun getArchivedExerciseIds(ids: List<String>): List<String> =
+        ids.filter { id -> exercises[id]?.isArchived == true }
+
+    /** Имитирует `ExerciseDao.deleteOrArchiveExercise`: упражнение удалили, а оно кому-то нужно. */
+    fun archiveExercise(id: String) {
+        exercises[id]?.let { exercise -> exercises[id] = exercise.copy(isArchived = true) }
+    }
+
+    fun isExerciseArchived(id: String): Boolean = exercises.getValue(id).isArchived
 }

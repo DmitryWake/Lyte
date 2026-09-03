@@ -26,6 +26,7 @@ import com.nikolaevskii.lyte.core.design.component.button.LyteButton
 import com.nikolaevskii.lyte.core.design.component.button.LyteButtonSize
 import com.nikolaevskii.lyte.core.design.component.card.LyteExerciseCard
 import com.nikolaevskii.lyte.core.design.component.card.LyteExerciseCardVariant
+import com.nikolaevskii.lyte.core.design.component.feedback.LyteEmptyState
 import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBar
 import com.nikolaevskii.lyte.core.design.component.navigation.LyteTopBarSize
 import com.nikolaevskii.lyte.core.design.icon.LyteExerciseGlyph
@@ -35,6 +36,9 @@ import com.nikolaevskii.lyte.core.design.theme.LyteAccent
 import com.nikolaevskii.lyte.core.mvi.LyteError
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.Res
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_error
+import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_error_action
+import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_gone
+import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_gone_hint
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_start_error
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_exercise_count
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.workout_preview_set_count
@@ -44,6 +48,7 @@ import com.nikolaevskii.lyte.feature.tracker.presentation.model.WorkoutPreviewUi
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.WorkoutPreviewIntent
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.WorkoutPreviewUiState
 import com.nikolaevskii.lyte.feature.tracker.presentation.viewmodel.WorkoutPreviewViewModel
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -110,11 +115,9 @@ fun WorkoutPreviewContent(
             when (state) {
                 WorkoutPreviewUiState.Loading -> CircularProgressIndicator()
 
-                is WorkoutPreviewUiState.Error -> Text(
-                    text = stringResource(Res.string.workout_preview_error),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(horizontal = LyteTheme.spacing.s5),
+                is WorkoutPreviewUiState.Error -> WorkoutPreviewErrorContent(
+                    error = state.error,
+                    onIntent = onIntent,
                 )
 
                 is WorkoutPreviewUiState.Content -> {
@@ -178,6 +181,26 @@ private fun WorkoutPreviewExerciseList(
     }
 }
 
+/**
+ * Программы нет — объяснение и выход, а не строка ошибки на пустом экране: кнопки «Начать» в этом
+ * арме уже нет, и единственный путь дальше — назад на лендинг.
+ */
+@Composable
+private fun WorkoutPreviewErrorContent(
+    error: LyteError,
+    onIntent: (WorkoutPreviewIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LyteEmptyState(
+        message = stringResource(error.toMessageResource()),
+        icon = LyteIcons.ClipboardList,
+        hint = error.toHintResource()?.let { hint -> stringResource(hint) },
+        actionLabel = stringResource(Res.string.workout_preview_error_action),
+        onAction = { onIntent(WorkoutPreviewIntent.OnBack) },
+        modifier = modifier,
+    )
+}
+
 @Composable
 private fun WorkoutPreviewStartBar(
     enabled: Boolean,
@@ -199,6 +222,17 @@ private fun WorkoutPreviewStartBar(
             modifier = Modifier.padding(horizontal = LyteTheme.spacing.s5, vertical = LyteTheme.spacing.s4),
         )
     }
+}
+
+/** Удалённая программа — не сбой чтения: «не удалось загрузить» обещало бы, что она ещё вернётся. */
+private fun LyteError.toMessageResource(): StringResource = when (this) {
+    LyteError.NotFound -> Res.string.workout_preview_gone
+    else -> Res.string.workout_preview_error
+}
+
+private fun LyteError.toHintResource(): StringResource? = when (this) {
+    LyteError.NotFound -> Res.string.workout_preview_gone_hint
+    else -> null
 }
 
 @Composable
@@ -227,6 +261,7 @@ private fun WorkoutPreviewContentLoadingPreview() {
     }
 }
 
+/** Программу не прочитать: сбой хранилища. Состав и кнопка старта не показываются вовсе. */
 @Composable
 @Preview
 private fun WorkoutPreviewContentErrorPreview() {
@@ -234,6 +269,23 @@ private fun WorkoutPreviewContentErrorPreview() {
         Box(modifier = Modifier.size(width = PreviewDeviceWidth, height = PreviewDeviceHeight)) {
             WorkoutPreviewContent(
                 state = WorkoutPreviewUiState.Error(LyteError.Storage),
+                onIntent = {},
+            )
+        }
+    }
+}
+
+/**
+ * Программу удалили, пока превью висело в стеке вкладки: тот же арм ошибки, но текст и подсказка
+ * другие — сказать «не удалось загрузить» о том, чего больше нет, значит предложить подождать.
+ */
+@Composable
+@Preview
+private fun WorkoutPreviewContentGonePreview() {
+    LyteTheme {
+        Box(modifier = Modifier.size(width = PreviewDeviceWidth, height = PreviewDeviceHeight)) {
+            WorkoutPreviewContent(
+                state = WorkoutPreviewUiState.Error(LyteError.NotFound),
                 onIntent = {},
             )
         }

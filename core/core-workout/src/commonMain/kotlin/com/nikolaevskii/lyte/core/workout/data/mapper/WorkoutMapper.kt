@@ -39,6 +39,11 @@ internal fun ExerciseDatabaseEntity.toDomainEntity(): WorkoutExerciseEntity =
         glyph = ExerciseGlyph.fromKey(glyph),
     )
 
+/**
+ * `isArchived` намеренно не задаётся: архивность — свойство строки в БД, домен о ней не знает.
+ * Значение по умолчанию (`false`) переписывает [com.nikolaevskii.lyte.core.db.workout.WorkoutDao]
+ * при записи графа — иначе сохранение программы воскресило бы удалённое упражнение.
+ */
 internal fun WorkoutExerciseEntity.toDatabaseEntity(): ExerciseDatabaseEntity =
     ExerciseDatabaseEntity(
         id = id,
@@ -63,6 +68,7 @@ internal fun WorkoutWithExercises.toDomainEntity(): WorkoutEntity =
             .map { it.toDomainEntity() },
     )
 
+/** Про `isArchived` строк — см. [toDatabaseEntity]: флаг приходит из БД, а не из домена. */
 internal fun WorkoutEntity.toRows(): WorkoutRowsModel {
     val workoutRow = WorkoutDatabaseEntity(
         id = id,

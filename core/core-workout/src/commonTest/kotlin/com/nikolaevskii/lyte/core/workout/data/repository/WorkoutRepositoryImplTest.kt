@@ -9,6 +9,7 @@ import com.nikolaevskii.lyte.core.workout.domain.model.WorkoutRepEntity
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -156,9 +157,42 @@ class WorkoutRepositoryImplTest {
 
         repository.deleteWorkout(workout.id)
 
-        // Программа скрыта из списка, но остаётся доступной по id (история сохранена).
+        // Для приложения удалённая программа исчезла целиком: её нет ни в списке, ни по id — иначе
+        // с открытого превью по ней стартовала бы тренировка. История независима: у сессии снапшот.
         assertTrue(repository.getWorkouts().none { it.id == workout.id })
-        assertEquals(workout, repository.getWorkout(workout.id))
+        assertNull(repository.getWorkout(workout.id))
+    }
+
+    @Test
+    fun editWorkoutDoesNotResurrectArchivedWorkout() = runTest {
+        val dao = FakeWorkoutDao()
+        val repository = WorkoutRepositoryImpl(workoutDao = dao)
+        val workout = sampleWorkout()
+        repository.createWorkout(workout)
+        dao.sessionCountByWorkout[workout.id] = 1
+        repository.deleteWorkout(workout.id)
+
+        repository.editWorkout(workout.copy(name = "Верх тела v2"))
+
+        // Сохранение графа апсертит строку программы — и обязано сохранить ей флаг архива.
+        assertNull(repository.getWorkout(workout.id))
+        assertTrue(repository.getWorkouts().none { it.id == workout.id })
+    }
+
+    @Test
+    fun editWorkoutDoesNotResurrectArchivedExercise() = runTest {
+        val dao = FakeWorkoutDao()
+        val repository = WorkoutRepositoryImpl(workoutDao = dao)
+        val workout = sampleWorkout()
+        repository.createWorkout(workout)
+        // Упражнение удалили из библиотеки, но оно осталось в программе — значит заархивировано.
+        dao.archiveExercise("ex-1")
+
+        repository.editWorkout(workout.copy(name = "Верх тела v2"))
+
+        // Правка программы — не повод вернуть в библиотеку удалённое оттуда упражнение.
+        assertTrue(dao.isExerciseArchived("ex-1"))
+        assertFalse(dao.isExerciseArchived("ex-2"))
     }
 
     private fun repository(): WorkoutRepositoryImpl =
