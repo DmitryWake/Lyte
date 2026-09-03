@@ -7,6 +7,7 @@ import com.nikolaevskii.lyte.core.navigation.di.coreNavigationModule
 import com.nikolaevskii.lyte.core.session.di.coreSessionModule
 import com.nikolaevskii.lyte.core.workout.di.coreWorkoutModule
 import com.nikolaevskii.lyte.feature.history.di.featureHistoryModule
+import com.nikolaevskii.lyte.feature.onboarding.di.featureOnboardingModule
 import com.nikolaevskii.lyte.feature.splash.di.featureSplashModule
 import com.nikolaevskii.lyte.feature.tracker.di.featureTrackerModule
 import com.nikolaevskii.lyte.feature.workout.di.featureWorkoutModule
@@ -27,6 +28,7 @@ fun initKoinShared(
             featureTrackerModule,
             featureWorkoutModule,
             featureHistoryModule,
+            featureOnboardingModule,
             featureSplashModule,
         )
     }

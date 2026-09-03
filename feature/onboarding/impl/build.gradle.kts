@@ -14,7 +14,7 @@ kotlin {
     iosSimulatorArm64()
 
     androidLibrary {
-        namespace = "com.nikolaevskii.lyte.feature.splash.impl"
+        namespace = "com.nikolaevskii.lyte.feature.onboarding.impl"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
 
@@ -34,10 +34,8 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
         }
         commonMain.dependencies {
-            api(projects.feature.splash.api)
+            api(projects.feature.onboarding.api)
             implementation(projects.core.coreApp)
-            implementation(projects.core.coreWorkout)
-            implementation(projects.feature.onboarding.api)
             implementation(projects.feature.tracker.api)
             implementation(projects.core.coreMvi)
             implementation(projects.core.coreNavigation)
@@ -51,6 +49,7 @@ kotlin {
             implementation(libs.compose.animation)
             implementation(libs.compose.material3)
             implementation(libs.compose.ui)
+            implementation(libs.compose.ui.backhandler)
             implementation(libs.compose.components.resources)
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.koin.core)
@@ -58,6 +57,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
         }
         commonTest.dependencies {
+            implementation(projects.core.coreApp)
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
         }
@@ -66,7 +66,7 @@ kotlin {
 
 compose.resources {
     publicResClass = true
-    packageOfResClass = "com.nikolaevskii.lyte.feature.splash.generated.resources"
+    packageOfResClass = "com.nikolaevskii.lyte.feature.onboarding.generated.resources"
     generateResClass = auto
 }
 

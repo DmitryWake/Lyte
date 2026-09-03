@@ -53,6 +53,8 @@ kotlin {
             implementation(projects.feature.workout.impl)
             implementation(projects.feature.history.api)
             implementation(projects.feature.history.impl)
+            implementation(projects.feature.onboarding.api)
+            implementation(projects.feature.onboarding.impl)
             implementation(projects.feature.splash.api)
             implementation(projects.feature.splash.impl)
             implementation(libs.androidx.navigation.compose)
