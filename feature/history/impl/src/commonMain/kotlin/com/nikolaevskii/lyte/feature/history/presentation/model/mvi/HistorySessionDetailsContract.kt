@@ -20,6 +20,12 @@ sealed interface HistorySessionDetailsUiState : UiState {
         val details: HistorySessionDetailsUiModel,
         /** Диалог подтверждения удаления существует только над контентом; имя программы берётся из [details]. */
         val isDeleteDialogVisible: Boolean = false,
+        /**
+         * Удаление уже запущено: guard от дабл-тапа по «Удалить» (второй `DELETE` идемпотентен и тоже
+         * успешен, поэтому без guard'а в навигацию ушёл бы второй `back` — он снял бы стартовый
+         * destination вкладки Истории). Пока флаг поднят, действие удаления в шапке заменено индикатором.
+         */
+        val isDeleting: Boolean = false,
         /** Неудачное удаление — баннер над деталями (детали остаются на экране). */
         val actionError: LyteError? = null,
     ) : HistorySessionDetailsUiState

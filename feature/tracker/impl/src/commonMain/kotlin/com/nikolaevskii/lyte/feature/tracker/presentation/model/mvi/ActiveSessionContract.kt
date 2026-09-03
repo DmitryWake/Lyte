@@ -17,13 +17,20 @@ import kotlin.time.Instant
  *
  * Остальные поля — сквозные, ортогональные контенту: [startedAt] — источник секундомера (`null`, пока
  * сессия не загружена), [elapsedSeconds] пересчитывается от него по wall-clock каждый тик; [isMutating] —
- * guard от повторных записей по дабл-тапу, сбрасывается по завершении мутации.
+ * guard от повторных записей по дабл-тапу, сбрасывается по завершении мутации, и он же гасит всё, чем
+ * можно начать новую запись; [mutationError] — какая запись не удалась.
+ *
+ * [mutationError] живёт снаружи армов намеренно: писать умеют оба ([Tracking] — подход и заметку,
+ * [AllDone] — финализацию), поэтому внутри [Tracking] поле было бы недостижимо для ошибки сохранения
+ * с экрана-итога. Текст баннера выбирает операция, а не арм: досрочное завершение проваливается на
+ * [Tracking] и обязано сказать про тренировку, а не про несохранённый подход.
  */
 data class ActiveSessionUiState(
     val content: ActiveSessionContent = ActiveSessionContent.Loading,
     val startedAt: Instant? = null,
     val elapsedSeconds: Int = 0,
     val isMutating: Boolean = false,
+    val mutationError: ActiveSessionMutationError? = null,
 ) : UiState {
 
     /** Что экран показывает прямо сейчас: один `when` без вложенных проверок на `null`. */
@@ -37,8 +44,7 @@ data class ActiveSessionUiState(
 
         /**
          * Трекинг текущего подхода. [current] гарантированно есть (есть незакрытый подход).
-         * [draftReps]/[draftWeight] — черновик степперов; [hasMutationError] — баннер о неудачной записи
-         * (сессия при этом остаётся рабочей).
+         * [draftReps]/[draftWeight] — черновик степперов.
          *
          * [trackSets] — те же подходы, но уже в виде состояний компонента списка, и [lastSetLabel] —
          * выбор подписи его хвоста. Оба считает маппер (`toTrackSetStates`/`lastSetLabel`), а не
@@ -54,7 +60,6 @@ data class ActiveSessionUiState(
             val draftReps: Int,
             val draftWeight: Double,
             val overlay: ActiveSessionOverlayUiModel,
-            val hasMutationError: Boolean,
         ) : ActiveSessionContent {
 
             /**
@@ -82,6 +87,20 @@ data class ActiveSessionUiState(
             val setTones: List<LyteProgressTone>,
         ) : ActiveSessionContent
     }
+}
+
+/**
+ * Что именно не удалось записать. Различие не косметическое: провал записи подхода оставляет сессию в
+ * работе («не удалось сохранить изменение»), провал финализации — говорит про тренировку целиком,
+ * и оба исхода достижимы на обоих армах контента.
+ */
+enum class ActiveSessionMutationError {
+
+    /** Подход, заметка, переключение упражнения — всё, что пишет прогресс внутри сессии. */
+    Write,
+
+    /** Завершение сессии: и досрочное с трекинга, и «Сохранить тренировку» с экрана-итога. */
+    Finish,
 }
 
 sealed interface ActiveSessionIntent : UiIntent {

@@ -75,6 +75,7 @@ private const val SwitcherCurrentSubtitleAlpha = 0.8f
 @Composable
 internal fun ExerciseSwitcherSheet(
     rows: List<ActiveSessionSwitcherRowUiModel>,
+    isMutating: Boolean,
     onIntent: (ActiveSessionIntent) -> Unit,
 ) {
     LyteBottomSheet(
@@ -89,16 +90,20 @@ internal fun ExerciseSwitcherSheet(
                 .padding(start = LyteTheme.spacing.s5, end = LyteTheme.spacing.s5, bottom = LyteTheme.spacing.s3),
         ) {
             rows.forEach { row ->
-                SwitcherRow(row = row, onIntent = onIntent)
+                SwitcherRow(row = row, isMutating = isMutating, onIntent = onIntent)
             }
         }
     }
 }
 
-/** Шторка заметки к текущему подходу: свободный текст, сохранение — по «Готово». */
+/**
+ * Шторка заметки к текущему подходу: свободный текст, сохранение — по «Готово». Пока запись идёт,
+ * кнопка погашена — шторку закроет только удачное сохранение, а повторный тап всё равно не приняли бы.
+ */
 @Composable
 internal fun SetNoteSheet(
     draft: String,
+    isMutating: Boolean,
     onIntent: (ActiveSessionIntent) -> Unit,
 ) {
     LyteBottomSheet(
@@ -118,6 +123,7 @@ internal fun SetNoteSheet(
         LyteButton(
             text = stringResource(Res.string.active_session_note_save),
             onClick = { onIntent(ActiveSessionIntent.OnSaveNoteClicked) },
+            enabled = !isMutating,
             fullWidth = true,
             modifier = Modifier.padding(
                 start = LyteTheme.spacing.s5,
@@ -132,6 +138,7 @@ internal fun SetNoteSheet(
 @Composable
 private fun SwitcherRow(
     row: ActiveSessionSwitcherRowUiModel,
+    isMutating: Boolean,
     onIntent: (ActiveSessionIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -145,7 +152,8 @@ private fun SwitcherRow(
 
     Surface(
         onClick = { onIntent(ActiveSessionIntent.OnExerciseSelected(row.exerciseId)) },
-        enabled = row.isSelectable,
+        // Пока идёт запись выбранного упражнения, строки погашены: следующий выбор всё равно не примут.
+        enabled = row.isSelectable && !isMutating,
         shape = MaterialTheme.shapes.large,
         color = if (isCurrent) {
             MaterialTheme.colorScheme.primaryContainer
@@ -293,6 +301,7 @@ private fun SwitcherRowPreview() {
                     targetPills = emptyList(),
                     isSelectable = false,
                 ),
+                isMutating = false,
                 onIntent = {},
             )
             SwitcherRow(
@@ -306,6 +315,7 @@ private fun SwitcherRowPreview() {
                     targetPills = emptyList(),
                     isSelectable = true,
                 ),
+                isMutating = false,
                 onIntent = {},
             )
             SwitcherRow(
@@ -323,6 +333,7 @@ private fun SwitcherRowPreview() {
                     ),
                     isSelectable = true,
                 ),
+                isMutating = false,
                 onIntent = {},
             )
         }

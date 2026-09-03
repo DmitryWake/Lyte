@@ -108,6 +108,29 @@ class HistorySessionDetailsViewModelTest {
         assertEquals(listOf<NavCommand>(NavCommand.Back), navigator.commandLog)
     }
 
+    /**
+     * Дабл-тап по «Удалить»: второй интент приходит в том же кадре, до того как Compose уберёт диалог.
+     * Повторный `DELETE` идемпотентен и тоже успешен, поэтому без guard'а в навигацию ушёл бы второй
+     * `back` — а он снял бы `HistoryRoute`, стартовый destination вкладки, схлопнув её граф.
+     */
+    @Test
+    fun doubleConfirmedDeleteNavigatesBackOnce() = runTest(testDispatcher) {
+        val repository = FakeSessionHistoryRepository(session = sampleSession())
+        val navigator = FakeLyteNavigator()
+        val viewModel = viewModel(repository, navigator)
+        runCurrent()
+
+        viewModel.onIntent(HistorySessionDetailsIntent.OnDeleteClicked)
+        viewModel.onIntent(HistorySessionDetailsIntent.OnDeleteConfirmed)
+        // Флаг поднят синхронно — на нём держатся и guard, и индикатор вместо кнопки удаления.
+        assertTrue(assertIs<HistorySessionDetailsUiState.Content>(viewModel.uiState.value).isDeleting)
+        viewModel.onIntent(HistorySessionDetailsIntent.OnDeleteConfirmed)
+        runCurrent()
+
+        assertEquals(listOf(SESSION_ID), repository.deletedSessionIds)
+        assertEquals(listOf<NavCommand>(NavCommand.Back), navigator.commandLog)
+    }
+
     @Test
     fun failedDeleteKeepsDetailsAndDoesNotNavigate() = runTest(testDispatcher) {
         val repository = FakeSessionHistoryRepository(session = sampleSession()).apply {
@@ -125,6 +148,8 @@ class HistorySessionDetailsViewModelTest {
         // Детали остаются на экране, диалог закрыт, ошибка — баннером.
         assertEquals("Push Day", content.details.programName)
         assertEquals(false, content.isDeleteDialogVisible)
+        // Guard снят: провал не должен запирать удаление навсегда.
+        assertEquals(false, content.isDeleting)
         assertIs<LyteError.Unknown>(content.actionError)
         assertEquals(emptyList(), navigator.commandLog)
     }

@@ -13,6 +13,7 @@ import com.nikolaevskii.lyte.core.session.domain.model.SessionSetResultEntity
 import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionEntity
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionOverlayUiModel
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionIntent
+import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionMutationError
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionUiState
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionUiState.ActiveSessionContent
 import com.nikolaevskii.lyte.feature.tracker.sessionExercise
@@ -340,24 +341,7 @@ class ActiveSessionViewModelTest {
 
     @Test
     fun finishFromAllDoneNavigatesToSessionDetails() = activeSessionTest {
-        val session = workoutSession(
-            exercises = listOf(
-                sessionExercise(
-                    id = "e1",
-                    name = "Жим",
-                    sets = listOf(
-                        sessionSet(
-                            id = "s1",
-                            targetCount = 10,
-                            targetWeight = 60.0,
-                            result = completed(count = 10, weight = 60.0)
-                        ),
-                        sessionSet(id = "s2", targetCount = 10, targetWeight = 60.0, result = SessionSetResultEntity.Skipped),
-                    ),
-                ),
-            ),
-        )
-        val repository = repository(session)
+        val repository = repository(allDoneSession())
         val navigator = FakeLyteNavigator()
         val viewModel = viewModel(repository = repository, navigator = navigator)
         runCurrent()
@@ -415,10 +399,13 @@ class ActiveSessionViewModelTest {
 
         // Два тапа до того, как первая мутация успела перечитать сессию.
         viewModel.onIntent(ActiveSessionIntent.OnCompleteSetClicked)
+        // Флаг занятости поднят синхронно — на нём держатся и guard, и погашенные кнопки записи.
+        assertTrue(viewModel.uiState.value.isMutating)
         viewModel.onIntent(ActiveSessionIntent.OnCompleteSetClicked)
         runCurrent()
 
         assertEquals(1, repository.completeSetCalls.size)
+        assertFalse(viewModel.uiState.value.isMutating)
     }
 
     @Test
@@ -433,15 +420,176 @@ class ActiveSessionViewModelTest {
         runCurrent()
 
         val state = viewModel.uiState.value
-        assertTrue(state.tracking.hasMutationError)
+        assertEquals(ActiveSessionMutationError.Write, state.mutationError)
         assertFalse(state.isMutating)
     }
 
-    /** Тело теста + отмена секундомеров созданных VM до очистки runTest (иначе цикл-тик зависает). */
-    private fun activeSessionTest(body: TestScope.() -> Unit) = runTest(testDispatcher) {
-        body()
-        createdViewModels.forEach { viewModel -> viewModel.viewModelScope.cancel() }
+    /** Провал записи и следующая удачная: баннер обязан погаснуть, иначе он врёт про текущее состояние. */
+    @Test
+    fun successfulWriteAfterFailureClearsMutationBanner() = activeSessionTest {
+        val repository = repository(twoSetSession()).apply {
+            completeSetError = IllegalStateException("db down")
+        }
+        val viewModel = viewModel(repository = repository)
         runCurrent()
+
+        viewModel.onIntent(ActiveSessionIntent.OnCompleteSetClicked)
+        runCurrent()
+        assertEquals(ActiveSessionMutationError.Write, viewModel.uiState.value.mutationError)
+
+        repository.completeSetError = null
+        viewModel.onIntent(ActiveSessionIntent.OnSkipSetClicked)
+        runCurrent()
+
+        assertEquals(null, viewModel.uiState.value.mutationError)
+    }
+
+    /**
+     * Провал сохранения заметки оставляет шторку открытой с набранным текстом: закрывает её только
+     * удачная запись (через пересборку контента). Иначе набранное исчезало бы, а баннер сообщал бы
+     * лишь «не удалось сохранить» — без единого способа вернуть текст.
+     */
+    @Test
+    fun failedNoteSaveKeepsSheetWithDraft() = activeSessionTest {
+        val repository = repository(twoSetSession()).apply {
+            saveSetNoteError = IllegalStateException("db down")
+        }
+        val viewModel = viewModel(repository = repository)
+        runCurrent()
+
+        viewModel.onIntent(ActiveSessionIntent.OnOpenNoteSheetClicked)
+        viewModel.onIntent(ActiveSessionIntent.OnNoteDraftChanged("пояс затянуть туже"))
+        viewModel.onIntent(ActiveSessionIntent.OnSaveNoteClicked)
+        runCurrent()
+
+        val state = viewModel.uiState.value
+        assertEquals(ActiveSessionMutationError.Write, state.mutationError)
+        assertEquals(ActiveSessionOverlayUiModel.NoteSheet(draft = "пояс затянуть туже"), state.tracking.overlay)
+
+        // Повтор по той же шторке проходит: черновик никуда не делся.
+        repository.saveSetNoteError = null
+        viewModel.onIntent(ActiveSessionIntent.OnSaveNoteClicked)
+        runCurrent()
+
+        assertEquals(listOf("s1" to "пояс затянуть туже"), repository.saveNoteCalls)
+        assertEquals(ActiveSessionOverlayUiModel.None, viewModel.uiState.value.tracking.overlay)
+        assertEquals("пояс затянуть туже", viewModel.uiState.value.tracking.current.note)
+    }
+
+    /**
+     * Пока идёт запись, шторки не открываются. Иначе шторка провисела бы поверх чужой мутации, а
+     * пересборка контента по её завершении захлопнула бы её вместе с набранным черновиком.
+     */
+    @Test
+    fun sheetsDoNotOpenDuringMutation() = activeSessionTest {
+        val repository = repository(twoSetSession())
+        val viewModel = viewModel(repository = repository)
+        runCurrent()
+
+        viewModel.onIntent(ActiveSessionIntent.OnCompleteSetClicked)
+        viewModel.onIntent(ActiveSessionIntent.OnOpenNoteSheetClicked)
+        assertEquals(ActiveSessionOverlayUiModel.None, viewModel.uiState.value.tracking.overlay)
+
+        viewModel.onIntent(ActiveSessionIntent.OnOpenExerciseSheetClicked)
+        assertEquals(ActiveSessionOverlayUiModel.None, viewModel.uiState.value.tracking.overlay)
+
+        // Запись закончилась — шторка снова открывается.
+        runCurrent()
+        viewModel.onIntent(ActiveSessionIntent.OnOpenNoteSheetClicked)
+        assertEquals(ActiveSessionOverlayUiModel.NoteSheet(draft = ""), viewModel.uiState.value.tracking.overlay)
+    }
+
+    /**
+     * Выбор упражнения, не принятый из-за занятости, не должен пропасть молча: шторка остаётся открытой,
+     * и повтор доводит переключение до БД.
+     */
+    @Test
+    fun exerciseSwitchDuringMutationIsNotSwallowed() = activeSessionTest {
+        val repository = repository(twoExerciseSession())
+        val viewModel = viewModel(repository = repository)
+        runCurrent()
+
+        viewModel.onIntent(ActiveSessionIntent.OnOpenExerciseSheetClicked)
+        // Запись подхода стартует, пока шторка открыта: тап по строке в этот момент не примут.
+        viewModel.onIntent(ActiveSessionIntent.OnCompleteSetClicked)
+        viewModel.onIntent(ActiveSessionIntent.OnExerciseSelected("e2"))
+
+        assertEquals(emptyList(), repository.setCurrentExerciseCalls)
+        assertEquals(ActiveSessionOverlayUiModel.ExerciseSheet, viewModel.uiState.value.tracking.overlay)
+
+        // Запись закончилась: шторку открываем заново и повторяем выбор — он доходит до БД.
+        runCurrent()
+        viewModel.onIntent(ActiveSessionIntent.OnOpenExerciseSheetClicked)
+        viewModel.onIntent(ActiveSessionIntent.OnExerciseSelected("e2"))
+        runCurrent()
+
+        assertEquals(listOf(SESSION_ID to "e2"), repository.setCurrentExerciseCalls)
+        assertEquals(ActiveSessionOverlayUiModel.None, viewModel.uiState.value.tracking.overlay)
+        assertEquals("e2", viewModel.uiState.value.tracking.current.exerciseId)
+    }
+
+    /**
+     * Провал сохранения на экране-итоге: [ActiveSessionContent.AllDone] не умеет держать ошибку у себя,
+     * поэтому она приходит сквозным полем состояния. Без него баннер оставался бы no-op'ом, а кнопка —
+     * просто мёртвой на вид.
+     */
+    @Test
+    fun finishFailureOnAllDoneSurfacesError() = activeSessionTest {
+        val repository = repository(allDoneSession()).apply {
+            finishSessionError = IllegalStateException("db down")
+        }
+        val navigator = FakeLyteNavigator()
+        val viewModel = viewModel(repository = repository, navigator = navigator)
+        runCurrent()
+        assertTrue(viewModel.uiState.value.content is ActiveSessionContent.AllDone)
+
+        viewModel.onIntent(ActiveSessionIntent.OnFinishClicked)
+        runCurrent()
+
+        val state = viewModel.uiState.value
+        assertEquals(ActiveSessionMutationError.Finish, state.mutationError)
+        // Кнопка снова живая: сессия цела и незавершена, сохранение можно повторить.
+        assertFalse(state.isMutating)
+        assertTrue(state.content is ActiveSessionContent.AllDone)
+        assertEquals(emptyList(), navigator.commandLog)
+    }
+
+    /**
+     * Досрочное завершение проваливается на арме трекинга — и баннер обязан сказать про тренировку.
+     * Пока текст выбирал арм, здесь печаталось «не удалось сохранить изменение»: неправда, подходы
+     * записаны, не удалось именно завершение.
+     */
+    @Test
+    fun endEarlyFailureReportsFinishError() = activeSessionTest {
+        val repository = repository(twoSetSession()).apply {
+            finishSessionError = IllegalStateException("db down")
+        }
+        val viewModel = viewModel(repository = repository)
+        runCurrent()
+
+        viewModel.onIntent(ActiveSessionIntent.OnEndEarlyClicked)
+        viewModel.onIntent(ActiveSessionIntent.OnEndEarlyConfirmed)
+        runCurrent()
+
+        val state = viewModel.uiState.value
+        assertEquals(ActiveSessionMutationError.Finish, state.mutationError)
+        assertTrue(state.content is ActiveSessionContent.Tracking)
+    }
+
+    /**
+     * Тело теста + отмена секундомеров созданных VM до очистки runTest (иначе цикл-тик зависает).
+     *
+     * Отмена — в `finally`: провалившееся тело теста иначе не доходит до неё, и вместо красного теста
+     * с внятным сообщением получается вечно крутящийся в виртуальном времени `delay`-цикл и повисший
+     * прогон. Красный тест обязан падать, а не вешать гейт.
+     */
+    private fun activeSessionTest(body: TestScope.() -> Unit) = runTest(testDispatcher) {
+        try {
+            body()
+        } finally {
+            createdViewModels.forEach { viewModel -> viewModel.viewModelScope.cancel() }
+            runCurrent()
+        }
     }
 
     private fun viewModel(
@@ -457,6 +605,49 @@ class ActiveSessionViewModelTest {
 
     private fun repository(session: WorkoutSessionEntity): FakeWorkoutSessionRepository =
         FakeWorkoutSessionRepository(initialSession = session)
+
+    /** Сессия, у которой все подходы разрешены: экран сразу показывает итог, писать остаётся только финиш. */
+    private fun allDoneSession(): WorkoutSessionEntity = workoutSession(
+        id = SESSION_ID,
+        exercises = listOf(
+            sessionExercise(
+                id = "e1",
+                name = "Жим",
+                sets = listOf(
+                    sessionSet(
+                        id = "s1",
+                        targetCount = 10,
+                        targetWeight = 60.0,
+                        result = completed(count = 10, weight = 60.0)
+                    ),
+                    sessionSet(id = "s2", targetCount = 10, targetWeight = 60.0, result = SessionSetResultEntity.Skipped),
+                ),
+            ),
+        ),
+    )
+
+    /**
+     * Два упражнения, у первого — два подхода: запись одного подхода не переводит сессию на второе
+     * упражнение сама, поэтому переключение шторкой остаётся осмысленным действием.
+     */
+    private fun twoExerciseSession(): WorkoutSessionEntity = workoutSession(
+        id = SESSION_ID,
+        exercises = listOf(
+            sessionExercise(
+                id = "e1",
+                name = "Жим",
+                sets = listOf(
+                    sessionSet(id = "s1", targetCount = 10, targetWeight = 60.0),
+                    sessionSet(id = "s2", targetCount = 10, targetWeight = 60.0),
+                ),
+            ),
+            sessionExercise(
+                id = "e2",
+                name = "Тяга",
+                sets = listOf(sessionSet(id = "s3", targetCount = 12, targetWeight = 50.0)),
+            ),
+        ),
+    )
 
     private fun twoSetSession(): WorkoutSessionEntity = workoutSession(
         id = SESSION_ID,

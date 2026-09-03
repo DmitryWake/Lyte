@@ -24,6 +24,7 @@ internal class FakeWorkoutRepository(
     var getWorkoutError: Throwable? = null
     var createWorkoutError: Throwable? = null
     var editWorkoutError: Throwable? = null
+    var deleteWorkoutError: Throwable? = null
     val deletedIds = mutableListOf<String>()
     val createdWorkouts = mutableListOf<WorkoutEntity>()
     val editedWorkouts = mutableListOf<WorkoutEntity>()
@@ -61,6 +62,7 @@ internal class FakeWorkoutRepository(
     }
 
     override suspend fun deleteWorkout(id: String) {
+        deleteWorkoutError?.let { throw it }
         deletedIds += id
         items = items.filterNot { it.id == id }
     }

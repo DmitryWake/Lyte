@@ -68,6 +68,7 @@
     <string name="active_session_save_workout">Сохранить тренировку</string>
     <string name="active_session_error">Не удалось загрузить сессию</string>
     <string name="active_session_mutation_error">Не удалось сохранить изменение</string>
+    <string name="active_session_finish_error">Не удалось сохранить тренировку</string>
     <string name="active_session_retry">Повторить</string>
     <string name="active_session_to_landing">На главную</string>
 </resources>
