@@ -125,8 +125,9 @@ internal class WorkoutSessionRepositoryImpl(
      * подходы, которые завершение только что пометило пропущенными.
      *
      * Пишем узким [WorkoutRepository.updateWorkoutTargets], а не `editWorkout`: тот пересобрал бы граф
-     * программы и разархивировал её вместе с упражнениями, если её удалили во время сессии.
-     * Пропавшая сессия или программа — не ошибка: обновлять нечего.
+     * программы целиком ради правки одних лишь целей. Пропавшая сессия или программа — не ошибка:
+     * обновлять нечего. Программу, удалённую во время сессии, [WorkoutRepository.getWorkout] уже не
+     * отдаёт, поэтому прогрессия молча пропускается — цели у удалённой программы никто не увидит.
      */
     private suspend fun applyProgression(sessionId: String) {
         val session = workoutSessionDao.getSession(sessionId)?.toDomainEntity() ?: return

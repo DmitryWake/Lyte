@@ -37,8 +37,18 @@ abstract class WorkoutDao {
     )
     abstract fun observeItems(): Flow<List<WorkoutItemWithExerciseCount>>
 
+    /**
+     * Программа со всем составом. Архивную (`is_archived = 1`) не отдаёт: по id её не должен получать
+     * никто — иначе с уже открытого превью стартует тренировка по удалённой программе, а редактор
+     * возвращает её в списки первым же сохранением. История фильтром не задета: сессия хранит снапшот
+     * программы и на `workout` не ссылается (см.
+     * [com.nikolaevskii.lyte.core.db.session.WorkoutSessionDatabaseEntity]).
+     *
+     * Упражнения внутри графа, наоборот, не фильтруются: архивное упражнение остаётся частью
+     * программы, и отсев молча проредил бы её состав — тот же довод, что у [ExerciseDao.getById].
+     */
     @Transaction
-    @Query("SELECT * FROM workout WHERE id = :id LIMIT 1")
+    @Query("SELECT * FROM workout WHERE id = :id AND is_archived = 0 LIMIT 1")
     abstract suspend fun getWithExercises(id: String): WorkoutWithExercises?
 
     @Upsert
@@ -83,13 +93,21 @@ abstract class WorkoutDao {
     @Query("SELECT COUNT(*) FROM workout_session WHERE program_id = :id")
     abstract suspend fun countSessionsForWorkout(id: String): Int
 
+    /** Архивна ли программа. `EXISTS`, а не выборка колонки: у несуществующей строки ответ `false`. */
+    @Query("SELECT EXISTS(SELECT 1 FROM workout WHERE id = :id AND is_archived = 1)")
+    abstract suspend fun isWorkoutArchived(id: String): Boolean
+
+    /** Те из [ids], что уже заархивированы. Пустой список — пустой ответ (`IN ()` в SQLite легален). */
+    @Query("SELECT id FROM exercise WHERE id IN (:ids) AND is_archived = 1")
+    abstract suspend fun getArchivedExerciseIds(ids: List<String>): List<String>
+
     @Query("UPDATE workout SET is_archived = 1 WHERE id = :id")
     abstract suspend fun archiveWorkout(id: String)
 
     /**
      * Удаляет программу, если на неё не ссылается ни одна сессия трекера; иначе — архивирует
-     * (soft delete), чтобы история сохранила ссылку на программу. Всё одной транзакцией:
-     * подсчёт и запись атомарны.
+     * (soft delete): строка остаётся в БД, но становится невидимой и для списков, и для чтения по id
+     * ([getWithExercises]). Всё одной транзакцией: подсчёт и запись атомарны.
      */
     @Transaction
     open suspend fun deleteOrArchiveWorkout(id: String) {
@@ -106,6 +124,12 @@ abstract class WorkoutDao {
      *
      * Для [workout]/[exercises] используется `@Upsert`, а не `@Insert(REPLACE)`:
      * `INSERT OR REPLACE` удалил бы конфликтную строку и через `ON DELETE CASCADE` снёс детей.
+     *
+     * `is_archived` — собственность БД: доменная модель о нём не знает и приносит `false` в каждой
+     * строке, поэтому апсерт «как принесли» снял бы архив и с программы, и с её упражнений, вернув
+     * удалённое в списки. Флаг переносится из текущих строк — весь пересчёт в одной транзакции с
+     * записью. Точечный [updateSetTargets] обходит ровно эту проблему с другой стороны: он вообще
+     * не трогает строки `workout`/`exercise`.
      */
     @Transaction
     open suspend fun saveWorkoutGraph(
@@ -114,17 +138,22 @@ abstract class WorkoutDao {
         crossRefs: List<WorkoutExerciseCrossRefDatabaseEntity>,
         sets: List<WorkoutSetDatabaseEntity>,
     ) {
+        val isWorkoutArchived = isWorkoutArchived(workout.id)
+        val archivedExerciseIds = getArchivedExerciseIds(exercises.map { exercise -> exercise.id }).toSet()
+
         deleteCrossRefsByWorkout(workout.id)
-        upsertWorkout(workout)
-        upsertExercises(exercises)
+        upsertWorkout(workout.copy(isArchived = isWorkoutArchived))
+        upsertExercises(
+            exercises.map { exercise -> exercise.copy(isArchived = exercise.id in archivedExerciseIds) },
+        )
         insertCrossRefs(crossRefs)
         insertSets(sets)
     }
 
     /**
      * Обновляет цели подходов программы одной транзакцией. Структуру программы (состав и порядок
-     * упражнений, число подходов) и флаги `is_archived` не трогает — в отличие от [saveWorkoutGraph],
-     * который пересоздаёт связки и апсертит строки `workout`/`exercise`.
+     * упражнений, число подходов) и строки `workout`/`exercise` не трогает вовсе — в отличие от
+     * [saveWorkoutGraph], который пересоздаёт связки и апсертит обе эти таблицы.
      */
     @Transaction
     open suspend fun updateSetTargets(workoutId: String, targets: List<WorkoutSetTargetUpdate>) {
