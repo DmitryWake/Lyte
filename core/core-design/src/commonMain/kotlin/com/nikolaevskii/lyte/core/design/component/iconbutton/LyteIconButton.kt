@@ -23,7 +23,8 @@ import com.nikolaevskii.lyte.core.design.theme.lytePressScale
 private val LyteIconButtonDefaultSize = 40.dp
 
 /**
- * Круглая кнопка-иконка. [active] переключает фон на secondaryContainer (напр. открытая шторка).
+ * Круглая кнопка-иконка. [active] переключает фон на secondaryContainer (напр. открытая шторка),
+ * [enabled] гасит её на время операции, во время которой действие всё равно не примут.
  * Нажатие — M3-овский state layer плюс уменьшение до 0.97, как у остальных контролов системы.
  */
 @Composable
@@ -33,6 +34,7 @@ fun LyteIconButton(
     onClick: () -> Unit,
     size: Dp = LyteIconButtonDefaultSize,
     active: Boolean = false,
+    enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     val iconSize = size / 2
@@ -44,6 +46,7 @@ fun LyteIconButton(
         FilledIconButton(
             onClick = onClick,
             modifier = sizedModifier,
+            enabled = enabled,
             colors = IconButtonDefaults.filledIconButtonColors(
                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -56,6 +59,7 @@ fun LyteIconButton(
         IconButton(
             onClick = onClick,
             modifier = sizedModifier,
+            enabled = enabled,
             colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant),
             interactionSource = interactionSource,
         ) {
@@ -71,6 +75,7 @@ private fun LyteIconButtonPreview() {
         Row(modifier = Modifier.padding(16.dp)) {
             LyteIconButton(icon = LyteIcons.Close, contentDescription = "Закрыть", onClick = {})
             LyteIconButton(icon = LyteIcons.List, contentDescription = "Упражнения", onClick = {}, active = true)
+            LyteIconButton(icon = LyteIcons.Delete, contentDescription = "Удалить", onClick = {}, enabled = false)
         }
     }
 }

@@ -25,6 +25,7 @@
     <string name="history_details_delete_dialog_title">Удалить тренировку «%1$s»?</string>
     <string name="history_details_delete_dialog_description">Запись пропадёт из истории.</string>
     <string name="history_details_delete_error">Не удалось удалить тренировку</string>
+    <string name="history_details_deleting_a11y">Удаление тренировки</string>
     <string-array name="history_month_names">
         <item>Январь</item>
         <item>Февраль</item>

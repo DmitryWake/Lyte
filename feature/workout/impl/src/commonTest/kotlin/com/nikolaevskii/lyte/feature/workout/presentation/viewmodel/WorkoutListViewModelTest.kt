@@ -1,5 +1,6 @@
 package com.nikolaevskii.lyte.feature.workout.presentation.viewmodel
 
+import com.nikolaevskii.lyte.core.mvi.LyteError
 import com.nikolaevskii.lyte.core.navigation.model.LyteNavOptions
 import com.nikolaevskii.lyte.core.design.icon.LyteExerciseGlyph
 import com.nikolaevskii.lyte.core.design.theme.LyteAccent
@@ -21,6 +22,8 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -142,6 +145,50 @@ class WorkoutListViewModelTest {
         val content = viewModel.uiState.value as WorkoutListUiState.Content
         assertNull(content.pendingDelete)
         assertEquals(listOf("w2"), content.programs.map { it.id })
+    }
+
+    /**
+     * Провал удаления: экран остаётся списком, диалог закрыт, о неудаче сообщает баннер. Без этого теста
+     * ветку `onFailure` можно выкинуть целиком, и гейт останется зелёным.
+     */
+    @Test
+    fun failedDeleteClosesDialogAndShowsActionError() = runTest(testDispatcher) {
+        val repository = FakeWorkoutRepository(
+            initialItems = listOf(program(id = "w1", name = "Push Day", exerciseCount = 5)),
+        ).apply { deleteWorkoutError = IllegalStateException("db down") }
+        val viewModel = WorkoutListViewModel(workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
+        runCurrent()
+        viewModel.onIntent(WorkoutListIntent.OnDeleteProgramClicked(id = "w1"))
+
+        viewModel.onIntent(WorkoutListIntent.OnDeleteConfirmed)
+        runCurrent()
+
+        val content = viewModel.uiState.value as WorkoutListUiState.Content
+        assertNull(content.pendingDelete)
+        assertIs<LyteError.Unknown>(content.actionError)
+        // Программа на месте: удаление не прошло, список не обманывает.
+        assertEquals(listOf("w1"), content.programs.map { it.id })
+    }
+
+    /** Повтор удаления гасит баннер прошлой неудачи: иначе во время попытки не понять, идёт ли она. */
+    @Test
+    fun retryingDeleteClearsPreviousActionError() = runTest(testDispatcher) {
+        val repository = FakeWorkoutRepository(
+            initialItems = listOf(program(id = "w1", name = "Push Day", exerciseCount = 5)),
+        ).apply { deleteWorkoutError = IllegalStateException("db down") }
+        val viewModel = WorkoutListViewModel(workoutRepository = repository, lyteNavigator = FakeLyteNavigator())
+        runCurrent()
+        viewModel.onIntent(WorkoutListIntent.OnDeleteProgramClicked(id = "w1"))
+        viewModel.onIntent(WorkoutListIntent.OnDeleteConfirmed)
+        runCurrent()
+        assertNotNull((viewModel.uiState.value as WorkoutListUiState.Content).actionError)
+
+        repository.deleteWorkoutError = null
+        viewModel.onIntent(WorkoutListIntent.OnDeleteProgramClicked(id = "w1"))
+        viewModel.onIntent(WorkoutListIntent.OnDeleteConfirmed)
+        runCurrent()
+
+        assertNull((viewModel.uiState.value as? WorkoutListUiState.Content)?.actionError)
     }
 
     @Test

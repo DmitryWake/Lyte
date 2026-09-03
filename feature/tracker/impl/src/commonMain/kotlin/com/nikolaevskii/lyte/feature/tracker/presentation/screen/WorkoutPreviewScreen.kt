@@ -2,6 +2,7 @@ package com.nikolaevskii.lyte.feature.tracker.presentation.screen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -94,10 +96,7 @@ fun WorkoutPreviewContent(
         },
         bottomBar = {
             if (content != null) {
-                WorkoutPreviewStartBar(
-                    enabled = !content.isStarting,
-                    onStart = { onIntent(WorkoutPreviewIntent.OnStartClicked) },
-                )
+                WorkoutPreviewStartBar(content = content, onIntent = onIntent)
             }
         },
     ) { paddingValues ->
@@ -123,16 +122,6 @@ fun WorkoutPreviewContent(
                         onIntent = onIntent,
                         modifier = Modifier.fillMaxSize(),
                     )
-                    if (state.startError != null) {
-                        Text(
-                            text = stringResource(Res.string.workout_preview_start_error),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier
-                                .align(Alignment.TopCenter)
-                                .padding(LyteTheme.spacing.s3),
-                        )
-                    }
                     // Шторка описания упражнения — оверлей превью, а не отдельный маршрут:
                     // в стеке вкладки её нет.
                     state.exerciseInfo?.let { exercise ->
@@ -178,10 +167,15 @@ private fun WorkoutPreviewExerciseList(
     }
 }
 
+/**
+ * Панель старта: кнопка и, если старт не удался, строка ошибки прямо над ней. Баннер живёт здесь, а не
+ * оверлеем над списком: непрозрачная панель — его подложка, и он не накрывает состав программы (сам
+ * список — `LazyColumn`, поверх которого текст без подложки нечитаем).
+ */
 @Composable
 private fun WorkoutPreviewStartBar(
-    enabled: Boolean,
-    onStart: () -> Unit,
+    content: WorkoutPreviewUiState.Content,
+    onIntent: (WorkoutPreviewIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -189,15 +183,29 @@ private fun WorkoutPreviewStartBar(
         shadowElevation = LyteTheme.elevation.level2,
         modifier = modifier.fillMaxWidth(),
     ) {
-        LyteButton(
-            text = stringResource(Res.string.workout_preview_start),
-            onClick = onStart,
-            size = LyteButtonSize.Large,
-            icon = LyteIcons.Play,
-            enabled = enabled,
-            fullWidth = true,
+        Column(
             modifier = Modifier.padding(horizontal = LyteTheme.spacing.s5, vertical = LyteTheme.spacing.s4),
-        )
+        ) {
+            if (content.startError != null) {
+                Text(
+                    text = stringResource(Res.string.workout_preview_start_error),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(bottom = LyteTheme.spacing.s2),
+                )
+            }
+            LyteButton(
+                text = stringResource(Res.string.workout_preview_start),
+                onClick = { onIntent(WorkoutPreviewIntent.OnStartClicked) },
+                size = LyteButtonSize.Large,
+                icon = LyteIcons.Play,
+                enabled = !content.isStarting,
+                fullWidth = true,
+            )
+        }
     }
 }
 
@@ -255,10 +263,8 @@ private fun WorkoutPreviewContentStartingPreview() {
 }
 
 /**
- * Старт не удался: кнопка снова активна. **Кадр фиксирует дефект вёрстки:** баннер — `Text` без
- * подложки в одном `Box` с `LazyColumn`, поэтому красный текст ложится поверх названия первого
- * упражнения и нечитаемы обе строки. Чинится в RD-24 вместе с остальными невидимыми ошибками;
- * до тех пор эталон показывает, как это выглядит на самом деле.
+ * Старт не удался: кнопка снова активна, над ней — строка ошибки на непрозрачной панели старта.
+ * Состав программы баннер не накрывает, поэтому читаются обе части кадра.
  */
 @Composable
 @Preview

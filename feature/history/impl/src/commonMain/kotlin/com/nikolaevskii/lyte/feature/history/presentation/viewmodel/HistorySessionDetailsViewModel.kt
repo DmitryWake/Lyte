@@ -8,6 +8,7 @@ import com.nikolaevskii.lyte.feature.history.presentation.model.mvi.HistorySessi
 import com.nikolaevskii.lyte.feature.history.presentation.model.mvi.HistorySessionDetailsUiState
 import com.nikolaevskii.lyte.feature.history.presentation.model.toDetailsUiModel
 import com.nikolaevskii.lyte.core.session.domain.repository.SessionHistoryRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 
@@ -29,7 +30,7 @@ class HistorySessionDetailsViewModel(
 
             HistorySessionDetailsIntent.OnDeleteDismissed -> updateContent { copy(isDeleteDialogVisible = false) }
 
-            HistorySessionDetailsIntent.OnDeleteConfirmed -> launch { confirmDelete() }
+            HistorySessionDetailsIntent.OnDeleteConfirmed -> confirmDelete()
         }
     }
 
@@ -46,6 +47,8 @@ class HistorySessionDetailsViewModel(
                 updateState { HistorySessionDetailsUiState.Content(details = details) }
             }
             .onFailure { error ->
+                // Отмена скоупа — не провал загрузки: пробрасываем, как и в confirmDelete ниже.
+                if (error is CancellationException) throw error
                 updateState { HistorySessionDetailsUiState.Error(error.toLyteError()) }
             }
     }
@@ -54,12 +57,27 @@ class HistorySessionDetailsViewModel(
      * Удаление обёрнуто в runCatching (без него сбой DAO уронил бы процесс необработанным исключением
      * в viewModelScope). Успех — уходим назад, в список: он перечитывается при возврате сам. Провал —
      * баннер над деталями, а не подмена экрана: запись всё ещё на месте и её есть что показать.
+     *
+     * Guard `isDeleting` поднимается синхронно, до запуска корутины: интент, поданный вторым тапом в
+     * том же кадре рекомпозиции, не должен запустить вторую корутину — повторный `DELETE`
+     * идемпотентен и тоже успешен, поэтому в навигацию ушёл бы второй `back`, снимающий стартовый
+     * destination вкладки. На успехе флаг не сбрасывается: экран уходит в навигацию.
      */
-    private suspend fun confirmDelete() {
-        updateContent { copy(isDeleteDialogVisible = false, actionError = null) }
-        runCatching { sessionHistoryRepository.deleteSession(sessionId) }
-            .onSuccess { lyteNavigator.back() }
-            .onFailure { error -> updateContent { copy(actionError = error.toLyteError()) } }
+    private fun confirmDelete() {
+        val content = uiStateValue as? HistorySessionDetailsUiState.Content ?: return
+        if (content.isDeleting) {
+            return
+        }
+        updateContent { copy(isDeleteDialogVisible = false, isDeleting = true, actionError = null) }
+        launch {
+            runCatching { sessionHistoryRepository.deleteSession(sessionId) }
+                .onSuccess { lyteNavigator.back() }
+                .onFailure { error ->
+                    // Отмена скоупа — не провал удаления: пробрасываем, чтобы не показать баннер вместо неё.
+                    if (error is CancellationException) throw error
+                    updateContent { copy(isDeleting = false, actionError = error.toLyteError()) }
+                }
+        }
     }
 
     private fun updateContent(

@@ -118,8 +118,8 @@ Lucide — `implementation`-only внутри `core-design`, подключат�
 |---|---|
 | `component.brand` | `LyteWordmark` (знак «Lyte.»: кегль задаёт вызывающий, `dotAlpha` — для «дышащей» точки сплэша) |
 | `component.button` | `LyteButton` (variant Filled/Tonal/Outlined/Text × accent Primary/Secondary/Tertiary/Error × size Large/Medium/Small) |
-| `component.iconbutton` | `LyteIconButton` |
-| `component.chip` | `LyteChip` |
+| `component.iconbutton` | `LyteIconButton` (`active` — фон открытой шторки, `enabled` — гашение на время записи) |
+| `component.chip` | `LyteChip` (`enabled` — гашение на время записи) |
 | `component.badge` | `LyteBadge` (size Small — счётчик, Medium — табличная stat-пилюля) |
 | `component.switch` | `LyteSwitch` |
 | `component.textfield` | `LyteTextField` |

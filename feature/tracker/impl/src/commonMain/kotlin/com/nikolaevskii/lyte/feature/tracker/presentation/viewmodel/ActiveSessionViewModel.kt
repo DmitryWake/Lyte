@@ -11,6 +11,7 @@ import com.nikolaevskii.lyte.core.session.domain.model.WorkoutSessionEntity
 import com.nikolaevskii.lyte.core.session.domain.repository.WorkoutSessionRepository
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionOverlayUiModel
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionIntent
+import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionMutationError
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionUiState
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionUiState.ActiveSessionContent
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.lastSetLabel
@@ -52,13 +53,12 @@ class ActiveSessionViewModel(
             is ActiveSessionIntent.OnDraftWeightChanged -> updateTracking { withDrafts(weight = intent.weight) }
             ActiveSessionIntent.OnCompleteSetClicked -> completeCurrentSet()
             ActiveSessionIntent.OnSkipSetClicked -> skipCurrentSet()
-            ActiveSessionIntent.OnOpenExerciseSheetClicked -> {
-                updateTracking { copy(overlay = ActiveSessionOverlayUiModel.ExerciseSheet) }
-            }
+            ActiveSessionIntent.OnOpenExerciseSheetClicked -> openOverlay(ActiveSessionOverlayUiModel.ExerciseSheet)
 
             is ActiveSessionIntent.OnExerciseSelected -> selectExercise(intent.exerciseId)
             ActiveSessionIntent.OnOpenNoteSheetClicked -> {
-                updateTracking { copy(overlay = ActiveSessionOverlayUiModel.NoteSheet(draft = current.note)) }
+                val note = (uiStateValue.content as? ActiveSessionContent.Tracking)?.current?.note ?: return
+                openOverlay(ActiveSessionOverlayUiModel.NoteSheet(draft = note))
             }
 
             is ActiveSessionIntent.OnNoteDraftChanged -> changeNoteDraft(intent.text)
@@ -97,28 +97,43 @@ class ActiveSessionViewModel(
     /**
      * Единственный путь записи прогресса: guard от дабл-тапа → мутация → перечитать сессию → пересобрать
      * контент. Перечитывание после каждой мутации гарантирует, что экран показывает ровно то, что в БД.
+     *
+     * Возвращает, принята ли запись: занятый экран отказывает молча, и вызывающий обязан этот отказ
+     * учесть — иначе набранное пользователем (черновик заметки) исчезнет вместе с проглоченной записью.
      */
-    private fun mutate(block: suspend () -> Unit) {
+    private fun mutate(block: suspend () -> Unit): Boolean {
         if (uiStateValue.isMutating) {
-            return
+            return false
         }
-        updateState { copy(isMutating = true) }
+        // Баннер гасится на старте следующей попытки: иначе кадр «ошибка + погашенная кнопка» не
+        // отличить от «ошибка и ничего не происходит». Единственная точка гашения — эта.
+        updateState { copy(isMutating = true, mutationError = null) }
         launch {
-            runCatching {
-                block()
-                applySession(checkNotNull(workoutSessionRepository.getSession(sessionId)) { "Session $sessionId not found" })
-            }.onFailure { error ->
-                // Отмена скоупа — не ошибка мутации: пробрасываем, чтобы не проглотить cancellation.
-                if (error is CancellationException) throw error
-                updateTracking { copy(hasMutationError = true) }
+            try {
+                runCatching {
+                    block()
+                    applySession(
+                        checkNotNull(workoutSessionRepository.getSession(sessionId)) { "Session $sessionId not found" },
+                    )
+                }.onFailure { error ->
+                    // Отмена скоупа — не ошибка мутации: пробрасываем, чтобы не проглотить cancellation.
+                    if (error is CancellationException) throw error
+                    updateState { copy(mutationError = ActiveSessionMutationError.Write) }
+                }
+            } finally {
+                // Guard снимается на любом выходе: `CancellationException` не от очистки VM (таймаут
+                // внутри репозитория) иначе запер бы экран навсегда — кнопки записи так и остались бы
+                // погашенными.
+                updateState { copy(isMutating = false) }
             }
-            updateState { copy(isMutating = false) }
         }
+        return true
     }
 
     /**
      * Пересобирает контент из перечитанной сессии. Драфты степперов сохраняются, только пока не сменился
-     * текущий подход (иначе перезаполняются его целью); успешная пересборка гасит баннер ошибки.
+     * текущий подход (иначе перезаполняются его целью). Открытую шторку пересборка закрывает — это и есть
+     * штатное закрытие шторки заметки после удачного сохранения.
      */
     private fun applySession(session: WorkoutSessionEntity) {
         val model = session.toActiveSessionUiModel()
@@ -138,7 +153,6 @@ class ActiveSessionViewModel(
                     draftReps = draftReps,
                     draftWeight = draftWeight,
                     overlay = ActiveSessionOverlayUiModel.None,
-                    hasMutationError = false,
                 )
             } else {
                 ActiveSessionContent.AllDone(
@@ -174,12 +188,19 @@ class ActiveSessionViewModel(
         if (!row.isSelectable) {
             return
         }
-        updateTracking { copy(overlay = ActiveSessionOverlayUiModel.None) }
         if (exerciseId == tracking.current.exerciseId) {
             // Тап по текущему упражнению — просто закрыть шторку, писать в БД нечего.
+            updateTracking { copy(overlay = ActiveSessionOverlayUiModel.None) }
             return
         }
-        mutate { workoutSessionRepository.setCurrentExercise(sessionId = sessionId, sessionExerciseId = exerciseId) }
+        // Шторка закрывается только по принятой записи: закрытая наперёд, она проглотила бы выбор
+        // упражнения — пользователь увидел бы прежнее и не узнал, почему.
+        val accepted = mutate {
+            workoutSessionRepository.setCurrentExercise(sessionId = sessionId, sessionExerciseId = exerciseId)
+        }
+        if (accepted) {
+            updateTracking { copy(overlay = ActiveSessionOverlayUiModel.None) }
+        }
     }
 
     private fun changeNoteDraft(text: String) {
@@ -192,10 +213,14 @@ class ActiveSessionViewModel(
         }
     }
 
+    /**
+     * Шторку закрывает только успешная запись — [applySession] пересобирает контент с
+     * [ActiveSessionOverlayUiModel.None]. Закрыть её здесь означало бы унести набранный текст на любом
+     * исходе, кроме удачного: провал оставляет шторку с черновиком, и сохранение можно повторить.
+     */
     private fun saveNote() {
         val tracking = uiStateValue.content as? ActiveSessionContent.Tracking ?: return
         val overlay = tracking.overlay as? ActiveSessionOverlayUiModel.NoteSheet ?: return
-        updateTracking { copy(overlay = ActiveSessionOverlayUiModel.None) }
         mutate { workoutSessionRepository.saveSetNote(setId = tracking.current.currentSetId, note = overlay.draft) }
     }
 
@@ -203,20 +228,22 @@ class ActiveSessionViewModel(
      * Финализация (и досрочная, и с экрана «все подходы выполнены»): репозиторий одной транзакцией
      * помечает незакрытые подходы пропущенными и ставит `finishedAt`. [ActiveSessionUiState.isMutating]
      * на успехе не сбрасывается — экран уходит в навигацию, повторные тапы уже не должны писать.
+     *
+     * Провал сообщается сквозным [ActiveSessionUiState.mutationError], а не полем арма: с экрана-итога
+     * ([ActiveSessionContent.AllDone]) правка контента трекинга была бы no-op, и ошибка не дошла бы никуда.
      */
     private fun finishSession() {
         if (uiStateValue.isMutating) {
             return
         }
-        updateState { copy(isMutating = true) }
+        updateState { copy(isMutating = true, mutationError = null) }
         updateTracking { copy(overlay = ActiveSessionOverlayUiModel.None) }
         launch {
             runCatching { workoutSessionRepository.finishSession(sessionId) }
                 .onSuccess { navigateToSessionDetails() }
                 .onFailure { error ->
                     if (error is CancellationException) throw error
-                    updateState { copy(isMutating = false) }
-                    updateTracking { copy(hasMutationError = true) }
+                    updateState { copy(isMutating = false, mutationError = ActiveSessionMutationError.Finish) }
                 }
         }
     }
@@ -231,6 +258,17 @@ class ActiveSessionViewModel(
                 delay(MILLIS_PER_SECOND.milliseconds)
             }
         }
+    }
+
+    /**
+     * Открыть шторку можно только когда не идёт запись: иначе она провисит поверх экрана до конца
+     * чужой мутации, а [applySession] закроет её вместе с набранным черновиком заметки.
+     */
+    private fun openOverlay(overlay: ActiveSessionOverlayUiModel) {
+        if (uiStateValue.isMutating) {
+            return
+        }
+        updateTracking { copy(overlay = overlay) }
     }
 
     /** Правит контент только когда экран в трекинге; в остальных состояниях — no-op. */

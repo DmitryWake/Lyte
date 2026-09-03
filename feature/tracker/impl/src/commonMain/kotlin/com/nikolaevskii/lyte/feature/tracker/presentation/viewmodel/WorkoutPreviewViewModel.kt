@@ -63,7 +63,11 @@ class WorkoutPreviewViewModel(
         if (content.isStarting) {
             return
         }
-        updateState { (this as? WorkoutPreviewUiState.Content)?.copy(isStarting = true) ?: this }
+        // Ошибка прошлой попытки гасится на старте следующей: кадр «баннер + погашенная кнопка» не
+        // отличить от «ошибка и ничего не происходит».
+        updateState {
+            (this as? WorkoutPreviewUiState.Content)?.copy(isStarting = true, startError = null) ?: this
+        }
         launch {
             runCatching {
                 val workout = workoutRepository.getWorkout(programId)

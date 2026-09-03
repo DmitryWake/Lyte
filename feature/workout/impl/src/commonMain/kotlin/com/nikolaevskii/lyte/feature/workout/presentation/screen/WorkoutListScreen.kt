@@ -2,14 +2,17 @@ package com.nikolaevskii.lyte.feature.workout.presentation.screen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -126,15 +129,9 @@ fun WorkoutListContent(
                         modifier = Modifier.align(Alignment.Center),
                     )
 
-                is WorkoutListUiState.Content -> {
+                is WorkoutListUiState.Content -> Column(modifier = Modifier.fillMaxSize()) {
                     if (state.actionError != null) {
-                        Text(
-                            text = stringResource(Res.string.workout_list_delete_error),
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier
-                                .align(Alignment.TopCenter)
-                                .padding(LyteTheme.spacing.s3),
-                        )
+                        WorkoutListActionErrorBanner()
                     }
                     WorkoutProgramList(programs = state.programs, onIntent = onIntent)
                 }
@@ -150,6 +147,30 @@ fun WorkoutListContent(
                 onDismissRequest = { onIntent(WorkoutListIntent.OnDeleteDismissed) },
             )
         }
+    }
+}
+
+/**
+ * Неудачное удаление: строка над списком — в потоке колонки, а не оверлеем поверх `LazyColumn`.
+ * Последующие дети `Box` рисуются поверх предыдущих, поэтому баннером-оверлеем его целиком накрывает
+ * первая же непрозрачная `LyteProgramCard`, и о провале удаления пользователь не узнаёт. Подложка —
+ * `errorContainer`: голый красный текст посреди карточек читается как часть списка.
+ */
+@Composable
+private fun WorkoutListActionErrorBanner(modifier: Modifier = Modifier) {
+    Surface(
+        color = MaterialTheme.colorScheme.errorContainer,
+        shape = MaterialTheme.shapes.large,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = LyteTheme.spacing.s5, vertical = LyteTheme.spacing.s1),
+    ) {
+        Text(
+            text = stringResource(Res.string.workout_list_delete_error),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onErrorContainer,
+            modifier = Modifier.padding(horizontal = LyteTheme.spacing.s4, vertical = LyteTheme.spacing.s3),
+        )
     }
 }
 
@@ -249,13 +270,7 @@ private fun WorkoutListContentErrorPreview() {
     }
 }
 
-/**
- * Удаление не прошло. **Кадр сегодня совпадает с базовым, и это дефект, а не оплошность превью:**
- * баннер композится до [WorkoutProgramList], поэтому первая непрозрачная карточка его полностью
- * накрывает — при неудачном удалении пользователь не получает никакого сигнала. Кадр заведён
- * канарейкой: как только порядок композиции починят (RD-24, «невидимые ошибки»), эталон изменится
- * и это будет видно в диффе.
- */
+/** Удаление не прошло: баннер над списком — список сдвигается вниз, ни одна карточка его не накрывает. */
 @Composable
 @Preview
 private fun WorkoutListContentActionErrorPreview() {

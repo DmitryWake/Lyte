@@ -58,6 +58,7 @@ import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_error
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_exercise_position
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_exercises_cd
+import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_finish_error
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_last_set
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_last_set_in_exercise
 import com.nikolaevskii.lyte.feature.tracker.generated.resources.active_session_mutation_error
@@ -76,6 +77,7 @@ import com.nikolaevskii.lyte.feature.tracker.presentation.model.ActiveSessionSwi
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.lastSetLabel
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.toTrackSetStates
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionIntent
+import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionMutationError
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionUiState
 import com.nikolaevskii.lyte.feature.tracker.presentation.model.mvi.ActiveSessionUiState.ActiveSessionContent
 import com.nikolaevskii.lyte.feature.tracker.presentation.viewmodel.ActiveSessionViewModel
@@ -162,11 +164,23 @@ fun ActiveSessionContent(
                     ActiveSessionErrorContent(onIntent = onIntent, modifier = Modifier.align(Alignment.Center))
 
                 is ActiveSessionContent.AllDone ->
-                    ActiveSessionAllDoneContent(content = content, elapsedSeconds = state.elapsedSeconds, onIntent = onIntent)
+                    ActiveSessionAllDoneContent(
+                        content = content,
+                        elapsedSeconds = state.elapsedSeconds,
+                        isMutating = state.isMutating,
+                        mutationError = state.mutationError,
+                        onIntent = onIntent,
+                    )
 
                 is ActiveSessionContent.Tracking -> {
-                    ActiveSessionTrackingContent(content = content, elapsedSeconds = state.elapsedSeconds, onIntent = onIntent)
-                    ActiveSessionOverlay(content = content, onIntent = onIntent)
+                    ActiveSessionTrackingContent(
+                        content = content,
+                        elapsedSeconds = state.elapsedSeconds,
+                        isMutating = state.isMutating,
+                        mutationError = state.mutationError,
+                        onIntent = onIntent,
+                    )
+                    ActiveSessionOverlay(content = content, isMutating = state.isMutating, onIntent = onIntent)
                 }
             }
         }
@@ -177,6 +191,7 @@ fun ActiveSessionContent(
 @Composable
 private fun ActiveSessionOverlay(
     content: ActiveSessionContent.Tracking,
+    isMutating: Boolean,
     onIntent: (ActiveSessionIntent) -> Unit,
 ) {
     when (val overlay = content.overlay) {
@@ -184,11 +199,13 @@ private fun ActiveSessionOverlay(
 
         ActiveSessionOverlayUiModel.ExerciseSheet -> ExerciseSwitcherSheet(
             rows = content.switcherRows,
+            isMutating = isMutating,
             onIntent = onIntent,
         )
 
         is ActiveSessionOverlayUiModel.NoteSheet -> SetNoteSheet(
             draft = overlay.draft,
+            isMutating = isMutating,
             onIntent = onIntent,
         )
 
@@ -207,6 +224,8 @@ private fun ActiveSessionOverlay(
 private fun ActiveSessionTrackingContent(
     content: ActiveSessionContent.Tracking,
     elapsedSeconds: Int,
+    isMutating: Boolean,
+    mutationError: ActiveSessionMutationError?,
     onIntent: (ActiveSessionIntent) -> Unit,
 ) {
     val current = content.current
@@ -224,7 +243,7 @@ private fun ActiveSessionTrackingContent(
         }
     }
     Column(modifier = Modifier.fillMaxSize()) {
-        SessionHeader(elapsedSeconds = elapsedSeconds, onIntent = onIntent)
+        SessionHeader(elapsedSeconds = elapsedSeconds, isMutating = isMutating, onIntent = onIntent)
         ExerciseTitle(current = current)
 
         // Список получает ограниченную по высоте область: от её нижнего края считается якорь
@@ -233,15 +252,20 @@ private fun ActiveSessionTrackingContent(
             sets = content.trackSets,
             onRepsChange = { reps -> onIntent(ActiveSessionIntent.OnDraftRepsChanged(reps)) },
             onWeightChange = { weight -> onIntent(ActiveSessionIntent.OnDraftWeightChanged(weight)) },
-            currentContent = { CurrentSetNote(note = current.note, onIntent = onIntent) },
+            currentContent = {
+                CurrentSetNote(note = current.note, isMutating = isMutating, onIntent = onIntent)
+            },
             footer = footer,
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = SetListPaddingHorizontal),
         )
 
-        if (content.hasMutationError) {
-            MutationErrorBanner(modifier = Modifier.align(Alignment.CenterHorizontally))
+        if (mutationError != null) {
+            MutationErrorBanner(
+                text = mutationErrorText(mutationError),
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
             Spacer(modifier = Modifier.height(BannerSpacing))
         }
 
@@ -254,16 +278,20 @@ private fun ActiveSessionTrackingContent(
                 bottom = ActionsPaddingBottom,
             ),
         ) {
+            // Пока идёт запись, обе кнопки погашены: ViewModel такой тап всё равно проглотит
+            // (guard от дабл-тапа), и без гашения экран выглядел бы мёртвым.
             LyteButton(
                 text = stringResource(Res.string.active_session_complete_set),
                 onClick = { onIntent(ActiveSessionIntent.OnCompleteSetClicked) },
                 size = LyteButtonSize.Large,
+                enabled = !isMutating,
                 fullWidth = true,
             )
             LyteButton(
                 text = stringResource(Res.string.active_session_skip_set),
                 onClick = { onIntent(ActiveSessionIntent.OnSkipSetClicked) },
                 variant = LyteButtonVariant.Text,
+                enabled = !isMutating,
                 fullWidth = true,
             )
         }
@@ -280,6 +308,7 @@ private fun lastSetLabelText(label: ActiveSessionLastSetLabel): String = when (l
 @Composable
 private fun SessionHeader(
     elapsedSeconds: Int,
+    isMutating: Boolean,
     onIntent: (ActiveSessionIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -289,10 +318,13 @@ private fun SessionHeader(
             .fillMaxWidth()
             .padding(top = HeaderPaddingTop, start = HeaderPaddingHorizontal, end = HeaderPaddingHorizontal),
     ) {
+        // Обе кнопки шапки гасятся на время записи: шторку упражнений во время неё не открыть, а
+        // диалог досрочного завершения открылся бы поверх — и подтверждение в нём было бы мёртвым тапом.
         LyteIconButton(
             icon = LyteIcons.List,
             contentDescription = stringResource(Res.string.active_session_exercises_cd),
             onClick = { onIntent(ActiveSessionIntent.OnOpenExerciseSheetClicked) },
+            enabled = !isMutating,
         )
         Box(contentAlignment = Alignment.Center, modifier = Modifier.weight(1f)) {
             LyteSessionStopwatch(seconds = elapsedSeconds, size = LyteStopwatchSize.Large)
@@ -301,6 +333,7 @@ private fun SessionHeader(
             icon = LyteIcons.Close,
             contentDescription = stringResource(Res.string.active_session_end_early_cd),
             onClick = { onIntent(ActiveSessionIntent.OnEndEarlyClicked) },
+            enabled = !isMutating,
         )
     }
 }
@@ -347,6 +380,7 @@ private fun ExerciseTitle(
 @Composable
 private fun CurrentSetNote(
     note: String,
+    isMutating: Boolean,
     onIntent: (ActiveSessionIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -357,11 +391,13 @@ private fun CurrentSetNote(
                 selected = false,
                 onClick = { onIntent(ActiveSessionIntent.OnOpenNoteSheetClicked) },
                 icon = LyteIcons.Edit,
+                enabled = !isMutating,
             )
         }
     } else {
         Surface(
             onClick = { onIntent(ActiveSessionIntent.OnOpenNoteSheetClicked) },
+            enabled = !isMutating,
             shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surfaceContainerLow,
             modifier = modifier.fillMaxWidth(),
@@ -394,10 +430,21 @@ private fun CurrentSetNote(
     }
 }
 
+/**
+ * Текст баннера выбирает операция, а не арм контента: досрочное завершение проваливается на трекинге и
+ * обязано сказать про тренировку, иначе баннер соврёт про несохранённый подход.
+ */
 @Composable
-private fun MutationErrorBanner(modifier: Modifier = Modifier) {
+private fun mutationErrorText(error: ActiveSessionMutationError): String = when (error) {
+    ActiveSessionMutationError.Write -> stringResource(Res.string.active_session_mutation_error)
+    ActiveSessionMutationError.Finish -> stringResource(Res.string.active_session_finish_error)
+}
+
+/** Неудачная запись: строка над кнопкой действия. */
+@Composable
+private fun MutationErrorBanner(text: String, modifier: Modifier = Modifier) {
     Text(
-        text = stringResource(Res.string.active_session_mutation_error),
+        text = text,
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.error,
         textAlign = TextAlign.Center,
@@ -409,6 +456,8 @@ private fun MutationErrorBanner(modifier: Modifier = Modifier) {
 private fun ActiveSessionAllDoneContent(
     content: ActiveSessionContent.AllDone,
     elapsedSeconds: Int,
+    isMutating: Boolean,
+    mutationError: ActiveSessionMutationError?,
     onIntent: (ActiveSessionIntent) -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
@@ -478,10 +527,21 @@ private fun ActiveSessionAllDoneContent(
             )
         }
 
+        // Сохранение не прошло: сессия цела и лежит в БД незавершённой, поэтому экран остаётся на
+        // месте, а тап можно повторить.
+        if (mutationError != null) {
+            MutationErrorBanner(
+                text = mutationErrorText(mutationError),
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
+            Spacer(modifier = Modifier.height(BannerSpacing))
+        }
+
         LyteButton(
             text = stringResource(Res.string.active_session_save_workout),
             onClick = { onIntent(ActiveSessionIntent.OnFinishClicked) },
             size = LyteButtonSize.Large,
+            enabled = !isMutating,
             fullWidth = true,
             modifier = Modifier.padding(
                 start = ActionsPaddingHorizontal,
@@ -648,6 +708,54 @@ private fun ActiveSessionContentAllDoneShortPreview() {
     }
 }
 
+/**
+ * Сохранение тренировки с экрана-итога не прошло: баннер над кнопкой, сессия остаётся незавершённой,
+ * тап можно повторить. В макете этого состояния нет — заведено, потому что иначе провал `finishSession`
+ * не виден на экране вовсе.
+ */
+@Composable
+@Preview
+private fun ActiveSessionContentAllDoneErrorPreview() {
+    ActiveSessionPreviewDevice {
+        ActiveSessionContent(
+            state = ActiveSessionUiState(
+                content = ActiveSessionContent.AllDone(
+                    programName = "Push Day",
+                    completedCount = 15,
+                    totalCount = 16,
+                    setTones = previewAllDoneTones(),
+                ),
+                startedAt = Instant.fromEpochMilliseconds(0),
+                elapsedSeconds = 3161,
+                mutationError = ActiveSessionMutationError.Finish,
+            ),
+            onIntent = {},
+        )
+    }
+}
+
+/** Идёт сохранение тренировки: погашенная кнопка — единственное, чем экран-итог отличается от мёртвого тапа. */
+@Composable
+@Preview
+private fun ActiveSessionContentAllDoneSavingPreview() {
+    ActiveSessionPreviewDevice {
+        ActiveSessionContent(
+            state = ActiveSessionUiState(
+                content = ActiveSessionContent.AllDone(
+                    programName = "Push Day",
+                    completedCount = 15,
+                    totalCount = 16,
+                    setTones = previewAllDoneTones(),
+                ),
+                startedAt = Instant.fromEpochMilliseconds(0),
+                elapsedSeconds = 3161,
+                isMutating = true,
+            ),
+            onIntent = {},
+        )
+    }
+}
+
 @Composable
 @Preview
 private fun ActiveSessionContentLoadingPreview() {
@@ -695,18 +803,18 @@ private fun ActiveSessionContentMutationErrorPreview() {
     ActiveSessionPreviewDevice {
         ActiveSessionContent(
             state = trackingState(
-                content = previewTracking(currentIndex = 1, setCount = 3).copy(hasMutationError = true),
+                content = previewTracking(currentIndex = 1, setCount = 3),
                 elapsedSeconds = 1224,
-            ),
+            ).copy(mutationError = ActiveSessionMutationError.Write),
             onIntent = {},
         )
     }
 }
 
 /**
- * Идёт запись подхода. Сегодня `isMutating` — только guard во ViewModel, экран его не рисует,
- * поэтому кадр совпадает с `ActiveSessionContentPreview` пиксель в пиксель. Это и есть его смысл:
- * когда индикацию заведут (RD-24), дифф покажет ровно то, что она добавила.
+ * Идёт запись подхода: погашено всё, чем можно начать вторую, — кнопки «Готово»/«Пропустить», обе
+ * кнопки шапки и вход в заметку. Кадр обязан отличаться от `ActiveSessionContentPreview`: пока
+ * `isMutating` не рисовался, они совпадали пиксель в пиксель, и состояние было вне контроля.
  */
 @Composable
 @Preview
@@ -752,6 +860,26 @@ private fun ActiveSessionContentNoteSheetPreview() {
                 ),
                 elapsedSeconds = 1224,
             ),
+            onIntent = {},
+        )
+    }
+}
+
+/**
+ * Заметка сохраняется: шторка ещё открыта (её закроет только удачная запись), кнопка сохранения
+ * погашена. Единственный способ увидеть открытую шторку при `isMutating` — её собственная запись.
+ */
+@Composable
+@Preview
+private fun ActiveSessionContentNoteSheetMutatingPreview() {
+    ActiveSessionPreviewDevice {
+        ActiveSessionContent(
+            state = trackingState(
+                content = previewTracking(currentIndex = 1, setCount = 3).copy(
+                    overlay = ActiveSessionOverlayUiModel.NoteSheet(draft = "Локти ближе к корпусу"),
+                ),
+                elapsedSeconds = 1224,
+            ).copy(isMutating = true),
             onIntent = {},
         )
     }
@@ -953,5 +1081,4 @@ private fun ActiveSessionCurrentUiModel.toTrackingContent(
     draftReps = draftReps,
     draftWeight = draftWeight,
     overlay = ActiveSessionOverlayUiModel.None,
-    hasMutationError = false,
 )
