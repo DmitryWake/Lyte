@@ -30,12 +30,14 @@ fun LyteChip(
     selected: Boolean,
     onClick: () -> Unit,
     icon: ImageVector? = null,
+    enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     FilterChip(
         selected = selected,
         onClick = onClick,
+        enabled = enabled,
         label = { Text(text = text, style = MaterialTheme.typography.labelLarge) },
         modifier = modifier
             .lytePressScale(interactionSource)
@@ -65,6 +67,7 @@ private fun LyteChipPreview() {
         ) {
             LyteChip(text = "Тяжело", selected = true, onClick = {}, icon = LyteIcons.Sparkles)
             LyteChip(text = "Легко", selected = false, onClick = {})
+            LyteChip(text = "Заметка", selected = false, onClick = {}, enabled = false)
         }
     }
 }

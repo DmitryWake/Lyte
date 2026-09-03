@@ -26,6 +26,7 @@ internal class FakeWorkoutSessionRepository(
     var getActiveSessionError: Throwable? = null
     var startSessionError: Throwable? = null
     var completeSetError: Throwable? = null
+    var saveSetNoteError: Throwable? = null
     var finishSessionError: Throwable? = null
     var startedSessionId: String = "started-session"
 
@@ -77,6 +78,7 @@ internal class FakeWorkoutSessionRepository(
     }
 
     override suspend fun saveSetNote(setId: String, note: String) {
+        saveSetNoteError?.let { error -> throw error }
         saveNoteCalls += setId to note
         mutateSet(setId) { set -> set.copy(note = note) }
     }

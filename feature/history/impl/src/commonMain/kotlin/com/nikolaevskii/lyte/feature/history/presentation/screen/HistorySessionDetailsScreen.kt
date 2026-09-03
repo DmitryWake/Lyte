@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
@@ -17,6 +18,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -43,6 +46,7 @@ import com.nikolaevskii.lyte.feature.history.generated.resources.history_details
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_details_delete_dialog_description
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_details_delete_dialog_title
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_details_delete_error
+import com.nikolaevskii.lyte.feature.history.generated.resources.history_details_deleting_a11y
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_details_error
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_details_meta
 import com.nikolaevskii.lyte.feature.history.generated.resources.history_details_not_found
@@ -61,6 +65,11 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 private val DetailsDeleteButtonSize = 44.dp
+
+// Индикатор занимает место кнопки удаления, поэтому меряется от неё: внутренний отступ держит круг
+// того же размера, что и иконка внутри LyteIconButton (половина кнопки).
+private val DetailsDeleteProgressPadding = 11.dp
+private val DetailsDeleteProgressStroke = 2.dp
 private val DetailsMarkSize = 36.dp
 private val DetailsGroupHeaderGap = 10.dp
 private val DetailsSummaryGap = 10.dp
@@ -97,14 +106,29 @@ fun HistorySessionDetailsContent(
                     sessionMetaLabel(details = details, monthLabel = genitiveMonths[details.monthNumber - 1])
                 },
                 // Удалять нечего, пока сессия не прочитана.
-                trailing = content?.let {
+                trailing = content?.let { loaded ->
                     {
-                        LyteIconButton(
-                            icon = LyteIcons.Delete,
-                            contentDescription = stringResource(Res.string.history_details_delete_a11y),
-                            onClick = { onIntent(HistorySessionDetailsIntent.OnDeleteClicked) },
-                            size = DetailsDeleteButtonSize,
-                        )
+                        // Удаление уже идёт: на месте действия — индикатор, а не живая кнопка. Сам
+                        // guard от повторного удаления живёт во ViewModel, это только его отражение.
+                        if (loaded.isDeleting) {
+                            // Своя семантика обязательна: индикатор занял место кнопки, и без неё
+                            // действие для скринридера просто исчезает с экрана.
+                            val deletingLabel = stringResource(Res.string.history_details_deleting_a11y)
+                            CircularProgressIndicator(
+                                strokeWidth = DetailsDeleteProgressStroke,
+                                modifier = Modifier
+                                    .size(DetailsDeleteButtonSize)
+                                    .padding(DetailsDeleteProgressPadding)
+                                    .semantics { contentDescription = deletingLabel },
+                            )
+                        } else {
+                            LyteIconButton(
+                                icon = LyteIcons.Delete,
+                                contentDescription = stringResource(Res.string.history_details_delete_a11y),
+                                onClick = { onIntent(HistorySessionDetailsIntent.OnDeleteClicked) },
+                                size = DetailsDeleteButtonSize,
+                            )
+                        }
                     }
                 },
             )
@@ -272,6 +296,18 @@ private fun HistorySessionDetailsContentDeleteDialogPreview() {
     LyteTheme {
         HistorySessionDetailsContent(
             state = HistorySessionDetailsUiState.Content(details = previewDetails(), isDeleteDialogVisible = true),
+            onIntent = {},
+        )
+    }
+}
+
+/** Удаление подтверждено и уже идёт: действие в шапке заменено индикатором, повторный тап невозможен. */
+@Composable
+@Preview
+private fun HistorySessionDetailsContentDeletingPreview() {
+    LyteTheme {
+        HistorySessionDetailsContent(
+            state = HistorySessionDetailsUiState.Content(details = previewDetails(), isDeleting = true),
             onIntent = {},
         )
     }

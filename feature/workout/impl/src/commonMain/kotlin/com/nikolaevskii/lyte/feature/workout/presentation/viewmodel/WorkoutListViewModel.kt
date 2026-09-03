@@ -69,6 +69,9 @@ class WorkoutListViewModel(
      */
     private fun confirmDelete() {
         val pending = (uiStateValue as? WorkoutListUiState.Content)?.pendingDelete ?: return
+        // Баннер прошлой неудачи гасится на старте следующей попытки: иначе он висит над списком до
+        // конца жизни экрана и во время повтора не отличить «уже не вышло» от «идёт сейчас».
+        updateState { (this as? WorkoutListUiState.Content)?.copy(actionError = null) ?: this }
         launch {
             runCatching { workoutRepository.deleteWorkout(pending.id) }
                 .onSuccess {
